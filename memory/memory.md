@@ -204,7 +204,23 @@ Implemented the Hero Section according to `context/feature-specs/04-hero.md` and
 ### Continuation Context
 - `Hero` is in `components/hero.tsx` and mounted on `app/page.tsx`.
 - Hero styling uses the approved subtle black overlay with crisp white text.
-- Next feature is ready for roadmap planning/approval.
+- Video showreel `hero.mp4` web-optimized (CRF 24, faststart, 6.7 MB) and committed to Git.
+- Unused large raw asset `public/hero2.mp4` ignored in `.gitignore`.
+- Next feature is ready for roadmap planning/approval (e.g., `05-update-navbar.md` or `06-marquee-01.md`).
+
+---
+
+## 2026-10-25 — GitHub Push & Video Asset Web Optimization
+
+### Session Summary
+Staged and pushed the codebase to GitHub remote `origin/main` (`https://github.com/maleeshax98/bstudios.git`). During the initial push, GitHub's HTTPS proxy returned HTTP 408 on pushing 120MB of raw video assets. In consultation with the user:
+- Ignored unused raw asset `public/hero2.mp4` (92MB) in `.gitignore`.
+- Web-optimized `public/hero.mp4` using `ffmpeg` with H.264 CRF 24 and `-movflags +faststart`, compressing the file from 34.2MB down to 6.7MB with zero perceptible visual loss under the dark overlay.
+- Configured git `http.postBuffer` and pushed commit `e37ffa4` to `origin/main` successfully.
+
+### Implementation State
+- Remote in sync: `origin/main` tracking commit `e37ffa4`.
+- Working tree clean: `git status` reports clean tree.
 
 
 
