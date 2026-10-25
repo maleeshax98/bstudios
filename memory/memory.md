@@ -167,4 +167,44 @@ This creates a seamless editorial flow ("WELCOME TO" followed by the brutalist b
 ### Continuation Context
 - Brand nomenclature across all components (`Navbar`, `HomeLoader`, `Home` page) is strictly consolidated to `B STUDIO`.
 
+---
+
+## 2026-10-25 — Feature 04: Hero Section Implementation
+
+### Session Summary
+Implemented the Hero Section according to `context/feature-specs/04-hero.md` and refined it per explicit user instruction to use a subtle black overlay with crisp white typography. Created `components/hero.tsx` and mounted it on `app/page.tsx` directly alongside `HomeLoader`. Designed a full-screen layout filling the remaining viewport height below the sticky navbar (`h-[calc(100dvh-5rem)]`) with an auto-playing looping background video showreel (`/hero.mp4`) with `opacity-70` and a subtle black gradient overlay (`bg-gradient-to-b from-black/40 via-black/35 to-black/55`). Center-stage typography features a dead-center, massive bold Sans-Serif headline ("B STUDIO") in `text-white` paired with an intertwined, elegant italicized Serif subtitle (*"Cinematic Photography & Videography"* in `text-white/80`). Implemented a dark glassmorphic GSAP `quickTo` custom cursor interaction on desktop fine-pointer viewports that expands into a sleek "Scroll" indicator capsule with down-arrow on mouse movement and collapses back after 1.2s of inactivity.
+
+### Implementation State
+- **Completed & Verified:**
+  - Created `components/hero.tsx` exporting `Hero`.
+  - Full-screen layout: `relative w-full h-[calc(100dvh-5rem)] min-h-[560px] flex items-center justify-center overflow-hidden bg-black select-none md:cursor-none`.
+  - Video showreel: `<video autoPlay loop muted playsInline preload="auto" ...>` sourcing `/hero.mp4` with `opacity-70` and a subtle black gradient veil (`bg-gradient-to-b from-black/40 via-black/35 to-black/55`) ensuring the video shines through while making white typography pop with high contrast.
+  - Main headline: `font-sans font-black text-6xl sm:text-8xl md:text-9xl lg:text-[10.5rem] xl:text-[12rem] tracking-tighter leading-[0.88] text-white uppercase drop-shadow-sm`.
+  - Subtitle: `font-serif italic font-normal text-lg sm:text-2xl md:text-3xl lg:text-4xl text-white/80 mt-2 sm:mt-3 md:mt-4 tracking-tight`.
+  - Custom cursor: Smooth GSAP `quickTo` coordinates tracking (`duration: 0.18, ease: "power2.out"`). Dark glass capsule (`border-white/30 bg-black/60 shadow-lg backdrop-blur-sm text-white`) that expands into an 80px badge containing "Scroll" and stroke down-arrow on mouse movement, collapses to 12px white dot after 1.2s inactivity, and fades on mouse leave. Guarded with `window.matchMedia("(pointer: fine)").matches` for touch safety.
+  - Editorial bottom scroll cue: Centered indicator line and label in `text-white/70`.
+  - Integrated into `app/page.tsx` cleanly alongside `HomeLoader`.
+  - Passed `pnpm exec tsc --noEmit` (TypeScript strict mode, 0 errors).
+  - Passed `pnpm lint` (ESLint 0 errors, 0 warnings).
+  - Passed `pnpm build` (production build compiled successfully in 298ms, static routes prerendered).
+  - HTTP 200 verification on running dev server.
+- **Incomplete / Next:**
+  - Feature 05 / Next milestone (e.g., `05-marquee-01.md`).
+
+### Decisions & Rationale
+- **User Design Direction (Subtle Black Overlay & White Text):** User explicitly decided to replace the light/white overlay with a subtle black overlay (`from-black/40 via-black/35 to-black/55`) and crisp white typography (`text-white` title, `text-white/80` subtitle) because it provides superior contrast and cinematic drama over the video showreel.
+- **Dark Glassmorphic Custom Cursor:** Adjusted the custom cursor to match the dark hero treatment with a translucent black frosted glass body (`bg-black/60 backdrop-blur-sm`) and fine white border (`border-white/30`), displaying white text and arrow on expansion.
+- **Viewport Height Calculation:** Maintained `h-[calc(100dvh-5rem)]` with `min-h-[560px]` to account precisely for the sticky 5rem (`h-20`) navbar.
+- **GSAP quickTo Custom Cursor:** Retained high-performance `gsap.quickTo` for cursor coordinate updates at 60-120fps.
+- **Strict Scope Discipline:** Kept `app/page.tsx` minimal with only `<HomeLoader />` and `<Hero />`.
+
+### Lessons Learned
+- **High-Performance Mouse Tracking in React:** Using `useRef` for `gsap.quickTo` setters ensures smooth frame interpolation without triggering React re-renders on mouse move events. Only the expansion state (`isExpanded`) triggers state updates on move debounces.
+
+### Continuation Context
+- `Hero` is in `components/hero.tsx` and mounted on `app/page.tsx`.
+- Hero styling uses the approved subtle black overlay with crisp white text.
+- Next feature is ready for roadmap planning/approval.
+
+
 

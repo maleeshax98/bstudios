@@ -40,12 +40,12 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
       // 1. Text Animation: "WELCOME TO" fades in, followed smoothly by "B STUDIO" in the middle
       tl.fromTo(
         welcomeRef.current,
-        { opacity: 0, y: 14 },
+        { opacity: 0, y: 0 },
         { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }
       )
         .fromTo(
           studioRef.current,
-          { opacity: 0, y: 18 },
+          { opacity: 0, y: 0 },
           { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" },
           "-=0.25"
         )
@@ -54,7 +54,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
         // Text fades out together
         .to([welcomeRef.current, studioRef.current], {
           opacity: 0,
-          y: -12,
+          y: 0,
           duration: 0.6,
           ease: "power2.in",
         })
