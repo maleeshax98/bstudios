@@ -11,7 +11,7 @@ export default function Home() {
           Cinematic Photography &amp; Direction
         </p>
         <h1 className="font-sans font-black text-4xl sm:text-6xl md:text-7xl uppercase tracking-tighter text-text-primary">
-          BINUKA STUDIO
+          B STUDIO
         </h1>
         <p className="font-sans text-xs sm:text-sm uppercase tracking-widest text-text-muted mt-4">
           Colombo, Sri Lanka — Available Worldwide

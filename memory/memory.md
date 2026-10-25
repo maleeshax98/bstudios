@@ -145,3 +145,24 @@ Connected the local `bstudio` repository to GitHub remote `origin` (`https://git
 - Remote `origin` is actively tracking `https://github.com/maleeshax98/bstudios.git`.
 - Local branch `main` is completely in sync with remote `main`.
 
+---
+
+## 2026-10-25 — Home Loader Text Refinement to "B STUDIO"
+
+### Session Summary
+Refined the branding text in `components/home-loader.tsx` per user direction. Updated the second greeting line from "TO BINUKA STUDIO" to "TO B STUDIO" (pairing with "WELCOME" above), aligning with the global studio branding in the navigation bar and home page header. Also updated `app/page.tsx` headline to "B STUDIO" for visual consistency and synchronized `context/feature-specs/03-loading-home.md`.
+
+### Implementation State
+- **Completed & Verified:**
+  - `components/home-loader.tsx`: Updated `<h1>` text to `TO B STUDIO`.
+  - `app/page.tsx`: Updated `<h1>` text to `B STUDIO`.
+  - `context/feature-specs/03-loading-home.md`: Updated specification to reference `TO B STUDIO`.
+  - Passed TypeScript check (`tsc --noEmit`) and ESLint (`pnpm lint`) with 0 errors.
+  - Verified browser rendering and compilation.
+- **Incomplete / Next:**
+  - Feature 04 / Next milestone implementation awaiting user instruction.
+
+### Continuation Context
+- Brand nomenclature across all components (`Navbar`, `HomeLoader`, `Home` page) is strictly consolidated to `B STUDIO`.
+
+
