@@ -147,16 +147,18 @@ Connected the local `bstudio` repository to GitHub remote `origin` (`https://git
 
 ---
 
-## 2026-10-25 — Home Loader Text Refinement to "B STUDIO"
+## 2026-10-25 — Home Loader Text Refinement to "WELCOME TO" / "B STUDIO"
 
 ### Session Summary
-Refined the branding text in `components/home-loader.tsx` per user direction. Updated the second greeting line from "TO BINUKA STUDIO" to "TO B STUDIO" (pairing with "WELCOME" above), aligning with the global studio branding in the navigation bar and home page header. Also updated `app/page.tsx` headline to "B STUDIO" for visual consistency and synchronized `context/feature-specs/03-loading-home.md`.
+Refined the branding text in `components/home-loader.tsx` per user direction. Shifted "TO" to the first greeting line:
+- First line: "WELCOME TO" (muted tracking header)
+- Second line: "B STUDIO" (bold sans structural headline)
+This creates a seamless editorial flow ("WELCOME TO" followed by the brutalist brand title "B STUDIO").
 
 ### Implementation State
 - **Completed & Verified:**
-  - `components/home-loader.tsx`: Updated `<h1>` text to `TO B STUDIO`.
-  - `app/page.tsx`: Updated `<h1>` text to `B STUDIO`.
-  - `context/feature-specs/03-loading-home.md`: Updated specification to reference `TO B STUDIO`.
+  - `components/home-loader.tsx`: Updated `<p>` text to `WELCOME TO` and `<h1>` text to `B STUDIO`.
+  - `app/page.tsx`: Headline is `B STUDIO`.
   - Passed TypeScript check (`tsc --noEmit`) and ESLint (`pnpm lint`) with 0 errors.
   - Verified browser rendering and compilation.
 - **Incomplete / Next:**

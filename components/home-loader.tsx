@@ -37,7 +37,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
         },
       });
 
-      // 1. Text Animation: "WELCOME" fades in, followed smoothly by "TO B STUDIO" in the middle
+      // 1. Text Animation: "WELCOME TO" fades in, followed smoothly by "B STUDIO" in the middle
       tl.fromTo(
         welcomeRef.current,
         { opacity: 0, y: 14 },
@@ -120,13 +120,13 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
             ref={welcomeRef}
             className="font-sans text-xs sm:text-sm md:text-base uppercase tracking-[0.35em] text-text-muted font-medium mb-3"
           >
-            WELCOME
+            WELCOME TO
           </p>
           <h1
             ref={studioRef}
             className="font-sans font-black text-2xl sm:text-4xl md:text-5xl lg:text-6xl uppercase tracking-tighter text-text-primary"
           >
-            TO B STUDIO
+            B STUDIO
           </h1>
         </div>
 
