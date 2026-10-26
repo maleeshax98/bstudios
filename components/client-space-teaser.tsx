@@ -1,0 +1,411 @@
+"use client";
+
+import * as React from "react";
+import Image from "next/image";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Globe, ArrowUpRight, Share2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+export type ClientSpaceTeaserProps = React.HTMLAttributes<HTMLElement>;
+
+interface PersonalAlbum {
+  id: string;
+  galleryId: string;
+  client: string;
+  shootType: string;
+  assetCount: string;
+  src: string;
+  alt: string;
+}
+
+const ALBUMS: PersonalAlbum[] = [
+  {
+    id: "album-01",
+    galleryId: "GALLERY #01",
+    client: "Elena & Marc",
+    shootType: "Lake Como Ceremony",
+    assetCount: "340 Assets // 4K Master",
+    src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=85",
+    alt: "Client wedding album preview",
+  },
+  {
+    id: "album-02",
+    galleryId: "GALLERY #02",
+    client: "Sora & Kenji",
+    shootType: "Kyoto Editorial Preshoot",
+    assetCount: "215 Assets // 35mm Analog",
+    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=85",
+    alt: "Client editorial preshoot album preview",
+  },
+  {
+    id: "album-03",
+    galleryId: "GALLERY #03",
+    client: "Aurelia & Cassian",
+    shootType: "Brutalist Villa Reception",
+    assetCount: "420 Assets // HDR Masters",
+    src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85",
+    alt: "Client luxury reception album preview",
+  },
+  {
+    id: "album-04",
+    galleryId: "GALLERY #04",
+    client: "Amara & Julian",
+    shootType: "Sunset Coastal Monograph",
+    assetCount: "190 Assets // Ultra-Res",
+    src: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=1000&q=85",
+    alt: "Client monograph album preview",
+  },
+];
+
+export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProps) {
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const cardsRef = React.useRef<(HTMLDivElement | null)[]>([]);
+  const magneticBtnRef = React.useRef<HTMLAnchorElement>(null);
+
+  // GSAP ScrollTrigger album fan out / spread animation
+  React.useEffect(() => {
+    const section = sectionRef.current;
+    const cards = cardsRef.current.filter((c): c is HTMLDivElement => c !== null);
+
+    if (!section || cards.length === 0) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+
+      // Desktop layout (>= 1024px)
+      mm.add("(min-width: 1024px)", () => {
+        // Initial stacked deck positioning
+        gsap.set(cards[0], { xPercent: -5, yPercent: 4, rotation: -4, scale: 0.94, zIndex: 1 });
+        gsap.set(cards[1], { xPercent: 3, yPercent: -2, rotation: 3, scale: 0.96, zIndex: 2 });
+        gsap.set(cards[2], { xPercent: -2, yPercent: 2, rotation: -1.5, scale: 0.98, zIndex: 3 });
+        gsap.set(cards[3], { xPercent: 0, yPercent: 0, rotation: 0, scale: 1.0, zIndex: 4 });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: "+=120%",
+            pin: true,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        // Fan out albums into an overlapping cascading spread
+        tl.to(
+          cards[0],
+          {
+            xPercent: -88,
+            yPercent: 12,
+            rotation: -14,
+            scale: 0.92,
+            ease: "power2.out",
+          },
+          0
+        )
+          .to(
+            cards[1],
+            {
+              xPercent: -28,
+              yPercent: -6,
+              rotation: -5,
+              scale: 0.96,
+              ease: "power2.out",
+            },
+            0
+          )
+          .to(
+            cards[2],
+            {
+              xPercent: 28,
+              yPercent: 6,
+              rotation: 5,
+              scale: 0.98,
+              ease: "power2.out",
+            },
+            0
+          )
+          .to(
+            cards[3],
+            {
+              xPercent: 88,
+              yPercent: -12,
+              rotation: 14,
+              scale: 1.0,
+              ease: "power2.out",
+            },
+            0
+          );
+      });
+
+      // Mobile & Tablet layout (< 1024px)
+      mm.add("(max-width: 1023px)", () => {
+        // Subtle stack setup fitting narrower viewport
+        gsap.set(cards[0], { xPercent: -3, yPercent: 3, rotation: -3, scale: 0.92, zIndex: 1 });
+        gsap.set(cards[1], { xPercent: 2, yPercent: -2, rotation: 2, scale: 0.95, zIndex: 2 });
+        gsap.set(cards[2], { xPercent: -1, yPercent: 1, rotation: -1, scale: 0.98, zIndex: 3 });
+        gsap.set(cards[3], { xPercent: 0, yPercent: 0, rotation: 0, scale: 1.0, zIndex: 4 });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: "+=90%",
+            pin: true,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.to(
+          cards[0],
+          {
+            xPercent: -42,
+            yPercent: -10,
+            rotation: -10,
+            scale: 0.88,
+            ease: "power2.out",
+          },
+          0
+        )
+          .to(
+            cards[1],
+            {
+              xPercent: -14,
+              yPercent: 4,
+              rotation: -3,
+              scale: 0.92,
+              ease: "power2.out",
+            },
+            0
+          )
+          .to(
+            cards[2],
+            {
+              xPercent: 14,
+              yPercent: -4,
+              rotation: 3,
+              scale: 0.96,
+              ease: "power2.out",
+            },
+            0
+          )
+          .to(
+            cards[3],
+            {
+              xPercent: 42,
+              yPercent: 10,
+              rotation: 10,
+              scale: 1.0,
+              ease: "power2.out",
+            },
+            0
+          );
+      });
+    }, section);
+
+    // Refresh calculations once custom web fonts are rendered
+    document.fonts?.ready?.then(() => {
+      ScrollTrigger.refresh();
+    });
+
+    return () => {
+      ctx.revert();
+    };
+  }, []);
+
+  // Magnetic hover effect on primary CTA button
+  const handleMagneticMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const el = magneticBtnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const distanceX = (e.clientX - centerX) * 0.35;
+    const distanceY = (e.clientY - centerY) * 0.35;
+
+    gsap.to(el, {
+      x: distanceX,
+      y: distanceY,
+      duration: 0.3,
+      ease: "power2.out",
+    });
+  };
+
+  const handleMagneticLeave = () => {
+    const el = magneticBtnRef.current;
+    if (!el) return;
+    gsap.to(el, {
+      x: 0,
+      y: 0,
+      duration: 0.7,
+      ease: "elastic.out(1, 0.4)",
+    });
+  };
+
+  // Teardown magnetic tweens on unmount
+  React.useEffect(() => {
+    const el = magneticBtnRef.current;
+    return () => {
+      if (el) {
+        gsap.killTweensOf(el);
+      }
+    };
+  }, []);
+
+  return (
+    <section
+      ref={sectionRef}
+      id="client-space"
+      role="region"
+      aria-label="Dedicated Client Space"
+      className={cn(
+        "relative w-full h-[100dvh] min-h-[680px] bg-bg-base text-text-primary overflow-hidden flex items-center select-none",
+        className
+      )}
+      {...props}
+    >
+      {/* Background architectural watermark */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] overflow-hidden">
+        <span className="font-sans font-black text-[28vw] uppercase leading-none whitespace-nowrap tracking-tighter">
+          GALLERY
+        </span>
+      </div>
+
+      <div className="relative w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Editorial Information & CTA */}
+          <div className="lg:col-span-5 flex flex-col justify-center text-left z-20">
+            {/* Shareable Kicker */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-surface w-fit mb-4 sm:mb-6">
+              <Globe className="w-3.5 h-3.5 text-text-primary stroke-[1.75]" />
+              <span className="font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
+                Dedicated Client Space
+              </span>
+            </div>
+
+            {/* Massive Brutalist Sans-Serif Headline */}
+            <h2 className="font-sans font-black uppercase tracking-tighter leading-[0.88] text-text-primary text-4xl sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]">
+              YOUR PERSONAL PREMIERE
+            </h2>
+
+            {/* Elegant Italicized Serif Description */}
+            <p className="font-serif italic text-text-primary/90 text-lg sm:text-xl md:text-2xl leading-relaxed mt-4 sm:mt-6 max-w-xl">
+              Every memory, beautifully curated. Access your high-resolution digital albums in one dedicated space—designed for private viewing or sharing publicly with the world.
+            </p>
+
+            {/* Feature Highlights */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-6 border-t border-text-primary/10 mt-6 sm:mt-8 max-w-xl">
+              <div>
+                <span className="font-sans font-bold text-[11px] sm:text-xs uppercase tracking-wider text-text-primary block">
+                  01 / Gallery
+                </span>
+                <span className="font-serif italic text-[11px] sm:text-xs text-text-muted mt-0.5 block leading-tight">
+                  Public & Private
+                </span>
+              </div>
+              <div>
+                <span className="font-sans font-bold text-[11px] sm:text-xs uppercase tracking-wider text-text-primary block">
+                  02 / Master
+                </span>
+                <span className="font-serif italic text-[11px] sm:text-xs text-text-muted mt-0.5 block leading-tight">
+                  Lossless 4K Files
+                </span>
+              </div>
+              <div>
+                <span className="font-sans font-bold text-[11px] sm:text-xs uppercase tracking-wider text-text-primary block">
+                  03 / Sharing
+                </span>
+                <span className="font-serif italic text-[11px] sm:text-xs text-text-muted mt-0.5 block leading-tight">
+                  One-Click Links
+                </span>
+              </div>
+            </div>
+
+            {/* Call to Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-8 sm:mt-10">
+              <a
+                ref={magneticBtnRef}
+                href="#client-login"
+                onMouseMove={handleMagneticMove}
+                onMouseLeave={handleMagneticLeave}
+                className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-text-primary text-bg-base font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:bg-black hover:shadow-xl active:scale-95 will-change-transform"
+              >
+                <span>VIEW SAMPLE ALBUM</span>
+                <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+
+              <a
+                href="#client-login"
+                className="group inline-flex items-center gap-2 px-6 py-3.5 sm:py-4 rounded-full border border-border-subtle bg-bg-surface text-text-primary font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:border-text-primary hover:bg-bg-subtle active:scale-95"
+              >
+                <Share2 className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary transition-colors duration-200 stroke-[1.75]" />
+                <span>ACCESS GALLERY</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Right Column: The Album Spread Animation Stage */}
+          <div className="lg:col-span-7 flex items-center justify-center relative w-full h-[360px] sm:h-[450px] md:h-[500px] lg:h-[560px] perspective-[1000px]">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {ALBUMS.map((album, index) => (
+                <div
+                  key={album.id}
+                  ref={(el) => {
+                    cardsRef.current[index] = el;
+                  }}
+                  className="group absolute w-[190px] sm:w-[240px] md:w-[280px] lg:w-[310px] aspect-[3/4] rounded-2xl overflow-hidden border border-border-subtle bg-bg-surface shadow-[0_20px_50px_rgba(0,0,0,0.12)] will-change-transform transition-shadow duration-500 hover:shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
+                >
+                  {/* High Quality Cinematic Image */}
+                  <div className="relative w-full h-full overflow-hidden">
+                    <Image
+                      src={album.src}
+                      alt={album.alt}
+                      fill
+                      sizes="(max-width: 640px) 190px, (max-width: 1024px) 280px, 310px"
+                      priority={index === 3}
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+
+                    {/* Top Vault Pill Badge */}
+                    <div className="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
+                      <span className="font-sans text-[9px] sm:text-[10px] font-bold tracking-widest uppercase bg-bg-base/90 backdrop-blur-md px-2.5 py-1 rounded-full text-text-primary border border-black/5 shadow-sm">
+                        {album.galleryId}
+                      </span>
+                      <div className="w-6 h-6 rounded-full bg-bg-base/90 backdrop-blur-md flex items-center justify-center border border-black/5 shadow-sm">
+                        <Share2 className="w-3 h-3 text-text-primary stroke-[1.75]" />
+                      </div>
+                    </div>
+
+                    {/* Bottom Metadata Overlay */}
+                    <div className="absolute inset-x-0 bottom-0 p-4 pt-12 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-white z-10 pointer-events-none">
+                      <p className="font-serif italic text-base sm:text-lg text-white font-normal leading-tight">
+                        {album.client}
+                      </p>
+                      <p className="font-sans text-[10px] sm:text-[11px] tracking-wider uppercase text-white/80 mt-1">
+                        {album.shootType}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/15 text-[9px] tracking-widest uppercase text-white/60">
+                        <span>{album.assetCount}</span>
+                        <span className="font-mono text-[9px]">4K HDR</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default ClientSpaceTeaser;

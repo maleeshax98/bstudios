@@ -10,3 +10,4 @@ Please generate the code for the `PinnedScrollText` component using Next.js, Tai
 * **Theme Enforcement:** Lock the component into the cinematic off-light theme only (no dark mode styling whatsoever)[cite: 9]. The background must be Cinematic Off-White / Warm Pearl (`--bg-base` / #F7F7F5) and the text should be Rich Charcoal / Ink Black (`--text-primary` / #111111)[cite: 9].
 
 Output *only* the complete, working React component code. Do not provide explanations or read further context. Ensure all GSAP animations and ScrollTriggers are properly cleaned up on component unmount.
+

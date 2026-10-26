@@ -1,0 +1,285 @@
+"use client";
+
+import * as React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { cn } from "@/lib/utils";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+export interface ColorGradeTheme {
+  id: string;
+  title: string;
+  subtitle: string;
+  index: string;
+  src: string;
+  alt: string;
+  paletteDescription: string;
+}
+
+const COLOR_THEMES: ColorGradeTheme[] = [
+  {
+    id: "dreamy-glow",
+    title: "Dreamy Glow",
+    subtitle: "Golden Halation",
+    index: "01",
+    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=85",
+    alt: "Dreamy glow color grading aesthetic with ethereal golden sunlight",
+    paletteDescription: "Warm radiant highlights, soft optical diffusion, and luminous golden skin tones.",
+  },
+  {
+    id: "off-green",
+    title: "Off Green",
+    subtitle: "Muted Earth & Sage",
+    index: "02",
+    src: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1600&q=85",
+    alt: "Off green color grading aesthetic with muted foliage tones",
+    paletteDescription: "Desaturated olive foliage, organic earthen balance, and muted natural daylight tones.",
+  },
+  {
+    id: "moody",
+    title: "Moody",
+    subtitle: "Atmospheric Twilight",
+    index: "03",
+    src: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=85",
+    alt: "Moody color grading aesthetic with dramatic shadows",
+    paletteDescription: "Deep sculpted contrast, evocative twilight ambiance, and subtle shadow separation.",
+  },
+  {
+    id: "dark-aesthetic",
+    title: "Dark Aesthetic",
+    subtitle: "Noir & Chiaroscuro",
+    index: "04",
+    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=85",
+    alt: "Dark aesthetic color grading with deep blacks and stark contrast",
+    paletteDescription: "Inky rich blacks, deliberate silhouette framing, and high-density monochrome edge clarity.",
+  },
+  {
+    id: "vintage-film",
+    title: "Vintage Film",
+    subtitle: "35mm Analog Warmth",
+    index: "05",
+    src: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=85",
+    alt: "Vintage film color grading with organic grain and analog film response",
+    paletteDescription: "Warm analog grain emulation, soft rolled-off highlights, and nostalgic film curves.",
+  },
+  {
+    id: "high-contrast",
+    title: "High Contrast",
+    subtitle: "Stark Modern Impact",
+    index: "06",
+    src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+    alt: "High contrast color grading with bold dynamic range",
+    paletteDescription: "Bold punchy dynamic range, razor-sharp architectural midtones, and striking tonal punch.",
+  },
+];
+
+export type ColorGradeLookbookProps = React.HTMLAttributes<HTMLElement>;
+
+export function ColorGradeLookbook({
+  className,
+  ...props
+}: ColorGradeLookbookProps) {
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const magneticButtonRef = React.useRef<HTMLDivElement>(null);
+
+  const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = magneticButtonRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const distanceX = (e.clientX - centerX) * 0.35;
+    const distanceY = (e.clientY - centerY) * 0.35;
+
+    gsap.to(el, {
+      x: distanceX,
+      y: distanceY,
+      duration: 0.25,
+      ease: "power2.out",
+    });
+  };
+
+  const handleMagneticLeave = () => {
+    const el = magneticButtonRef.current;
+    if (!el) return;
+
+    gsap.to(el, {
+      x: 0,
+      y: 0,
+      duration: 0.6,
+      ease: "elastic.out(1, 0.4)",
+    });
+  };
+
+  React.useEffect(() => {
+    const section = sectionRef.current;
+    const track = trackRef.current;
+    const magneticBtn = magneticButtonRef.current;
+
+    if (!section || !track) return;
+
+    const ctx = gsap.context(() => {
+      const getScrollDistance = () => {
+        return Math.max(0, track.scrollWidth - window.innerWidth);
+      };
+
+      gsap.to(track, {
+        x: () => -getScrollDistance(),
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: () => `+=${getScrollDistance()}`,
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+    }, sectionRef);
+
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        ScrollTrigger.refresh();
+      });
+    }
+
+    return () => {
+      ctx.revert();
+      if (magneticBtn) {
+        gsap.killTweensOf(magneticBtn);
+      }
+    };
+  }, []);
+
+  return (
+    <section
+      ref={sectionRef}
+      id="color-grade"
+      aria-label="Color Grade Lookbook"
+      className={cn(
+        "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
+        className
+      )}
+      {...props}
+    >
+      {/* Horizontal Scrolling Track */}
+      <div
+        ref={trackRef}
+        className="flex h-full items-center gap-8 sm:gap-12 md:gap-16 lg:gap-20 px-8 sm:px-14 md:px-20 lg:px-24 w-max will-change-transform"
+      >
+        {/* Intro Section Headline Card */}
+        <div className="w-[38vw] sm:w-[32vw] lg:w-[28vw] max-w-[460px] shrink-0 flex flex-col justify-center pr-4">
+          <div className="mb-4 sm:mb-6 flex items-center gap-3 text-xs sm:text-sm font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
+            <span className="w-8 h-[1px] bg-text-muted/40" />
+            <span>Lookbook // 01 — 06</span>
+          </div>
+
+          <h2 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-text-primary uppercase leading-[0.92]">
+            Color Grade{" "}
+            <span className="font-serif italic font-normal lowercase tracking-normal text-text-muted">
+              curation
+            </span>
+          </h2>
+
+          <p className="font-serif italic text-base sm:text-lg text-text-muted mt-6 leading-relaxed">
+            Signature film emulsions and bespoke tonal palettes engineered to elevate emotional depth across every frame.
+          </p>
+
+          <div className="mt-8 flex items-center gap-2 text-xs font-sans font-bold tracking-[0.2em] text-text-primary/60 uppercase">
+            <span>Scroll horizontally</span>
+            <span className="animate-pulse">→</span>
+          </div>
+        </div>
+
+        {/* Oversized Gallery Cards (60-80% Viewport Width) */}
+        {COLOR_THEMES.map((theme, index) => (
+          <div
+            key={theme.id}
+            className="w-[78vw] sm:w-[72vw] lg:w-[68vw] max-w-[1100px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col relative"
+          >
+            <div className="group relative w-full h-full overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface shadow-xs transition-all duration-500 hover:border-text-primary/30 hover:shadow-xl">
+              {/* Massive Image Container with Smooth Scale-Up on Hover */}
+              <Image
+                src={theme.src}
+                alt={theme.alt}
+                fill
+                priority={index === 0}
+                sizes="(max-width: 1024px) 80vw, 68vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+
+              {/* Top-Right Index Pill Badge */}
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-widest text-text-primary bg-bg-base/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-border-subtle shadow-xs">
+                  {theme.index} / 06
+                </span>
+              </div>
+
+              {/* Bottom Elegant Overlay with Theme Name and Tonal Description */}
+              <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 md:p-10 lg:p-12 bg-gradient-to-t from-bg-base/95 via-bg-base/80 to-transparent flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                  <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-text-muted uppercase block mb-1.5">
+                    {theme.subtitle}
+                  </span>
+                  <h3 className="font-serif italic text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-text-primary tracking-tight">
+                    {theme.title}
+                  </h3>
+                </div>
+
+                <p className="font-sans text-xs sm:text-sm text-text-primary/75 max-w-sm sm:text-right leading-relaxed font-medium">
+                  {theme.paletteDescription}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Terminal Call to Action Panel: Centered Magnetic "WORK WITH US" Button */}
+        <div className="w-[60vw] sm:w-[50vw] lg:w-[42vw] max-w-[650px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col items-center justify-center text-center p-8 sm:p-12 border border-border-subtle rounded-2xl bg-bg-surface/50">
+          <span className="font-sans text-xs font-bold tracking-[0.25em] text-text-muted uppercase block mb-4">
+            Collaboration & Inquiries
+          </span>
+
+          <h3 className="font-sans font-black text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-text-primary leading-tight">
+            Elevate Your Vision
+          </h3>
+
+          <p className="font-serif italic text-base sm:text-lg text-text-muted max-w-md mt-4 mb-10 leading-relaxed">
+            Available worldwide for bespoke photography, editorial color grading, and commercial film direction.
+          </p>
+
+          <div
+            className="p-4 cursor-pointer"
+            onMouseMove={handleMagneticMove}
+            onMouseLeave={handleMagneticLeave}
+          >
+            <div ref={magneticButtonRef}>
+              <Link
+                href="#contact"
+                className={cn(
+                  "group/btn relative inline-flex items-center gap-4 rounded-full",
+                  "border border-text-primary bg-text-primary px-10 py-5 sm:px-14 sm:py-6",
+                  "text-xs sm:text-sm md:text-base font-sans font-black uppercase tracking-[0.25em] text-bg-base",
+                  "shadow-xl transition-all duration-300",
+                  "hover:border-text-primary hover:bg-bg-base hover:text-text-primary hover:shadow-2xl hover:scale-[1.03]"
+                )}
+              >
+                <span>WORK WITH US</span>
+                <ArrowUpRight className="h-5 w-5 transition-transform duration-300 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

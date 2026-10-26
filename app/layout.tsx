@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Navbar } from "@/components/navbar";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,8 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg-base text-text-primary font-sans">
-        <Navbar />
-        <main className="flex-1">{children}</main>
+        <SmoothScroll>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+        </SmoothScroll>
       </body>
     </html>
   );

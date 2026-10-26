@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
@@ -13,9 +14,9 @@ export interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Work", href: "#work", index: "01" },
-  { label: "Services", href: "#services", index: "02" },
-  { label: "About", href: "#about", index: "03" },
+  { label: "Work", href: "/#work", index: "01" },
+  { label: "Services", href: "/services", index: "02" },
+  { label: "About", href: "/#about", index: "03" },
   { label: "Contact", href: "#contact", index: "04" },
 ];
 
@@ -30,10 +31,63 @@ export function Navbar({
   ctaHref = "#contact",
   ...props
 }: NavbarProps) {
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+  const [isVisible, setIsVisible] = React.useState(true);
+  const [isScrolled, setIsScrolled] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const magneticButtonRef = React.useRef<HTMLDivElement>(null);
   const overlayRef = React.useRef<HTMLDivElement>(null);
   const menuListRef = React.useRef<HTMLUListElement>(null);
+  const lastScrollYRef = React.useRef(0);
+
+  // Track scroll position and direction:
+  // - Always visible at the very top of the page (transparent if in hero section)
+  // - Smoothly hides (slides up) when scrolling down
+  // - Slides back into view (slides down) when scrolling up
+  React.useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = Math.max(0, window.scrollY);
+
+          // Update transparency threshold (solid past 20px)
+          setIsScrolled(currentScrollY > 20);
+
+          // Always visible at the very top of the page
+          if (currentScrollY <= 20) {
+            setIsVisible(true);
+            lastScrollYRef.current = currentScrollY;
+          } else {
+            const diff = currentScrollY - lastScrollYRef.current;
+            // Only toggle visibility when scroll delta exceeds threshold to prevent micro-jitter
+            if (Math.abs(diff) > 8) {
+              if (diff > 0) {
+                // Scrolling DOWN -> smoothly hide navbar
+                setIsVisible(false);
+              } else {
+                // Scrolling UP -> slide navbar back into view
+                setIsVisible(true);
+              }
+              lastScrollYRef.current = currentScrollY;
+            }
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isTransparent = isHomePage && !isScrolled;
+  const shouldShow = isVisible || isOpen;
 
   // Magnetic button hover effect using GSAP
   const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -165,8 +219,13 @@ export function Navbar({
   return (
     <>
       <header
+        onFocusCapture={() => setIsVisible(true)}
         className={cn(
-          "sticky top-0 z-40 w-full bg-bg-base border-b border-border-subtle",
+          "fixed top-0 left-0 right-0 z-40 w-full transition-all duration-300 ease-in-out",
+          shouldShow ? "translate-y-0" : "-translate-y-full",
+          isTransparent
+            ? "bg-transparent border-b border-transparent"
+            : "bg-bg-base border-b border-border-subtle",
           className
         )}
         {...props}
@@ -181,10 +240,22 @@ export function Navbar({
               href="/"
               className="group inline-flex items-baseline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
             >
-              <span className="font-sans font-extrabold uppercase tracking-tighter text-xl sm:text-2xl text-text-primary transition-colors duration-200 group-hover:text-accent-primary">
+              <span
+                className={cn(
+                  "font-sans font-extrabold uppercase tracking-tighter text-xl sm:text-2xl transition-colors duration-300",
+                  isTransparent
+                    ? "text-white group-hover:text-white/80"
+                    : "text-text-primary group-hover:text-accent-primary"
+                )}
+              >
                 B STUDIO
               </span>
-              <span className="ml-1 w-1.5 h-1.5 rounded-full bg-accent-primary inline-block transition-transform duration-300 group-hover:scale-125" />
+              <span
+                className={cn(
+                  "ml-1 w-1.5 h-1.5 rounded-full inline-block transition-all duration-300 group-hover:scale-125",
+                  isTransparent ? "bg-white" : "bg-accent-primary"
+                )}
+              />
             </Link>
           </div>
 
@@ -194,9 +265,21 @@ export function Navbar({
               <Link
                 key={item.label}
                 href={item.href}
-                className="group flex items-baseline gap-1.5 text-xs uppercase tracking-widest text-text-muted transition-colors duration-200 hover:text-accent-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary"
+                className={cn(
+                  "group flex items-baseline gap-1.5 text-xs uppercase tracking-widest transition-colors duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
+                  isTransparent
+                    ? "text-white/70 hover:text-white"
+                    : "text-text-muted hover:text-accent-primary"
+                )}
               >
-                <span className="font-serif italic text-xs text-text-muted/70 transition-colors duration-200 group-hover:text-accent-primary">
+                <span
+                  className={cn(
+                    "font-serif italic text-xs transition-colors duration-300",
+                    isTransparent
+                      ? "text-white/50 group-hover:text-white"
+                      : "text-text-muted/70 group-hover:text-accent-primary"
+                  )}
+                >
                   {item.index}
                 </span>
                 <span className="font-sans font-medium">{item.label}</span>
@@ -214,7 +297,12 @@ export function Navbar({
             >
               <Link
                 href={ctaHref}
-                className="group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-accent-primary text-bg-base font-sans text-xs uppercase tracking-widest font-semibold transition-all duration-300 hover:bg-text-primary shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                className={cn(
+                  "group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-sans text-xs uppercase tracking-widest font-semibold transition-all duration-300 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                  isTransparent
+                    ? "bg-white text-accent-primary hover:bg-white/90"
+                    : "bg-accent-primary text-bg-base hover:bg-text-primary"
+                )}
               >
                 <span>{ctaLabel}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -230,7 +318,12 @@ export function Navbar({
               aria-label={isOpen ? "Close menu" : "Open navigation menu"}
               aria-expanded={isOpen}
               aria-controls="mobile-nav-overlay"
-              className="p-2 -mr-2 text-text-primary hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary transition-colors duration-200"
+              className={cn(
+                "p-2 -mr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary transition-colors duration-300",
+                isTransparent
+                  ? "text-white hover:text-white/80"
+                  : "text-text-primary hover:text-accent-primary"
+              )}
             >
               <Menu className="w-6 h-6 stroke-[1.75]" />
             </button>

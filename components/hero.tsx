@@ -13,7 +13,7 @@ export interface HeroProps extends React.HTMLAttributes<HTMLElement> {
 
 export function Hero({
   videoSrc = "/hero.mp4",
-  title = "B STUDIO",
+  title = "B STUDIO.",
   subtitle = "Cinematic Photography & Videography",
   className,
   ...props
@@ -101,13 +101,14 @@ export function Hero({
 
   return (
     <section
+      id="hero"
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       aria-label="Hero Showreel"
       className={cn(
-        "relative w-full h-[calc(100dvh-5rem)] min-h-[560px] flex items-center justify-center overflow-hidden bg-black select-none md:cursor-none",
+        "relative w-full h-[100dvh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black select-none md:cursor-none",
         className
       )}
       {...props}
