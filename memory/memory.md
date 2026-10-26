@@ -646,3 +646,123 @@ Implemented the Dedicated About Us Page according to `context/feature-specs/abou
 - Dev server running on `http://localhost:3000` with 200 OK.
 - `context/progress-tracker.md` marked Dedicated About Us Page as Completed.
 - Ready for next instruction from user.
+
+---
+
+## 2026-10-26 — Dedicated Works (Portfolio) Page Implementation (`/works`)
+
+### Session Summary
+Implemented the Dedicated Works (Portfolio) Page according to `context/feature-specs/works-page/01-works-page.md`. Created `components/works/works-page.tsx` exporting the complete `WorksPage` component using Next.js, Tailwind CSS, GSAP, and `cn()` utility. Implemented the full-width header with brutalist Sans-Serif headline ("SELECTED WORKS"), editorial archive subtitle, and sleek dual interactive filter rows for Media Format ([ ALL ] | [ PHOTOS ] | [ VIDEOS ]) and Shoot Category ([ ALL ] | [ WEDDING ] | [ BIRTHDAY ] | [ COMMERCIAL ] | [ CASUAL ] | [ ENGAGEMENT ]). Designed a responsive gallery grid displaying curated project albums with Next.js `<Image>` optimization, smooth hover scale, sophisticated italicized Serif titles, and clean date/category metadata. Built a simulated `SkeletonCard` loading state using Tailwind `animate-pulse` on `#EBEBE8`, and implemented per-card image `onError` handling with clean fallback cards and subtle "Retry Image" buttons. Created route `app/works/page.tsx` composing `WorksPage` with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`. Added alias redirects in `app/work/page.tsx` and `app/portfolio/page.tsx` to `/works`, and updated `Navbar` and `SampleGallery` links. Strictly locked into the Cinematic Off-Light theme (`#F7F7F5` base, `#111111` primary text, zero dark mode styling). Verified with TypeScript strict checks, ESLint, Next.js production build, and dev server HTTP verification.
+
+### Implementation State
+- **Completed & Verified:**
+  - Route & Components:
+    - Created `components/works/works-page.tsx` exporting `WorksPage`.
+    - Created `app/works/page.tsx` route with static prerendering and metadata.
+    - Created `app/work/page.tsx` with `redirect("/works")`.
+    - Created `app/portfolio/page.tsx` with `redirect("/works")`.
+  - 1. The Header & Filtering System:
+    - Clean, full-width header section introducing the gallery with kicker showing total archive count.
+    - Massive, brutalist Sans-Serif headline ("SELECTED WORKS") in `text-5xl sm:text-7xl md:text-8xl lg:text-9xl` tracking-tight.
+    - Editorial subtitle in italicized Serif (*Newsreader*).
+    - Dual interactive filter rows:
+      - Media Format: tabs toggling between [ ALL ] | [ PHOTOS ] | [ VIDEOS ].
+      - Shoot Category: tabs toggling between [ ALL ] | [ WEDDING ] | [ BIRTHDAY ] | [ COMMERCIAL ] | [ CASUAL ] | [ ENGAGEMENT ].
+    - Small, bold, track-spaced Sans-Serif font with active tabs in Rich Charcoal (`#111111`) and inactive tabs in Soft Mid-Grey (`#888888`).
+  - 2. The Gallery Grid & Album Cards:
+    - Responsive CSS grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12`).
+    - Album Cards:
+      - Thumbnail: massive high-quality image container (`aspect-[4/5] overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface`).
+      - Title: album name (e.g., "Malaysia's Birthday", "Lake Como Vows", "The Brutalist Monograph") in sophisticated italicized Serif (`font-serif italic text-2xl sm:text-[1.65rem]`).
+      - Date/Meta: date of shoot (e.g., "Oct 24, 2026") and category in clean, tiny Sans-Serif font (`text-[11px] uppercase tracking-wider text-text-muted`).
+      - Interactions: hover over card triggers smooth scale-up (`group-hover:scale-105 duration-700 ease-out`) on thumbnail inside overflow-hidden container.
+      - Media badges: top-right glass badge indicating film duration or photo count; floating play indicator on videos.
+  - 3. Image Optimization, Skeletons & Retry Logic:
+    - Image optimization: strictly Next.js `<Image fill sizes="..." quality={85} />` with Unsplash remote patterns.
+    - Skeleton Loader: `SkeletonCard` UI state using Tailwind's `animate-pulse` with `#EBEBE8` background, rendered in a simulated grid during initial loading.
+    - Error & Retry Handling: per-card `onError` handler switching to clean fallback card (`bg-[#EBEBE8]`, alert icon, message) with subtle pill "Retry Image" button that increments a retry key to trigger a fresh image fetch attempt.
+  - 4. Theme Enforcement (Cinematic Off-Light):
+    - Locked strictly to Off-Light palette (`--bg-base`: `#F7F7F5`, `--text-primary`: `#111111`, `--text-muted`: `#888888`, `--border-subtle`: `#DFDFDC`). Zero dark mode styling.
+  - 5. Booking Transition & Navigation:
+    - Composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />` at bottom of page.
+    - Updated `components/navbar.tsx` navigation link for Work to `/works`.
+    - Updated `components/sample-gallery.tsx` "See More" button to link to `/works`.
+  - Passed `pnpm exec tsc --noEmit` (0 errors).
+  - Passed `pnpm lint` (0 errors, 0 warnings in new files).
+  - Passed `pnpm build` (prerendered `/works`, `/work`, `/portfolio` statically in 639ms).
+  - Dev server verified responding with HTTP 200 OK on `/works` and HTTP 307 on `/work`.
+- **Incomplete / Next:**
+  - Next milestone / feature direction awaiting user instruction.
+
+### Decisions & Rationale
+- **Self-Contained Card Error & Retry State:** Isolated image error state to each `AlbumCard` rather than parent page state. If a single network glitch or image CDN failure occurs, only that specific card displays the fallback UI with its retry button, leaving the rest of the gallery fully intact.
+- **URL Aliases for Consistency:** Created `app/work/page.tsx` and `app/portfolio/page.tsx` with server redirects to `/works`. This prevents 404 errors regardless of whether a user or link navigates to `/work`, `/works`, or clicks legacy `/portfolio` buttons.
+- **Simulated Initial Skeleton Sequence:** Added an initial 650ms loading skeleton transition on page mount, allowing users to experience the editorial skeleton state before images render.
+- **Empty Filter State:** Designed a bespoke empty state with a "Reset Filters" action button when no albums match a specific format/category combination.
+
+### Lessons Learned
+- **Next.js Image Retry Technique:** When an `Image` component errors out, triggering a reload requires updating its `src` with a cache-busting parameter or changing the component `key`, accompanied by resetting the `onError` flag.
+
+### Continuation Context
+- Route `/works` is fully operational in `app/works/page.tsx`.
+- Dev server running on `http://localhost:3000` with 200 OK.
+- `context/progress-tracker.md` marked Dedicated Works Page as Completed.
+- Ready for next instruction from user.
+
+---
+
+## 2026-10-26 — Dedicated Contact Us Page (`ContactPage`)
+
+### Session Summary
+Implemented the dedicated Contact Us Page according to `context/feature-specs/contact-us/contact-us.md`. Created `components/contact/contact-page.tsx` exporting the `ContactPage` component, re-exported via `components/contact-page.tsx`, and wired into dedicated route `app/contact/page.tsx` with `<Footer />`. Designed a split-screen editorial magazine layout (`min-h-[100dvh]`):
+- **Left Side (The Details):** Brutalist bold Sans-Serif headline ("LET'S CREATE"), sophisticated italicized Serif philosophy text (*"Available worldwide. Reach out to discuss your next cinematic project or request our complete pricing guide."*), and studio contact details (Email, Phone, Studio Location, Social Links) with small bold Sans-Serif headers and Serif values.
+- **Right Side (The Conversational Form):** Mad-Libs conversational form with auto-expanding inline underlines transitioning from Soft Mid-Grey (`#888888`) to pure black (`#000000`) on focus/active, floating dropdown menu listing the 6 core services (Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, Promotion Video), massive pill-shaped "SEND INQUIRY" button with GSAP magnetic cursor pull, client validation, smooth GSAP dissolution fade-out of the form, and elegant Serif confirmation message (*"Your story is safe with us. We will be in touch soon."*).
+Locked strictly to the Cinematic Off-Light theme (`#F7F7F5` base, `#111111` primary text, `#888888` muted text, zero dark mode styling). Cleaned up all GSAP contexts and tweens on unmount. Updated `components/navbar.tsx` navigation link for Contact to `/contact`. Verified with full TypeScript type checks, ESLint, Next.js production build, and dev server HTTP 200 OK response.
+
+### Implementation State
+- **Completed & Verified:**
+  - Created `components/contact/contact-page.tsx` exporting `ContactPage`.
+  - Created `components/contact-page.tsx` root export.
+  - Created `app/contact/page.tsx` route with editorial metadata and `<Footer />`.
+  - 1. Split-Screen Editorial Magazine Layout:
+    - Left side: Brutalist headline ("LET'S CREATE", `text-5xl` to `text-[6.5rem]`), elegant italicized Serif statement, and bottom contact block:
+      - Email: `inquiries@bstudio.com`
+      - Phone: `+94 (77) 203-8822`
+      - Location: `74 Horton Place, Colombo 07, Sri Lanka & Worldwide`
+      - Socials: Instagram, Vimeo, YouTube
+      - Small bold Sans-Serif headers (`text-[11px] uppercase tracking-wider text-text-muted`) paired with Serif values.
+  - 2. Conversational Mad-Libs Form:
+    - Text: *"Hi B studio, my name is [ Your Name ]. I am captivated by your work and would love to book a [ Select Service ▾ ] for my upcoming event around [ Date ]. You can reach me at [ Email Address ] to discuss the details."*
+    - Static text in sophisticated italicized Serif (`font-serif italic`), and typed inputs in bold brutalist Sans-Serif (`font-sans font-bold not-italic`).
+    - Inputs represented as sleek underlines using CSS Grid auto-expanding layout (`inline-grid grid-cols-1 items-baseline`), transitioning smoothly from `#888888` to `#000000` (`border-black border-b-2`) on focus and when filled.
+    - Floating dropdown for 6 core services (Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, Promotion Video) with click-outside dismissal and Escape key handling.
+  - 3. Submission & Success State:
+    - Massive pill-shaped "SEND INQUIRY" button with GSAP magnetic cursor tracking (`power2.out` pull, `elastic.out(1, 0.4)` return on leave).
+    - GSAP timeline dissolution of form container (`opacity: 0, y: -18, duration: 0.5, ease: "power2.inOut"`).
+    - Fade-in confirmation state with elegant Serif confirmation message: *"Your story is safe with us. We will be in touch soon."* and "Send another inquiry" action.
+  - 4. Theme Enforcement:
+    - Locked strictly to Off-Light palette (`--bg-base: #F7F7F5`, `--text-primary: #111111`, `--text-muted: #888888`).
+  - 5. Navigation:
+    - Updated `components/navbar.tsx` Contact nav item and default CTA to `/contact`.
+  - Passed `pnpm exec tsc --noEmit` (0 errors).
+  - Passed `pnpm lint` (0 errors in new files).
+  - Passed `pnpm build` (compiled and statically prerendered `/contact` in 614ms).
+  - Dev server verified responding with HTTP 200 OK on `/contact`.
+- **Incomplete / Next:**
+  - Next milestone / feature direction awaiting user instruction.
+
+### Decisions & Rationale
+- **CSS Grid Auto-Resizing Inputs:** Utilized the overlay pattern where a hidden measurement `<span>` and the `<input>` share the same CSS grid cell. This allows the underline and text field to scale naturally with typed characters without layout shifting, manual pixel calculation, or font size mismatch.
+- **Split-Screen Magazine Proportions:** Implemented a responsive 5:7 column distribution (`lg:col-span-5` for Details, `lg:col-span-7` for Conversational Form). This gives the Mad-Libs sentence ample space for large editorial font sizing (`text-2xl` to `text-[2.9rem]`) while keeping the brutalist headline prominent on the left.
+- **Global GSAP Teardown:** Bound entrance animations to `gsap.context(..., sectionRef)` with `ctx.revert()` in `useEffect` cleanup, and explicitly called `gsap.killTweensOf(magneticButtonRef.current)` on unmount to eliminate memory leaks.
+
+### Lessons Learned
+- **Empty Interface Lint Warning:** `@typescript-eslint/no-empty-object-type` flags `interface ContactPageProps extends React.HTMLAttributes<HTMLElement> {}`. Replaced with `export type ContactPageProps = React.HTMLAttributes<HTMLElement>;`.
+
+### Continuation Context
+- Dedicated Contact route `/contact` is operational and mounted at `app/contact/page.tsx`.
+- Dev server running on `http://localhost:3000` with 200 OK.
+- `context/progress-tracker.md` marked Dedicated Contact Us Page as Completed.
+- Ready for next instruction from user.
+
+

@@ -20,6 +20,9 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
   const cameraRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    if (!welcomeRef.current && !studioRef.current && !cameraRef.current) {
+      return
+    }
     // Prevent scrolling behind the loading screen
     document.body.style.overflow = "hidden";
 

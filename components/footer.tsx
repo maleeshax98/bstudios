@@ -159,12 +159,11 @@ export function Footer({ className, ...props }: FooterProps) {
       {...props}
     >
       {/* Top Editorial Row */}
-      <div
+      {/* <div
         ref={metaRef}
         className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16"
       >
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-12 lg:gap-16 items-start">
-          {/* Column 1: Studio identity & Mission */}
           <div className="md:col-span-5 space-y-4">
 
             <p className="font-serif italic text-xl sm:text-2xl md:text-3xl text-text-primary max-w-md leading-relaxed pt-2">
@@ -175,7 +174,7 @@ export function Footer({ className, ...props }: FooterProps) {
 
 
         </div>
-      </div>
+      </div> */}
 
       {/* Massive Screen-Wide Typographic Section */}
       <div className="relative w-full overflow-hidden border-y border-text-primary/10 py-6 sm:py-8 md:py-10 lg:py-12 flex items-center justify-center bg-bg-base">

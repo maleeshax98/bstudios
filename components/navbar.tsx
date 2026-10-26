@@ -14,10 +14,10 @@ export interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Work", href: "/#work", index: "01" },
+  { label: "Work", href: "/works", index: "01" },
   { label: "Services", href: "/services", index: "02" },
   { label: "About", href: "/about", index: "03" },
-  { label: "Contact", href: "#contact", index: "04" },
+  { label: "Contact", href: "/contact", index: "04" },
 ];
 
 export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
@@ -28,7 +28,7 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 export function Navbar({
   className,
   ctaLabel = "Inquire",
-  ctaHref = "#contact",
+  ctaHref = "/contact",
   ...props
 }: NavbarProps) {
   const pathname = usePathname();

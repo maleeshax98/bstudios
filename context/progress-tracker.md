@@ -8,9 +8,50 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Dedicated About Us Page completed (`context/feature-specs/about-us-page/01-about-us-page.md`), awaiting next user instruction.
+- Dedicated Contact Us Page completed (`context/feature-specs/contact-us/contact-us.md`), awaiting next user instruction.
+
+## In Progress
+
+- None (Dedicated Contact Us Page completed, awaiting next user instruction).
+
+## Next Up
+
+- Project review & polish / subsequent feature milestones.
 
 ## Completed
+
+- Dedicated Contact Us Page (`context/feature-specs/contact-us/contact-us.md`)
+  - Created `components/contact/contact-page.tsx` exporting the complete `ContactPage` component using Next.js, Tailwind CSS, GSAP, and `cn()` utility.
+  - Implemented 1. Split-Screen Editorial Magazine Layout (`min-h-[100dvh]`):
+    - Left side: Brutalist Sans-Serif headline ("LET'S CREATE", `text-5xl sm:text-6xl md:text-7xl lg:text-[5.25rem] xl:text-[6.5rem] leading-[0.88]`), sophisticated italicized Serif paragraph (*"Available worldwide. Reach out to discuss your next cinematic project or request our complete pricing guide."*), and studio contact details (Email: `inquiries@bstudio.com`, Phone: `+94 (77) 203-8822`, Studio Location: `74 Horton Place, Colombo 07`, Socials: Instagram, Vimeo, YouTube) with small bold Sans-Serif headers and Serif values.
+    - Right side: Mad-Libs conversational form (*"Hi B studio, my name is [ Your Name ]. I am captivated by your work and would love to book a [ Select Service ▾ ] for my upcoming event around [ Date ]. You can reach me at [ Email Address ] to discuss the details."*).
+  - Implemented 2. Form Interactions:
+    - User inputs represented as sleek underlines with auto-expanding CSS Grid layout, defaulting to Soft Mid-Grey (`border-[#888888]`) and smoothly transitioning to pure black (`border-black border-b-2`) when focused or populated.
+    - Floating dropdown menu listing the 6 core services (Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, Promotion Video) with check indicators, keyboard navigation, click-outside listener, and Escape key dismissal.
+    - Typography pairing: sophisticated italicized Serif for static form text (`font-serif italic`), and bold brutalist Sans-Serif for user typed text (`font-sans font-bold not-italic`).
+  - Implemented 3. Submission & Success State:
+    - Massive pill-shaped "SEND INQUIRY" button in bold Sans-Serif with GSAP magnetic cursor pull (`power2.out` tracking, `elastic.out(1, 0.4)` return), clean unmount tween kill, and validation warnings.
+    - Form dissolution: smooth GSAP timeline fade-out (`opacity: 0, y: -18, duration: 0.5`) followed by the fade-in of an elegant Serif confirmation message (*"Your story is safe with us. We will be in touch soon."* in `font-serif italic text-3xl sm:text-4xl md:text-5xl lg:text-6xl`) with "Send another inquiry" action.
+  - Implemented 4. Theme Enforcement: strictly locked to Cinematic Off-Light theme (`#F7F7F5` base, `#111111` primary text, `#888888` muted text, zero dark mode styling).
+  - Created root export `components/contact-page.tsx`.
+  - Created dedicated Next.js route `app/contact/page.tsx` rendering `ContactPage` composed with `<Footer />`.
+  - Updated `components/navbar.tsx` navigation link and CTA to `/contact`.
+  - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint` 0 errors), Next.js production build (`pnpm build` in 614ms), and dev server curl verification (HTTP 200 OK on `/contact`).
+
+- Dedicated Works (Portfolio) Page (`context/feature-specs/works-page/01-works-page.md`)
+  - Created `components/works/works-page.tsx` exporting the complete `WorksPage` component using Next.js, Tailwind CSS, GSAP, and `cn()` utility.
+  - Implemented 1. Header & Filtering System: massive brutalist Sans-Serif headline ("SELECTED WORKS"), editorial monograph description, and dual interactive filter rows:
+    - Media Format: tabs toggling between [ ALL ] | [ PHOTOS ] | [ VIDEOS ].
+    - Shoot Category: tabs toggling between [ ALL ] | [ WEDDING ] | [ BIRTHDAY ] | [ COMMERCIAL ] | [ CASUAL ] | [ ENGAGEMENT ].
+    - Small, bold, track-spaced Sans-Serif typography with active tabs in Rich Charcoal (`#111111`) and inactive tabs in Soft Mid-Grey (`#888888`).
+  - Implemented 2. Gallery Grid & Album Cards: responsive CSS grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12`) showcasing curated projects (including "Malaysia's Birthday", "Lake Como Vows", "The Brutalist Monograph", etc.) with thumbnail containers, hover scale-up effect (`group-hover:scale-105`), sophisticated italicized Serif titles (`font-serif italic text-2xl sm:text-[1.65rem]`), and clean tiny date/category metadata.
+  - Implemented 3. Image Optimization, Skeletons & Retry Logic: Next.js `<Image>` optimization with Unsplash remote patterns, `SkeletonCard` UI state using Tailwind `animate-pulse` on `#EBEBE8` background for simulated loading, and `onError` image handling with a clean fallback card and subtle "Retry Image" button.
+  - Implemented 4. Theme Enforcement: strictly locked into Cinematic Off-Light theme (`#F7F7F5` base, `#111111` primary text, `#888888` muted text, `#DFDFDC` border, zero dark mode styling).
+  - Created dedicated route `app/works/page.tsx` composing `WorksPage` with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`.
+  - Added alias redirects for `app/work/page.tsx` and `app/portfolio/page.tsx` pointing to `/works`.
+  - Updated `components/navbar.tsx` navigation link for Work to `/works`.
+  - Updated `components/sample-gallery.tsx` "See More" button to link to `/works`.
+  - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint`), Next.js production build (`pnpm build` in 639ms), and dev server curl verification (HTTP 200 OK on `/works`, HTTP 307 on `/work`).
 
 - Feature 01: Design Architecture & UI Primitives (`context/feature-specs/01-design-architecture.md`)
   - Installed and configured `shadcn/ui` on Tailwind CSS v4.
@@ -178,14 +219,6 @@ Update this file whenever the current phase, active feature, or implementation s
   - Strictly locked to Off-Light theme (`#F7F7F5` base, `#111111` text, `#888888` muted text, zero dark mode styling).
   - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint`), Next.js production build (`pnpm build`), and dev server curl verification (HTTP 200).
 
-## In Progress
-
-- None (Dedicated About Us Page completed, awaiting next user instruction).
-
-## Next Up
-
-- Project review & polish / subsequent feature milestones.
-
 ## Open Questions
 
 - None currently.
@@ -193,11 +226,10 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Architecture Decisions
 
 - Theme: Locked to Off-Light Modern Editorial palette (`--bg-base: #F7F7F5`, `--bg-surface: #EBEBE8`, `--bg-subtle: #DFDFDC`, `--border-subtle: rgba(17, 17, 17, 0.08)`, `--text-primary: #111111`, `--text-muted: #888888`, `--accent-primary: #000000`) with `color-scheme: light;`.
-- Dedicated About Architecture: Route `app/about/page.tsx` composing `AboutIntro`, `AboutDirectorsCut`, `AboutPillars`, and `ContactForm` with `prompt="READY TO SHOOT?"`.
-- About Intro: GSAP timeline entry animation smoothly animating editorial kicker, brutalist Sans-Serif headline, and large italic Serif philosophy statement into place.
-- Director's Cut Split-Screen & Parallax: GSAP ScrollTrigger desktop pinning (`pin: rightCol`, `anticipatePin: 1`) of the studio story column over the full scroll duration of the 4 behind-the-scenes image column, with responsive fallback on mobile/tablet screens and inner image parallax (`yPercent`).
-- Core Pillars Rhythmic Reveal: Minimalist editorial rows with large Serif numerals and tags, bound to GSAP ScrollTrigger scrub (`scrub: 1`) so that fade and upward glide are tied to scroll speed.
+- Dedicated Works Architecture: Component `components/works/works-page.tsx` exporting `WorksPage` with dual interactive filtering (Media Format: ALL, PHOTOS, VIDEOS; Shoot Category: ALL, WEDDING, BIRTHDAY, COMMERCIAL, CASUAL, ENGAGEMENT), Next.js `<Image>` optimization, `SkeletonCard` pulse loader, image `onError` fallback with retry logic, and responsive CSS grid.
+- Dedicated Contact Page Architecture: Split-screen editorial magazine layout in `components/contact/contact-page.tsx` (`min-h-[100dvh]`). Left column features brutalist Sans-Serif headline ("LET'S CREATE"), italicized Serif statement, and studio contact details (small bold Sans-Serif headers, Serif values). Right column features interactive Mad-Libs conversational form with auto-expanding CSS Grid underlines transitioning from `#888888` to `#000000` on focus, floating service dropdown for 6 core services, magnetic "SEND INQUIRY" button, and smooth GSAP dissolution into an elegant Serif confirmation message (*"Your story is safe with us. We will be in touch soon."*).
+- Route Structure: Dedicated route `app/contact/page.tsx` rendering `ContactPage` composed with `<Footer />`. Updated `components/navbar.tsx` navigation link for Contact and default `ctaHref` to `/contact`.
 
 ## Session Notes
 
-- Dedicated About Us Page completed and verified. Created `app/about/page.tsx` and modular components in `components/about/*` (`about-intro.tsx`, `about-directors-cut.tsx`, `about-pillars.tsx`), composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`. Updated `components/navbar.tsx` navigation link for About to `/about`. Passed TypeScript check (`tsc --noEmit` 0 errors), ESLint (`pnpm lint` 0 errors), Next.js production build (`pnpm build` in 630ms), and dev server curl verification (HTTP 200). Ready for next instruction.
+- Dedicated Contact Us Page completed and verified. Created `components/contact/contact-page.tsx`, `components/contact-page.tsx`, and `app/contact/page.tsx`. Updated `Navbar` navigation link to `/contact`. Verified with full TypeScript check (`tsc --noEmit` 0 errors), ESLint (`pnpm lint` 0 errors), Next.js production build (`pnpm build` in 614ms), and dev server curl verification (HTTP 200 OK on `/contact`). Ready for next user instruction.

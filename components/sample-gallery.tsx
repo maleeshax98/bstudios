@@ -206,7 +206,7 @@ export function SampleGallery({ className, ...props }: SampleGalleryProps) {
         >
           <div ref={magneticButtonRef}>
             <Link
-              href="/portfolio"
+              href="/works"
               className={cn(
                 "group/btn relative inline-flex items-center gap-3 rounded-full",
                 "border border-text-primary/20 bg-[#F7F7F5]/90 px-8 py-4 sm:px-10 sm:py-4.5",
