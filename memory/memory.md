@@ -642,6 +642,7 @@ Implemented the Dedicated About Us Page according to `context/feature-specs/abou
 
 ### Continuation Context
 - Route `/about` is fully operational in `app/about/page.tsx`.
+- Codebase pushed to GitHub remote `origin/main` (commit `598819c`).
 - Dev server running on `http://localhost:3000` with 200 OK.
 - `context/progress-tracker.md` marked Dedicated About Us Page as Completed.
 - Ready for next instruction from user.
