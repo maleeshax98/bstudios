@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Dedicated Services Page completed (`context/feature-specs/services-page/01-services-page.md`), awaiting next user instruction.
+- Dedicated About Us Page completed (`context/feature-specs/about-us-page/01-about-us-page.md`), awaiting next user instruction.
 
 ## Completed
 
@@ -168,9 +168,19 @@ Update this file whenever the current phase, active feature, or implementation s
   - Strictly locked to Off-Light theme (`#F7F7F5` base, `#111111` text, `#888888` muted text, zero dark mode styling).
   - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint`), and Next.js production build (`pnpm build`).
 
+- Dedicated About Us Page (`context/feature-specs/about-us-page/01-about-us-page.md`)
+  - Created `app/about/page.tsx` exporting the dedicated `AboutPage` route (`/about`).
+  - Implemented 1. The Editorial Hook (`components/about/about-intro.tsx`): massive full-screen (100vh / `100dvh`) magazine-style introduction section with brutalist bold Sans-Serif headline ("THE VISION") paired with an elegant, large italicized Serif philosophical statement (*"We treat every memory as a cinematic masterpiece, framing authentic moments with editorial elegance."*), smooth GSAP fade & slide-up entry animations, and animated editorial scroll cue.
+  - Implemented 2. The Director's Cut (`components/about/about-directors-cut.tsx`): split-screen layout with pinned right-side story text block (`gsap.matchMedia` for desktop screens >= 1024px) detailing the studio's dedication to cinema and fine art, while the left side features a staggered column of 4 high-quality cinematic behind-the-scenes placeholder images with subtle GSAP parallax (`scrub: true`, `yPercent: ±14` to `±22`).
+  - Implemented 3. The Core Pillars (`components/about/about-pillars.tsx`): clean, minimalist layout breaking down the studio's approach into 3 core pillars (01. Authentic Presence, 02. Editorial Lighting, 03. Cinematic Grading), with smooth GSAP ScrollTrigger fade-in and upward translation tied directly to scroll speed (`scrub: 1`).
+  - Implemented 4. The Booking Transition: terminal booking section with massive prompt *"READY TO SHOOT?"* followed by the interactive Mad-Libs conversational form (`components/contact-form.tsx`) and `<Footer />`.
+  - Updated `components/navbar.tsx` desktop and mobile nav items to route "About" directly to `/about`.
+  - Strictly locked to Off-Light theme (`#F7F7F5` base, `#111111` text, `#888888` muted text, zero dark mode styling).
+  - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint`), Next.js production build (`pnpm build`), and dev server curl verification (HTTP 200).
+
 ## In Progress
 
-- None (Dedicated Services Page completed, awaiting next user instruction).
+- None (Dedicated About Us Page completed, awaiting next user instruction).
 
 ## Next Up
 
@@ -183,11 +193,11 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Architecture Decisions
 
 - Theme: Locked to Off-Light Modern Editorial palette (`--bg-base: #F7F7F5`, `--bg-surface: #EBEBE8`, `--bg-subtle: #DFDFDC`, `--border-subtle: rgba(17, 17, 17, 0.08)`, `--text-primary: #111111`, `--text-muted: #888888`, `--accent-primary: #000000`) with `color-scheme: light;`.
-- Dedicated Services Architecture: Route `app/services/page.tsx` composing `WhisperLoader`, `ServicesLanding`, `ServicesHorizontal`, and `ContactForm` with `prompt="READY TO SHOOT?"`.
-- Services Whisper Loader: Pure cinematic black preloader (`#000000`) with GSAP timeline animating italic serif *"Crafting your story."* text, dissolving the veil and unmounting cleanly from the DOM.
-- Services Horizontal Exhibition: GSAP ScrollTrigger pinned track over `track.scrollWidth - window.innerWidth` scroll distance, 6 full-screen (100vw) panels with scrubbed horizontal motion, background serif numbering, floating images with aspect ratio containment, and clean unmount teardown via `ctx.revert()`.
-- Conversational Booking Form Custom Prompt: Extended `components/contact-form.tsx` with an optional `prompt?: string` prop to render massive editorial headers like *"READY TO SHOOT?"* while maintaining complete backward compatibility with the homepage layout.
+- Dedicated About Architecture: Route `app/about/page.tsx` composing `AboutIntro`, `AboutDirectorsCut`, `AboutPillars`, and `ContactForm` with `prompt="READY TO SHOOT?"`.
+- About Intro: GSAP timeline entry animation smoothly animating editorial kicker, brutalist Sans-Serif headline, and large italic Serif philosophy statement into place.
+- Director's Cut Split-Screen & Parallax: GSAP ScrollTrigger desktop pinning (`pin: rightCol`, `anticipatePin: 1`) of the studio story column over the full scroll duration of the 4 behind-the-scenes image column, with responsive fallback on mobile/tablet screens and inner image parallax (`yPercent`).
+- Core Pillars Rhythmic Reveal: Minimalist editorial rows with large Serif numerals and tags, bound to GSAP ScrollTrigger scrub (`scrub: 1`) so that fade and upward glide are tied to scroll speed.
 
 ## Session Notes
 
-- Dedicated Services Page completed and verified. Created `app/services/page.tsx` and modular components in `components/services/*` (`whisper-loader.tsx`, `services-landing.tsx`, `services-horizontal.tsx`), alongside extending `components/contact-form.tsx` to accept a custom `prompt` prop ("READY TO SHOOT?"). Updated `components/navbar.tsx` navigation links. Passed TypeScript check (`tsc --noEmit` 0 errors), ESLint (`pnpm lint` 0 errors), Next.js production build (`pnpm build`), and dev server curl verification (HTTP 200). Ready for next instruction.
+- Dedicated About Us Page completed and verified. Created `app/about/page.tsx` and modular components in `components/about/*` (`about-intro.tsx`, `about-directors-cut.tsx`, `about-pillars.tsx`), composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`. Updated `components/navbar.tsx` navigation link for About to `/about`. Passed TypeScript check (`tsc --noEmit` 0 errors), ESLint (`pnpm lint` 0 errors), Next.js production build (`pnpm build` in 630ms), and dev server curl verification (HTTP 200). Ready for next instruction.

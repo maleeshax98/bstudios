@@ -592,3 +592,56 @@ Implemented the Dedicated Services Page according to `context/feature-specs/serv
 - Dev server running on `http://localhost:3000` with 200 OK.
 - `context/progress-tracker.md` marked Dedicated Services Page as Completed.
 - Ready for next instruction from user.
+
+---
+
+## 2026-10-26 — Dedicated About Us Page Implementation (`/about`)
+
+### Session Summary
+Implemented the Dedicated About Us Page according to `context/feature-specs/about-us-page/01-about-us-page.md`. Created the route `app/about/page.tsx` and modular components in `components/about/*`: `AboutIntro` (The Editorial Hook), `AboutDirectorsCut` (The Director's Cut split-screen parallax), and `AboutPillars` (The Core Pillars staggered reveal list). Reused `ContactForm` with `prompt="READY TO SHOOT?"` for the Booking Transition, followed by `<Footer />`. Updated `Navbar` navigation links to route "About" directly to `/about`. Strictly locked to the Off-Light Modern Editorial palette (`#F7F7F5` base, `#111111` primary text, `#888888` muted text, zero dark mode styling). Verified with full TypeScript strict check (`tsc --noEmit`), ESLint (`pnpm lint`), Next.js production build (`pnpm build`), and HTTP 200 response on dev server.
+
+### Implementation State
+- **Completed & Verified:**
+  - Route: Created `app/about/page.tsx` with static prerendering and metadata, including `WhisperLoader` ("Who I Am" intro sequence).
+  - 1. The Editorial Hook (`components/about/about-intro.tsx`):
+    - Full-screen (100vh / `100dvh`) magazine-style introduction section.
+    - Massive brutalist Sans-Serif headline ("THE VISION") paired directly below with a large, elegant, italicized Serif philosophical statement (*"We treat every memory as a cinematic masterpiece, framing authentic moments with editorial elegance."*).
+    - GSAP timeline on initial mount smoothly fading and translating kicker, headline, serif statement, and animated scroll cue upward into place.
+    - Scoped GSAP context with clean unmount teardown via `ctx.revert()`.
+  - 2. The Director's Cut (`components/about/about-directors-cut.tsx`):
+    - Split-screen layout: left column contains 4 cinematic behind-the-scenes placeholder images (Unsplash optics, camera setups, director viewpoints, and color suites); right column contains pinned story text block.
+    - Desktop pinning via `gsap.matchMedia("(min-width: 1024px)")` with ScrollTrigger `pin: rightCol`, `anticipatePin: 1`, leaving left images to scroll naturally.
+    - Subtle GSAP parallax (`scrub: true`, `yPercent: ±14` to `±22`) applied to inner image containers as user scrolls.
+    - Crisp Sans-Serif section label (`OUR STORY // 01`), brutalist headline ("THE DIRECTOR'S CUT"), and sophisticated Serif body paragraphs detailing the studio's dedication to high-end photography and videography.
+  - 3. The Core Pillars (`components/about/about-pillars.tsx`):
+    - Clean, minimalist layout with 3 core pillars:
+      - 01. Authentic Presence (Natural Grace & Unscripted Intimacy)
+      - 02. Editorial Lighting (Chiaroscuro & Sculpted Luminescence)
+      - 03. Cinematic Grading (Bespoke Color Chemistry & Analog Warmth)
+    - Scroll-speed-linked upward translation and fade-in via GSAP ScrollTrigger with `scrub: 1`.
+    - Minimalist horizontal editorial rows with large Serif numerals, tags, and subtle hover states.
+  - 4. The Booking Transition (`ContactForm prompt="READY TO SHOOT?"`):
+    - Terminal booking section with massive prompt *"READY TO SHOOT?"* followed by interactive Mad-Libs conversational form and `<Footer />`.
+  - Navigation:
+    - Updated `components/navbar.tsx` `NAV_ITEMS` to route "About" to `/about`.
+  - Passed `pnpm exec tsc --noEmit` (0 errors).
+  - Passed `pnpm lint` (0 errors in new files).
+  - Passed `pnpm build` (prerendered `/about` as static route successfully in 630ms).
+  - Dev server verified responding with HTTP 200 OK (`curl -s -I http://localhost:3000/about`).
+- **Incomplete / Next:**
+  - Next milestone / feature direction awaiting user instruction.
+
+### Decisions & Rationale
+- **Modular Component Architecture:** Organized `components/about/` with `about-intro.tsx`, `about-directors-cut.tsx`, and `about-pillars.tsx`, ensuring each section has its own scoped lifecycle and GSAP context teardown (`ctx.revert()`).
+- **Responsive Split-Screen Pinning with `gsap.matchMedia`:** Pinned the story text column on screens >= 1024px while allowing smaller screens to scroll smoothly without horizontal overflow or fixed-position collisions.
+- **Inner Image Container Parallax:** Parallax was implemented by translating an oversized inner image container (`h-[124%] -top-[12%]`) with `yPercent` scrubbed to scroll inside an `overflow-hidden` outer frame. This prevents layout reflows and guarantees smooth GPU-accelerated motion with Lenis.
+- **Scroll-Tied Pillar Upward Glide:** Bound each pillar row to individual ScrollTrigger scrub instances (`scrub: 1`, `start: "top 90%"`, `end: "top 55%"`), ensuring the upward motion and opacity are strictly proportional to scroll speed as required by the specification.
+
+### Lessons Learned
+- **ScrollTrigger Pinning in CSS Grid:** When pinning a grid column with `pinSpacing: false`, wrapping the pinned content in a full-height column container (`lg:h-[100dvh] flex flex-col justify-center`) inside its grid cell ensures vertical centering and stable column width during scroll.
+
+### Continuation Context
+- Route `/about` is fully operational in `app/about/page.tsx`.
+- Dev server running on `http://localhost:3000` with 200 OK.
+- `context/progress-tracker.md` marked Dedicated About Us Page as Completed.
+- Ready for next instruction from user.
