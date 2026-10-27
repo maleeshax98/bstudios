@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Camera,
   RotateCw,
@@ -12,49 +13,32 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
+import { fetchMoreAlbums } from "@/lib/actions";
+import OptimizedImage from "../optimized-image";
 
 // ============================================================================
-// Types & Categories
+// Types & Models
 // ============================================================================
 
-export type MediaFormat = "ALL" | "PHOTOS" | "VIDEOS";
-export type ShootCategory =
-  | "ALL"
-  | "WEDDING"
-  | "BIRTHDAY"
-  | "COMMERCIAL"
-  | "CASUAL"
-  | "ENGAGEMENT";
+export type MediaFormat = "ALL" | "PHOTOS" | "VIDEOS" | "MIXED";
 
 export interface AlbumProject {
   id: string;
   title: string;
-  category: Exclude<ShootCategory, "ALL">;
-  media: Exclude<MediaFormat, "ALL">;
+  category: string;
+  media: "PHOTOS" | "VIDEOS" | "MIXED";
   date: string;
   src: string;
   alt: string;
   count?: string;
   duration?: string;
   aspectRatio?: string;
+  slug?: string;
+  description?: string;
+  cloudinaryFolder?: string;
 }
 
-export const MEDIA_FORMAT_TABS: { label: string; value: MediaFormat }[] = [
-  { label: "ALL", value: "ALL" },
-  { label: "PHOTOS", value: "PHOTOS" },
-  { label: "VIDEOS", value: "VIDEOS" },
-];
-
-export const SHOOT_CATEGORY_TABS: { label: string; value: ShootCategory }[] = [
-  { label: "ALL", value: "ALL" },
-  { label: "WEDDING", value: "WEDDING" },
-  { label: "BIRTHDAY", value: "BIRTHDAY" },
-  { label: "COMMERCIAL", value: "COMMERCIAL" },
-  { label: "CASUAL", value: "CASUAL" },
-  { label: "ENGAGEMENT", value: "ENGAGEMENT" },
-];
-
-// Curated high-resolution Unsplash album projects
+// Fallback curated projects in case CMS has not yet been populated
 export const ALBUM_PROJECTS: AlbumProject[] = [
   {
     id: "project-01",
@@ -190,6 +174,81 @@ export const ALBUM_PROJECTS: AlbumProject[] = [
   },
 ];
 
+export interface WorksPageAlbum {
+  _id: string;
+  title?: string | null;
+  description?: string | null;
+  date?: string | null;
+  category?: {
+    _id: string;
+    title?: string | null;
+  } | null;
+  alt?: string | null;
+  thumbnail?: string | null;
+  cloudinaryFolder?: string | null;
+  Media?: string | null;
+  count?: string | null;
+  duration?: string | null;
+  slug?: {
+    current?: string | null;
+  } | null;
+  publishedAt?: string | null;
+}
+
+export interface WorksPageCategory {
+  _id: string;
+  title?: string | null;
+}
+
+/**
+ * Maps a raw Sanity album query item to the standardized AlbumProject model.
+ */
+function mapSanityAlbum(item: WorksPageAlbum): AlbumProject {
+  const fallbackSrc =
+    "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85";
+
+  let formattedDate = item.date || "";
+  if (!formattedDate && item.publishedAt) {
+    try {
+      formattedDate = new Date(item.publishedAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      formattedDate = "Recent";
+    }
+  }
+
+  const rawMedia = item.Media
+    ? String(item.Media).trim().toUpperCase()
+    : "PHOTOS";
+  const media: "PHOTOS" | "VIDEOS" | "MIXED" = rawMedia.includes("VIDEO")
+    ? "VIDEOS"
+    : rawMedia.includes("MIXED")
+      ? "MIXED"
+      : "PHOTOS";
+
+  return {
+    id: item._id,
+    title: item.title || "Untitled Archive",
+    category: (item.category?.title || "WEDDING").trim().toUpperCase(),
+    media,
+    date: formattedDate || "Recent Archive",
+    src:
+      item.thumbnail && item.thumbnail.trim().length > 0
+        ? item.thumbnail.trim()
+        : fallbackSrc,
+    alt: item.alt || item.title || "Archive Project",
+    count: item.count || undefined,
+    duration: item.duration || undefined,
+    aspectRatio: "aspect-[4/5]",
+    slug: item.slug?.current || undefined,
+    description: item.description || undefined,
+    cloudinaryFolder: item.cloudinaryFolder || undefined,
+  };
+}
+
 // ============================================================================
 // Skeleton Card Component
 // ============================================================================
@@ -233,130 +292,198 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
   const [retryKey, setRetryKey] = React.useState(0);
 
   const handleRetry = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setIsRetrying(true);
     setHasError(false);
     setRetryKey((prev) => prev + 1);
 
-    // Reset spinner state after a momentary pause
     setTimeout(() => {
       setIsRetrying(false);
     }, 450);
   };
 
+  const rawSrc =
+    project.src && project.src.trim().length > 0
+      ? project.src
+      : "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85";
+
   const imageSrc =
-    retryKey > 0 ? `${project.src}&retry=${retryKey}` : project.src;
+    retryKey > 0
+      ? rawSrc.includes("?")
+        ? `${rawSrc}&retry=${retryKey}`
+        : `${rawSrc}?retry=${retryKey}`
+      : rawSrc;
+
+  // Format Photo count display badge
+  const formattedCount = React.useMemo(() => {
+    if (!project.count) return "Photo Vault";
+    const lower = project.count.toLowerCase();
+    if (
+      lower.includes("photo") ||
+      lower.includes("still") ||
+      lower.includes("shot")
+    ) {
+      return project.count;
+    }
+    return `${project.count} Photos`;
+  }, [project.count]);
+
+  // Format Video duration display badge
+  const formattedDuration = React.useMemo(() => {
+    if (!project.duration || project.duration === "0") return "4K Film";
+    const lower = project.duration.toLowerCase();
+    if (
+      lower.includes("film") ||
+      lower.includes("min") ||
+      lower.includes("sec")
+    ) {
+      return project.duration;
+    }
+    return `${project.duration} Film`;
+  }, [project.duration]);
+
+  const albumHref = project.slug
+    ? `/album/${project.slug}`
+    : `/album/${project.id}`;
 
   return (
-    <article className="group relative flex flex-col w-full text-left transition-all duration-300">
-      {/* Thumbnail Container */}
-      <div
-        className={cn(
-          "relative w-full overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface",
-          project.aspectRatio || "aspect-[4/5]"
-        )}
-      >
-        {/* Error Fallback UI with Retry Button */}
-        {hasError ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-[#EBEBE8]">
-            <div className="w-12 h-12 rounded-full border border-border-subtle bg-bg-base flex items-center justify-center mb-3 text-text-muted shadow-sm">
-              <AlertCircle className="w-6 h-6 stroke-[1.5]" />
-            </div>
-            <p className="font-serif italic text-base text-text-primary">
-              Thumbnail Unavailable
-            </p>
-            <p className="font-sans text-xs text-text-muted mt-1 max-w-[200px]">
-              Could not load high-resolution image preview.
-            </p>
+    <Link
+      href={albumHref}
+      className="group relative flex flex-col w-full text-left transition-all duration-300 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary rounded-2xl"
+    >
+      <article className="flex flex-col w-full">
+        {/* Thumbnail Container */}
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface",
+            project.aspectRatio || "aspect-[4/5]",
+          )}
+        >
+          {/* Error Fallback UI with Retry Button */}
+          {hasError ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-[#EBEBE8]">
+              <div className="w-12 h-12 rounded-full border border-border-subtle bg-bg-base flex items-center justify-center mb-3 text-text-muted shadow-sm">
+                <AlertCircle className="w-6 h-6 stroke-[1.5]" />
+              </div>
+              <p className="font-serif italic text-base text-text-primary">
+                Thumbnail Unavailable
+              </p>
+              <p className="font-sans text-xs text-text-muted mt-1 max-w-[200px]">
+                Could not load high-resolution image preview.
+              </p>
 
-            <button
-              type="button"
-              onClick={handleRetry}
-              disabled={isRetrying}
-              className={cn(
-                "mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full",
-                "border border-border-subtle bg-bg-base text-xs font-sans font-semibold uppercase tracking-wider text-text-primary",
-                "shadow-sm transition-all duration-300 hover:bg-text-primary hover:text-bg-base hover:shadow-md",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-              )}
-            >
-              <RotateCw
+              <button
+                type="button"
+                onClick={handleRetry}
+                disabled={isRetrying}
                 className={cn(
-                  "w-3.5 h-3.5 stroke-[2]",
-                  isRetrying && "animate-spin"
+                  "mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full",
+                  "border border-border-subtle bg-bg-base text-xs font-sans font-semibold uppercase tracking-wider text-text-primary",
+                  "shadow-sm transition-all duration-300 hover:bg-text-primary hover:text-bg-base hover:shadow-md",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                 )}
-              />
-              <span>{isRetrying ? "Retrying..." : "Retry Image"}</span>
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Optimized Next.js Image with Hover Scale */}
-            <Image
-              key={`${project.id}-${retryKey}`}
-              src={imageSrc}
-              alt={project.alt || project.title}
-              fill
-              sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-              priority={priority}
-              quality={85}
-              onError={() => setHasError(true)}
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-
-            {/* Subtle Gradient Scrim at bottom of image */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-80"
-            />
-
-            {/* Top Badge: Media Type / Asset Count */}
-            <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white shadow-sm">
-              {project.media === "VIDEOS" ? (
-                <>
-                  <Film className="w-3 h-3 stroke-[2]" />
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-wider">
-                    {project.duration || "4K Film"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Camera className="w-3 h-3 stroke-[2]" />
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-wider">
-                    {project.count || "Photo Vault"}
-                  </span>
-                </>
-              )}
+              >
+                <RotateCw
+                  className={cn(
+                    "w-3.5 h-3.5 stroke-[2]",
+                    isRetrying && "animate-spin",
+                  )}
+                />
+                <span>{isRetrying ? "Retrying..." : "Retry Image"}</span>
+              </button>
             </div>
+          ) : (
+            <>
+              {/* Optimized Next.js Image with Hover Scale */}
+              {/* <Image
+                key={`${project.id}-${retryKey}`}
+                src={imageSrc}
+                alt={project.alt || project.title}
+                fill
+                sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                priority={priority}
+                onError={() => setHasError(true)}
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              /> */}
 
-            {/* Bottom Floating Play Indicator for Videos */}
-            {project.media === "VIDEOS" && (
+              <OptimizedImage
+                key={`${project.id}-${retryKey}`}
+                src={imageSrc}
+                alt={project.alt || project.title}
+                format="auto"
+                quality="auto"
+                loading="eager"
+                fill
+                sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="w-full h-auto object-cover transition-all duration-700 ease-out group-hover:scale-105"
+                priority={priority}
+                onError={() => setHasError(true)}
+              />
+
+              {/* Subtle Gradient Scrim at bottom of image */}
               <div
                 aria-hidden="true"
-                className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-white/90 text-text-primary backdrop-blur-md flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
-              >
-                <Play className="w-4 h-4 fill-text-primary stroke-none ml-0.5" />
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-80"
+              />
+
+              {/* Top Badge: Media Type / Asset Count */}
+              <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white shadow-sm">
+                {project.media === "VIDEOS" ? (
+                  <>
+                    <Film className="w-3 h-3 stroke-[2]" />
+                    <span className="font-sans text-[10px] font-bold uppercase tracking-wider">
+                      {formattedDuration}
+                    </span>
+                  </>
+                ) : project.media === "MIXED" ? (
+                  <>
+                    <Layers className="w-3 h-3 stroke-[2]" />
+                    <span className="font-sans text-[10px] font-bold uppercase tracking-wider">
+                      {project.count
+                        ? `${project.count} Assets`
+                        : "Photos & Film"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-3 h-3 stroke-[2]" />
+                    <span className="font-sans text-[10px] font-bold uppercase tracking-wider">
+                      {formattedCount}
+                    </span>
+                  </>
+                )}
               </div>
-            )}
-          </>
-        )}
-      </div>
 
-      {/* Date & Category Meta */}
-      <div className="mt-4 flex items-center justify-between text-xs tracking-wider text-text-muted">
-        <span className="font-sans font-bold uppercase tracking-widest text-[11px] text-text-muted group-hover:text-text-primary transition-colors duration-300">
-          {project.category}
-        </span>
-        <span className="font-sans text-[11px] uppercase tracking-wider text-text-muted">
-          {project.date}
-        </span>
-      </div>
+              {/* Bottom Floating Play Indicator for Videos or Mixed */}
+              {(project.media === "VIDEOS" || project.media === "MIXED") && (
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-white/90 text-text-primary backdrop-blur-md flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
+                >
+                  <Play className="w-4 h-4 fill-text-primary stroke-none ml-0.5" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-      {/* Album Title */}
-      <h3 className="mt-1 font-serif italic text-2xl sm:text-[1.65rem] text-text-primary group-hover:text-accent-primary transition-colors duration-300 leading-tight">
-        {project.title}
-      </h3>
-    </article>
+        {/* Date & Category Meta */}
+        <div className="mt-4 flex items-center justify-between text-xs tracking-wider text-text-muted">
+          <span className="font-sans font-bold uppercase tracking-widest text-[11px] text-text-muted group-hover:text-text-primary transition-colors duration-300">
+            {project.category}
+          </span>
+          <span className="font-sans text-[11px] uppercase tracking-wider text-text-muted">
+            {project.date}
+          </span>
+        </div>
+
+        {/* Album Title */}
+        <h3 className="mt-1 font-serif italic text-2xl sm:text-[1.65rem] text-text-primary group-hover:text-accent-primary transition-colors duration-300 leading-tight">
+          {project.title}
+        </h3>
+      </article>
+    </Link>
   );
 }
 
@@ -364,41 +491,142 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
 // Main WorksPage Component
 // ============================================================================
 
-export type WorksPageProps = React.HTMLAttributes<HTMLElement>;
+export interface WorksPageProps extends React.HTMLAttributes<HTMLElement> {
+  initialAlbums?: WorksPageAlbum[];
+  initialCategories?: WorksPageCategory[];
+}
 
-export function WorksPage({ className, ...props }: WorksPageProps) {
+export function WorksPage({
+  initialAlbums,
+  initialCategories,
+  className,
+  ...props
+}: WorksPageProps) {
   const containerRef = React.useRef<HTMLElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+
+  const [sanityAlbums, setSanityAlbums] = React.useState<WorksPageAlbum[]>(
+    initialAlbums || [],
+  );
+  const [hasMore, setHasMore] = React.useState(
+    (initialAlbums?.length ?? 0) >= 6,
+  );
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+
+  const loadMoreAlbums = React.useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const res = await fetchMoreAlbums(sanityAlbums.length, 6);
+      if (!res || !res.albums || res.albums.length === 0) {
+        setHasMore(false);
+      } else {
+        setSanityAlbums((prev) => {
+          const existingIds = new Set(prev.map((a) => a._id));
+          const newUnique = res.albums.filter((a) => !existingIds.has(a._id));
+          return [...prev, ...newUnique];
+        });
+        setHasMore(res.hasMore);
+      }
+    } catch (err) {
+      console.error("Failed to fetch more albums:", err);
+      setHasMore(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, sanityAlbums.length]);
+
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && hasMore) {
+          loadMoreAlbums();
+        }
+      },
+      { rootMargin: "600px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMoreAlbums]);
+
+  // Normalize all available projects: use Sanity CMS data when available, otherwise fall back to curated projects
+  const allProjects = React.useMemo<AlbumProject[]>(() => {
+    if (sanityAlbums && sanityAlbums.length > 0) {
+      return sanityAlbums.map(mapSanityAlbum);
+    }
+    return ALBUM_PROJECTS;
+  }, [sanityAlbums]);
+
+  // Dynamically compute Shoot Category tabs: only show categories fetched from Sanity
+  const categoryTabs = React.useMemo<{ label: string; value: string }[]>(() => {
+    const sanityCategoryTitles = (initialCategories || [])
+      .map((c) => c.title?.trim().toUpperCase())
+      .filter((t): t is string => Boolean(t));
+
+    const unique = Array.from(new Set(sanityCategoryTitles));
+
+    return [
+      { label: "ALL", value: "ALL" },
+      ...unique.map((cat) => ({ label: cat, value: cat })),
+    ];
+  }, [initialCategories]);
+
+  // Dynamically compute Media Format tabs: include MIXED if mixed media exists
+  const mediaFormatTabs = React.useMemo<
+    { label: string; value: MediaFormat }[]
+  >(() => {
+    const hasMixed = allProjects.some((p) => p.media === "MIXED");
+    if (hasMixed) {
+      return [
+        { label: "ALL", value: "ALL" },
+        { label: "PHOTOS", value: "PHOTOS" },
+        { label: "VIDEOS", value: "VIDEOS" },
+        { label: "MIXED", value: "MIXED" },
+      ];
+    }
+    return [
+      { label: "ALL", value: "ALL" },
+      { label: "PHOTOS", value: "PHOTOS" },
+      { label: "VIDEOS", value: "VIDEOS" },
+    ];
+  }, [allProjects]);
 
   // Filter States
   const [activeMedia, setActiveMedia] = React.useState<MediaFormat>("ALL");
-  const [activeCategory, setActiveCategory] =
-    React.useState<ShootCategory>("ALL");
+  const [activeCategory, setActiveCategory] = React.useState<string>("ALL");
 
-  // Simulated Loading State for initial fetch and skeleton demonstration
-  const [isLoading, setIsLoading] = React.useState(true);
+  // Subtle loading state for initial smooth mount
+  const isLoading = false;
 
-  // Initial simulated data loading sequence
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 650);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Filtered projects
+  // Filtered projects based on active format and category filters
   const filteredProjects = React.useMemo(() => {
-    return ALBUM_PROJECTS.filter((project) => {
-      const matchMedia =
-        activeMedia === "ALL" || project.media === activeMedia;
+    return allProjects.filter((project) => {
+      // Media Format Filter
+      let matchMedia = true;
+      if (activeMedia === "PHOTOS") {
+        matchMedia = project.media === "PHOTOS" || project.media === "MIXED";
+      } else if (activeMedia === "VIDEOS") {
+        matchMedia = project.media === "VIDEOS" || project.media === "MIXED";
+      } else if (activeMedia === "MIXED") {
+        matchMedia = project.media === "MIXED";
+      }
+
+      // Shoot Category Filter (case-insensitive)
       const matchCategory =
-        activeCategory === "ALL" || project.category === activeCategory;
+        activeCategory === "ALL" ||
+        project.category.trim().toUpperCase() ===
+          activeCategory.trim().toUpperCase();
+
       return matchMedia && matchCategory;
     });
-  }, [activeMedia, activeCategory]);
+  }, [allProjects, activeMedia, activeCategory]);
 
-  // Animate grid cards when filtering or loading completes
+  // Animate grid cards when filtering completes
   React.useEffect(() => {
     if (isLoading || !gridRef.current) return;
 
@@ -407,14 +635,14 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
       if (cards && cards.length > 0) {
         gsap.fromTo(
           cards,
-          { opacity: 0, y: 24 },
+          { opacity: 0, y: 20 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.45,
+            duration: 0.4,
             stagger: 0.04,
             ease: "power2.out",
-          }
+          },
         );
       }
     }, gridRef);
@@ -428,7 +656,7 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
       className={cn(
         "relative w-full min-h-screen bg-bg-base text-text-primary select-none",
         "pt-28 sm:pt-36 md:pt-40 pb-24 sm:pb-32 px-6 sm:px-8 lg:px-12",
-        className
+        className,
       )}
       {...props}
     >
@@ -437,17 +665,10 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
         {/* 1. Header & Filtering System */}
         {/* ================================================================= */}
         <header className="border-b border-border-subtle pb-10 sm:pb-14">
-
           {/* Massive Brutalist Headline */}
           <h1 className="font-sans font-black uppercase text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight leading-[0.9] text-text-primary">
             SELECTED WORKS
           </h1>
-
-          {/* Editorial Philosophy Statement */}
-          {/* <p className="mt-4 sm:mt-6 font-serif italic text-lg sm:text-2xl text-text-muted max-w-3xl leading-relaxed">
-            A comprehensive monograph of client archives, documentary wedding
-            narratives, and editorial commercial direction.
-          </p> */}
 
           {/* Interactive Dual Filtering Tabs */}
           <div className="mt-10 sm:mt-12 space-y-5">
@@ -462,7 +683,7 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
                 aria-label="Media Format Filter"
                 className="flex flex-wrap items-center gap-2 sm:gap-3"
               >
-                {MEDIA_FORMAT_TABS.map((tab) => {
+                {mediaFormatTabs.map((tab) => {
                   const isActive = activeMedia === tab.value;
                   return (
                     <button
@@ -476,7 +697,7 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                         isActive
                           ? "bg-text-primary text-bg-base shadow-sm"
-                          : "text-text-muted hover:text-text-primary hover:bg-[#111111]/5 border border-transparent"
+                          : "text-text-muted hover:text-text-primary hover:bg-[#111111]/5 border border-transparent",
                       )}
                     >
                       <span>[ {tab.label} ]</span>
@@ -497,7 +718,7 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
                 aria-label="Shoot Category Filter"
                 className="flex flex-wrap items-center gap-2 sm:gap-2.5"
               >
-                {SHOOT_CATEGORY_TABS.map((tab) => {
+                {categoryTabs.map((tab) => {
                   const isActive = activeCategory === tab.value;
                   return (
                     <button
@@ -511,7 +732,7 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                         isActive
                           ? "bg-text-primary text-bg-base shadow-sm"
-                          : "text-text-muted hover:text-text-primary hover:bg-[#111111]/5 border border-transparent"
+                          : "text-text-muted hover:text-text-primary hover:bg-[#111111]/5 border border-transparent",
                       )}
                     >
                       <span>[ {tab.label} ]</span>
@@ -562,18 +783,33 @@ export function WorksPage({ className, ...props }: WorksPageProps) {
             </div>
           ) : (
             /* Actual Responsive Gallery Grid */
-            <div
-              ref={gridRef}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12"
-            >
-              {filteredProjects.map((project, index) => (
-                <AlbumCard
-                  key={project.id}
-                  project={project}
-                  priority={index < 3}
-                />
-              ))}
-            </div>
+            <>
+              <div
+                ref={gridRef}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12"
+              >
+                {filteredProjects.map((project, index) => (
+                  <AlbumCard
+                    key={project.id}
+                    project={project}
+                    priority={index < 3}
+                  />
+                ))}
+              </div>
+
+              {/* Scroll-based pagination sentinel & loading indicator */}
+              <div
+                ref={sentinelRef}
+                className="w-full py-12 flex items-center justify-center min-h-[80px]"
+                aria-live="polite"
+              >
+                {isLoadingMore && (
+                  <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
+                    loading...
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </main>
       </div>

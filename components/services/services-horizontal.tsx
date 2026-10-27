@@ -7,9 +7,23 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
+import OptimizedImage from "../optimized-image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+}
+
+function cleanImageUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(
+    /^(https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|avif|gif))([a-zA-Z\s].*)$/i,
+  );
+  if (match) {
+    return match[1];
+  }
+  return trimmed;
 }
 
 export interface ServicePanel {
@@ -93,23 +107,51 @@ const SERVICES: ServicePanel[] = [
       "High-impact commercial narratives and bespoke brand showreels engineered to articulate your vision. Masterful 4K film color grading, immersive soundscapes, and visionary direction.",
     imageSrc:
       "https://images.unsplash.com/photo-1551817958-20204d6ab212?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "Commercial videography and narrative video production camera setup",
+    imageAlt:
+      "Commercial videography and narrative video production camera setup",
     galleryHref: "/#work",
   },
 ];
 
-export type ServicesVerticalProps = React.HTMLAttributes<HTMLElement>;
+export type ServicesVerticalProps = React.HTMLAttributes<HTMLElement> & {
+  initialServices?: SERVICES_QUERY_RESULT;
+};
 
 export function ServicesVertical({
+  initialServices,
   className,
   ...props
 }: ServicesVerticalProps) {
   const sectionRef = React.useRef<HTMLElement>(null);
   const panelsRef = React.useRef<(HTMLDivElement | null)[]>([]);
 
+  const services = React.useMemo<ServicePanel[]>(() => {
+    if (initialServices && initialServices.length > 0) {
+      return initialServices.map((doc, index) => {
+        const num = String(index + 1).padStart(2, "0");
+        const cleaned = cleanImageUrl(doc.image);
+        return {
+          id: doc._id || doc.slug?.current || `service-${index}`,
+          number: `${num}.`,
+          title: doc.title || "Untitled Service",
+          subtitle: doc.subTitle || "Cinematic Offering",
+          description: doc.description || "",
+          imageSrc:
+            cleaned ||
+            "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
+          imageAlt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
+          galleryHref: "/works",
+        };
+      });
+    }
+    return SERVICES;
+  }, [initialServices]);
+
   React.useEffect(() => {
     const section = sectionRef.current;
-    const panels = panelsRef.current.filter((p): p is HTMLDivElement => p !== null);
+    const panels = panelsRef.current.filter(
+      (p): p is HTMLDivElement => p !== null,
+    );
 
     if (!section || !panels.length) return;
 
@@ -130,12 +172,12 @@ export function ServicesVertical({
         tl.fromTo(
           textBlock,
           { opacity: 0, y: 50 },
-          { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }
+          { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" },
         ).fromTo(
           imageBlock,
           { opacity: 0, y: 60, scale: 0.95 },
           { opacity: 1, y: 0, scale: 1, duration: 1.4, ease: "power3.out" },
-          "-=0.9" // Overlap the animations
+          "-=0.9", // Overlap the animations
         );
       });
     }, sectionRef);
@@ -148,7 +190,7 @@ export function ServicesVertical({
     }
 
     return () => ctx.revert();
-  }, []);
+  }, [services]);
 
   return (
     <section
@@ -156,12 +198,12 @@ export function ServicesVertical({
       ref={sectionRef}
       className={cn(
         "relative w-full bg-bg-base overflow-hidden select-none py-24 sm:py-32 lg:py-48",
-        className
+        className,
       )}
       {...props}
     >
       <div className="flex flex-col w-full gap-32 sm:gap-40 lg:gap-56">
-        {SERVICES.map((service, index) => {
+        {services.map((service, index) => {
           const isEven = index % 2 === 0;
 
           return (
@@ -186,7 +228,7 @@ export function ServicesVertical({
                 <div
                   className={cn(
                     "service-text lg:col-span-7 flex flex-col justify-center",
-                    isEven ? "lg:order-1" : "lg:order-2"
+                    isEven ? "lg:order-1" : "lg:order-2",
                   )}
                 >
                   {/* Category Index & Subtitle */}
@@ -223,18 +265,32 @@ export function ServicesVertical({
                 <div
                   className={cn(
                     "service-image lg:col-span-5 flex justify-center",
-                    isEven ? "lg:order-2" : "lg:order-1"
+                    isEven ? "lg:order-2" : "lg:order-1",
                   )}
                 >
                   <div
                     className={cn(
                       "relative w-full max-w-sm md:max-w-md lg:max-w-lg aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border border-black/10 group transition-transform duration-500",
-                      isEven ? "rotate-[-1deg] translate-y-2 lg:translate-x-4" : "rotate-[1deg] -translate-y-2 lg:-translate-x-4"
+                      isEven
+                        ? "rotate-[-1deg] translate-y-2 lg:translate-x-4"
+                        : "rotate-[1deg] -translate-y-2 lg:-translate-x-4",
                     )}
                   >
-                    <Image
+                    {/* <Image
                       src={service.imageSrc}
                       alt={service.imageAlt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      priority={index === 0}
+                    /> */}
+
+                    <OptimizedImage
+                      src={service.imageSrc}
+                      alt={service.imageAlt}
+                      format="auto"
+                      quality="auto"
+                      loading="eager"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"

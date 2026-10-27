@@ -216,6 +216,11 @@ export function Navbar({
     };
   }, [isOpen, closeMenu]);
 
+  // Do not render navbar when viewing an individual album
+  if (pathname?.startsWith("/album")) {
+    return null;
+  }
+
   return (
     <>
       <header

@@ -1,15 +1,47 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { FEATURED_ALBUMS_QUERY_RESULT } from "@/sanity.types";
+import OptimizedImage from "./optimized-image";
 
 // Register ScrollTrigger plugin safely for client-side environments
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+}
+
+function cleanImageUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(
+    /^(https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|avif|gif))([a-zA-Z\s].*)$/i,
+  );
+  if (match) {
+    return match[1];
+  }
+  return trimmed;
+}
+
+function extractYear(
+  dateStr?: string | null,
+  publishedAt?: string | null,
+): string {
+  if (dateStr) {
+    const yearMatch = dateStr.match(/\b(20\d\d|19\d\d)\b/);
+    if (yearMatch) return yearMatch[1];
+  }
+  if (publishedAt) {
+    try {
+      return new Date(publishedAt).getFullYear().toString();
+    } catch {
+      // fallback
+    }
+  }
+  return "2026";
 }
 
 export interface SelectedProject {
@@ -23,7 +55,7 @@ export interface SelectedProject {
   link: string;
 }
 
-const SELECTED_PROJECTS: SelectedProject[] = [
+export const SELECTED_PROJECTS: SelectedProject[] = [
   {
     id: "noir-silhouette",
     index: "01",
@@ -86,24 +118,58 @@ const SELECTED_PROJECTS: SelectedProject[] = [
   },
 ];
 
-export type SelectedWorksProps = React.HTMLAttributes<HTMLElement>;
+export type SelectedWorksProps = React.HTMLAttributes<HTMLElement> & {
+  initialWorks?: FEATURED_ALBUMS_QUERY_RESULT;
+};
 
-export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
+export function SelectedWorks({
+  initialWorks,
+  className,
+  ...props
+}: SelectedWorksProps) {
   const containerRef = React.useRef<HTMLElement>(null);
   const introTitleRef = React.useRef<HTMLDivElement>(null);
   const slideRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
 
+  const projects = React.useMemo<SelectedProject[]>(() => {
+    if (initialWorks && initialWorks.length > 0) {
+      return initialWorks.map((doc, idx) => {
+        const num = String(idx + 1).padStart(2, "0");
+        const cleanedImage = cleanImageUrl(doc.thumbnail);
+        const year = extractYear(doc.date, doc.publishedAt);
+        const slug = doc.slug?.current;
+        return {
+          id: doc._id || slug || `featured-${idx}`,
+          index: num,
+          title: doc.title || "Untitled Project",
+          category: doc.category?.title || "Editorial",
+          year,
+          description: doc.description || "",
+          image:
+            cleanedImage ||
+            "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=75",
+          link: slug ? `/album/${slug}` : `#${doc._id}`,
+        };
+      });
+    }
+    return SELECTED_PROJECTS;
+  }, [initialWorks]);
+
   React.useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || projects.length === 0) return;
+
+    slideRefs.current = slideRefs.current.slice(0, projects.length);
+    textRefs.current = textRefs.current.slice(0, projects.length);
+    imageRefs.current = imageRefs.current.slice(0, projects.length);
 
     const ctx = gsap.context(() => {
-      // 1. Initial deterministic setup for all 5 slides:
+      // 1. Initial deterministic setup for all slides:
       // Even projects: Text starts offscreen left (-140%), Image starts offscreen right (+140%)
       // Odd projects: Text starts offscreen right (+140%), Image starts offscreen left (-140%)
-      SELECTED_PROJECTS.forEach((_, idx) => {
+      projects.forEach((_, idx) => {
         const slide = slideRefs.current[idx];
         const textEl = textRefs.current[idx];
         const imgEl = imageRefs.current[idx];
@@ -130,7 +196,7 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
         scrollTrigger: {
           trigger: container,
           start: "top top",
-          end: () => `+=${window.innerHeight * 6}`,
+          end: () => `+=${window.innerHeight * (projects.length + 1)}`,
           pin: true,
           scrub: 1.2,
           anticipatePin: 1,
@@ -156,7 +222,7 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
       }
 
       // 4. Construct sequential alternating center-hold reveal for each project:
-      SELECTED_PROJECTS.forEach((_, idx) => {
+      projects.forEach((_, idx) => {
         const slide = slideRefs.current[idx];
         const textEl = textRefs.current[idx];
         const imgEl = imageRefs.current[idx];
@@ -168,39 +234,30 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
           autoAlpha: 1,
           pointerEvents: "auto",
         })
-          .to(
-            textEl,
-            {
-              xPercent: 0,
-              // scale: 1,
-              opacity: 1,
-              duration: 1.2,
-              ease: "power1.out",
-            }
-          )
+          .to(textEl, {
+            xPercent: 0,
+            opacity: 1,
+            duration: 1.2,
+            ease: "power1.out",
+          })
           .to(
             imgEl,
             {
               xPercent: 0,
-              // scale: 1,
               opacity: 1,
               duration: 1.2,
               ease: "power1.out",
             },
-            "<"
+            "<",
           )
           // Phase B: The Hold - Perfect stillness in center for reading & interaction
           .to({}, { duration: 2.0 })
-          // Phase C: The Exit - Smoothly scale down (zoom out into screen) and fade to 0
-          .to(
-            [textEl, imgEl],
-            {
-              // scale: 0.88,
-              opacity: 0,
-              duration: 0.9,
-              ease: "power1.in",
-            }
-          )
+          // Phase C: The Exit - Smoothly scale down and fade to 0
+          .to([textEl, imgEl], {
+            opacity: 0,
+            duration: 0.9,
+            ease: "power1.in",
+          })
           .set(slide, {
             autoAlpha: 0,
             pointerEvents: "none",
@@ -218,7 +275,9 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
     return () => {
       ctx.revert();
     };
-  }, []);
+  }, [projects]);
+
+  const totalCountFormatted = String(projects.length).padStart(2, "0");
 
   return (
     <section
@@ -227,7 +286,7 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
       aria-label="Selected Works"
       className={cn(
         "relative w-full h-[100dvh] min-h-[640px] overflow-hidden bg-bg-base select-none",
-        className
+        className,
       )}
       {...props}
     >
@@ -235,22 +294,22 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
       <div
         ref={introTitleRef}
         aria-hidden="true"
-        className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none  bg-black"
+        className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none bg-black"
       >
         <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
           <span className="w-2 h-2 rounded-full bg-text-primary/70 inline-block" />
           <span className="font-serif italic text-xs sm:text-sm md:text-base text-text-muted tracking-widest uppercase">
-            01 — 05 / Selected Works
+            01 — {totalCountFormatted} / Selected Works
           </span>
         </div>
-        <h2 className="font-sans font-black text-[18vw] sm:text-[20vw] md:text-[22vw] uppercase tracking-tighter leading-none text-text-primary text-center text-white">
+        <h2 className="font-sans font-black text-[18vw] sm:text-[20vw] md:text-[22vw] uppercase tracking-tighter leading-none text-center text-white">
           ARCHIVE
         </h2>
       </div>
 
-      {/* Centered Gallery Stage for all 5 Projects */}
+      {/* Centered Gallery Stage for all Projects */}
       <div className="relative w-full h-full flex items-center justify-center">
-        {SELECTED_PROJECTS.map((project, idx) => {
+        {projects.map((project, idx) => {
           const isEven = idx % 2 === 0;
 
           return (
@@ -270,7 +329,7 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
                   }}
                   className={cn(
                     "flex flex-col justify-center will-change-transform transform-gpu",
-                    isEven ? "md:order-1" : "md:order-2"
+                    isEven ? "md:order-1" : "md:order-2",
                   )}
                 >
                   {/* Category / Subtitle Eyebrow */}
@@ -292,10 +351,10 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
 
                   {/* View Button */}
                   <div>
-                    <a
+                    <Link
                       href={project.link}
                       onClick={(e) => {
-                        // Smoothly log or prevent jump for demo hash link
+                        // Smoothly prevent jump for demo hash link
                         if (project.link.startsWith("#")) {
                           e.preventDefault();
                         }
@@ -304,7 +363,7 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
                     >
                       <span>View Project</span>
                       <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </a>
+                    </Link>
                   </div>
                 </div>
 
@@ -315,10 +374,10 @@ export function SelectedWorks({ className, ...props }: SelectedWorksProps) {
                   }}
                   className={cn(
                     "relative w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[4/5] max-h-[55vh] md:max-h-[65vh] overflow-hidden rounded-xs bg-bg-surface border border-black/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] group will-change-transform transform-gpu",
-                    isEven ? "md:order-2" : "md:order-1"
+                    isEven ? "md:order-2" : "md:order-1",
                   )}
                 >
-                  <Image
+                  <OptimizedImage
                     src={project.image}
                     alt={project.title}
                     fill

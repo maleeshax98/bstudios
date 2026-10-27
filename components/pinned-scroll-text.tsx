@@ -104,7 +104,7 @@ export function PinnedScrollText({
       <div
         ref={textRef}
         style={{ transform: "translate3d(100vw, 0, 0)" }}
-        className="w-max inline-block whitespace-nowrap font-sans font-black uppercase tracking-tight sm:tracking-tighter leading-none text-text-primary text-[14vw] sm:text-[16vw] md:text-[18vw] lg:text-[20vw] will-change-transform pr-16 sm:pr-24 md:pr-32"
+        className="w-max inline-block whitespace-nowrap font-sans font-black uppercase tracking-tight sm:tracking-tighter leading-none text-text-primary text-[50vh] will-change-transform pr-16 sm:pr-24 md:pr-32"
       >
         CINEMATIC ART AND DIRECTING
       </div>
