@@ -21,7 +21,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
 
   React.useEffect(() => {
     if (!welcomeRef.current && !studioRef.current && !cameraRef.current) {
-      return
+      return;
     }
     // Prevent scrolling behind the loading screen
     document.body.style.overflow = "hidden";
@@ -44,13 +44,13 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
       tl.fromTo(
         welcomeRef.current,
         { opacity: 0, y: 0 },
-        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }
+        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
       )
         .fromTo(
           studioRef.current,
           { opacity: 0, y: 0 },
           { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" },
-          "-=0.25"
+          "-=0.25",
         )
         // Hold text
         .to({}, { duration: 0.85 })
@@ -67,7 +67,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
           cameraRef.current,
           { opacity: 0, scale: 0.85 },
           { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" },
-          "+=0.1"
+          "+=0.1",
         )
         // Hold camera icon
         .to({}, { duration: 0.75 })
@@ -87,7 +87,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
             duration: 0.7,
             ease: "power2.inOut",
           },
-          "+=0.1"
+          "+=0.1",
         );
     }, overlayRef);
 
@@ -109,7 +109,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
       aria-live="polite"
       className={cn(
         "fixed inset-0 z-50 flex items-center justify-center bg-bg-base select-none pointer-events-auto",
-        className
+        className,
       )}
       {...props}
     >
@@ -121,7 +121,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
         >
           <p
             ref={welcomeRef}
-            className="font-sans text-xs sm:text-sm md:text-base uppercase tracking-[0.35em] text-text-muted font-medium mb-3"
+            className="font-sans text-xs sm:text-sm md:text-base uppercase tracking-[0.35em] text-text-muted font-medium mb-3 "
           >
             WELCOME TO
           </p>
@@ -140,7 +140,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
         >
           <div
             ref={cameraRef}
-            className="flex items-center justify-center p-4"
+            className="flex items-center justify-center p-4  opacity-0"
           >
             <Camera
               className="w-12 h-12 sm:w-16 sm:h-16 text-text-primary stroke-[1.25]"

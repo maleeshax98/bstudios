@@ -10,19 +10,74 @@ import { ClientSpaceTeaser } from "@/components/client-space-teaser";
 import { ColorGradeLookbook } from "@/components/color-grade-lookbook";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
+import { client } from "@/sanity/client";
+import {
+  SERVICES_QUERY,
+  COLORGRADING_QUERY,
+  FEATURED_ALBUMS_QUERY,
+  WEDDING_ALBUMS_QUERY,
+} from "@/sanity/queries";
+import { getSampleImages } from "@/lib/cd";
 
-export default function Home() {
+async function getHomeData() {
+  "use cache";
+  try {
+    const [
+      services,
+      colorgrading,
+      featuredWorks,
+      weddingAlbums,
+      sampleImagesData,
+    ] = await Promise.all([
+      client.fetch(SERVICES_QUERY),
+      client.fetch(COLORGRADING_QUERY),
+      client.fetch(FEATURED_ALBUMS_QUERY),
+      client.fetch(WEDDING_ALBUMS_QUERY),
+      getSampleImages(),
+    ]);
+
+    return {
+      services: services || [],
+      colorgrading: colorgrading || [],
+      featuredWorks: featuredWorks || [],
+      weddingAlbums: weddingAlbums || [],
+      sampleImages: sampleImagesData?.resources || [],
+    };
+  } catch (error) {
+    console.warn(
+      "Could not fetch home data, falling back to sample data.",
+      error,
+    );
+    return {
+      services: [],
+      colorgrading: [],
+      featuredWorks: [],
+      weddingAlbums: [],
+      sampleImages: [],
+    };
+  }
+}
+
+export default async function Home() {
+  const {
+    services,
+    colorgrading,
+    featuredWorks,
+    weddingAlbums,
+    sampleImages,
+  } = await getHomeData();
+
   return (
     <>
       <HomeLoader />
       <Hero />
       <PinnedScrollText />
-      <SelectedWorks />
+      <SelectedWorks initialWorks={featuredWorks} />
       <Philosophy />
-      <ServicesExhibition />
-      <SampleGallery />
-      <ClientSpaceTeaser />
-      <ColorGradeLookbook />
+      <ServicesExhibition initialServices={services} />
+      <SampleGallery initialImages={sampleImages} />
+      <ClientSpaceTeaser initialAlbums={weddingAlbums} />
+      <ColorGradeLookbook initialLookbook={colorgrading} />
       <ContactForm />
       <Footer />
     </>

@@ -7,9 +7,23 @@ import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
+import OptimizedImage from "./optimized-image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+}
+
+function cleanImageUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(
+    /^(https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|avif|gif))([a-zA-Z\s].*)$/i,
+  );
+  if (match) {
+    return match[1];
+  }
+  return trimmed;
 }
 
 export interface ServiceItem {
@@ -30,7 +44,8 @@ const SERVICES: ServiceItem[] = [
     index: "01",
     src: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
     alt: "Cinematic preshoot photography",
-    description: "Intimate prelude sessions capturing raw, unscripted chemistry and anticipation before the main event.",
+    description:
+      "Intimate prelude sessions capturing raw, unscripted chemistry and anticipation before the main event.",
   },
   {
     id: "casual-shoot",
@@ -39,7 +54,8 @@ const SERVICES: ServiceItem[] = [
     index: "02",
     src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1600&q=85",
     alt: "Laid back casual portrait photography",
-    description: "Authentic, laid-back moments frozen in time with a natural, high-fashion editorial lens.",
+    description:
+      "Authentic, laid-back moments frozen in time with a natural, high-fashion editorial lens.",
   },
   {
     id: "birthday-shoot",
@@ -48,7 +64,8 @@ const SERVICES: ServiceItem[] = [
     index: "03",
     src: "https://images.unsplash.com/photo-1530103862676-de389d80ba24?auto=format&fit=crop&w=1600&q=85",
     alt: "Elegant birthday celebration photography",
-    description: "Cinematic celebrations framing your personal milestones with bespoke elegance and style.",
+    description:
+      "Cinematic celebrations framing your personal milestones with bespoke elegance and style.",
   },
   {
     id: "engagement-shoot",
@@ -57,7 +74,8 @@ const SERVICES: ServiceItem[] = [
     index: "04",
     src: "https://images.unsplash.com/photo-1518131558231-15a01bc1e345?auto=format&fit=crop&w=1600&q=85",
     alt: "Romantic engagement photography",
-    description: "Timeless visual narratives beautifully documenting the beginning of your forever.",
+    description:
+      "Timeless visual narratives beautifully documenting the beginning of your forever.",
   },
   {
     id: "wedding-shoot",
@@ -66,7 +84,8 @@ const SERVICES: ServiceItem[] = [
     index: "05",
     src: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1600&q=85",
     alt: "High-end wedding photography",
-    description: "Bespoke documentary and editorial coverage of your most unforgettable day.",
+    description:
+      "Bespoke documentary and editorial coverage of your most unforgettable day.",
   },
   {
     id: "promotion-video",
@@ -75,19 +94,46 @@ const SERVICES: ServiceItem[] = [
     index: "06",
     src: "https://images.unsplash.com/photo-1551817958-20204d6ab212?auto=format&fit=crop&w=1600&q=85",
     alt: "Professional promotional videography production",
-    description: "High-impact, cinematic brand storytelling engineered to elevate your commercial vision.",
+    description:
+      "High-impact, cinematic brand storytelling engineered to elevate your commercial vision.",
   },
 ];
 
-export type ServicesExhibitionProps = React.HTMLAttributes<HTMLElement>;
+export type ServicesExhibitionProps = React.HTMLAttributes<HTMLElement> & {
+  initialServices?: SERVICES_QUERY_RESULT;
+};
 
 export function ServicesExhibition({
+  initialServices,
   className,
   ...props
 }: ServicesExhibitionProps) {
   const sectionRef = React.useRef<HTMLElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const magneticButtonRef = React.useRef<HTMLDivElement>(null);
+
+  const services = React.useMemo<ServiceItem[]>(() => {
+    if (initialServices && initialServices.length > 0) {
+      return initialServices.map((doc, index) => {
+        const num = String(index + 1).padStart(2, "0");
+        const cleaned = cleanImageUrl(doc.image);
+        return {
+          id: doc._id || doc.slug?.current || `service-${index}`,
+          title: doc.title || "Untitled Service",
+          subtitle: doc.subTitle || "Cinematic Offering",
+          index: num,
+          src:
+            cleaned ||
+            "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
+          alt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
+          description: doc.description || "",
+        };
+      });
+    }
+    return SERVICES;
+  }, [initialServices]);
+
+  const totalCountFormatted = String(services.length).padStart(2, "0");
 
   const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = magneticButtonRef.current;
@@ -158,7 +204,7 @@ export function ServicesExhibition({
         gsap.killTweensOf(magneticBtn);
       }
     };
-  }, []);
+  }, [services]);
 
   return (
     <section
@@ -167,7 +213,7 @@ export function ServicesExhibition({
       aria-label="Core Services Exhibition"
       className={cn(
         "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
-        className
+        className,
       )}
       {...props}
     >
@@ -180,7 +226,7 @@ export function ServicesExhibition({
         <div className="w-[38vw] sm:w-[32vw] lg:w-[28vw] max-w-[460px] shrink-0 flex flex-col justify-center pr-4">
           <div className="mb-4 sm:mb-6 flex items-center gap-3 text-xs sm:text-sm font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
             <span className="w-8 h-[1px] bg-text-muted/40" />
-            <span>Services // 01 — 06</span>
+            <span>{`Services // 01 — ${totalCountFormatted}`}</span>
           </div>
 
           <h2 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-text-primary uppercase leading-[0.92]">
@@ -191,7 +237,8 @@ export function ServicesExhibition({
           </h2>
 
           <p className="font-serif italic text-base sm:text-lg text-text-muted mt-6 leading-relaxed">
-            Bespoke photography and videography packages engineered to capture authentic moments with editorial elegance.
+            Bespoke photography and videography packages engineered to capture
+            authentic moments with editorial elegance.
           </p>
 
           <div className="mt-8 flex items-center gap-2 text-xs font-sans font-bold tracking-[0.2em] text-text-primary/60 uppercase">
@@ -201,18 +248,29 @@ export function ServicesExhibition({
         </div>
 
         {/* Oversized Gallery Cards (60-80% Viewport Width) */}
-        {SERVICES.map((service, index) => (
+        {services.map((service, index) => (
           <div
             key={service.id}
             className="w-[78vw] sm:w-[72vw] lg:w-[68vw] max-w-[1100px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col relative"
           >
             <div className="group relative w-full h-full overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface shadow-xs transition-all duration-500 hover:border-text-primary/30 hover:shadow-xl">
               {/* Massive Image Container with Smooth Scale-Up on Hover */}
-              <Image
+              {/* <Image
                 src={service.src}
                 alt={service.alt}
                 fill
                 priority={index === 0}
+                sizes="(max-width: 1024px) 80vw, 68vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              /> */}
+
+              <OptimizedImage
+                src={service.src}
+                alt={service.alt}
+                format="auto"
+                quality="auto"
+                loading="eager"
+                fill
                 sizes="(max-width: 1024px) 80vw, 68vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
@@ -220,7 +278,7 @@ export function ServicesExhibition({
               {/* Top-Right Index Pill Badge */}
               <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
                 <span className="font-sans text-[11px] sm:text-xs font-bold tracking-widest text-text-primary bg-bg-base/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-border-subtle shadow-xs">
-                  {service.index} / 06
+                  {`${service.index} / ${totalCountFormatted}`}
                 </span>
               </div>
 
@@ -254,7 +312,8 @@ export function ServicesExhibition({
           </h3>
 
           <p className="font-serif italic text-base sm:text-lg text-text-muted max-w-md mt-4 mb-10 leading-relaxed">
-            Available worldwide to document your most unforgettable moments with cinematic precision.
+            Available worldwide to document your most unforgettable moments with
+            cinematic precision.
           </p>
 
           <div
@@ -270,7 +329,7 @@ export function ServicesExhibition({
                   "border border-text-primary bg-text-primary px-10 py-5 sm:px-14 sm:py-6",
                   "text-xs sm:text-sm md:text-base font-sans font-black uppercase tracking-[0.25em] text-bg-base",
                   "shadow-xl transition-all duration-300",
-                  "hover:border-text-primary hover:bg-bg-base hover:text-text-primary hover:shadow-2xl hover:scale-[1.03]"
+                  "hover:border-text-primary hover:bg-bg-base hover:text-text-primary hover:shadow-2xl hover:scale-[1.03]",
                 )}
               >
                 <span>BOOK A SESSION</span>

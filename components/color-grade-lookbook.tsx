@@ -7,9 +7,23 @@ import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import type { COLORGRADING_QUERY_RESULT } from "@/sanity.types";
+import OptimizedImage from "./optimized-image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+}
+
+function cleanImageUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(
+    /^(https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|avif|gif))([a-zA-Z\s].*)$/i,
+  );
+  if (match) {
+    return match[1];
+  }
+  return trimmed;
 }
 
 export interface ColorGradeTheme {
@@ -30,7 +44,8 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "01",
     src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=85",
     alt: "Dreamy glow color grading aesthetic with ethereal golden sunlight",
-    paletteDescription: "Warm radiant highlights, soft optical diffusion, and luminous golden skin tones.",
+    paletteDescription:
+      "Warm radiant highlights, soft optical diffusion, and luminous golden skin tones.",
   },
   {
     id: "off-green",
@@ -39,7 +54,8 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "02",
     src: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1600&q=85",
     alt: "Off green color grading aesthetic with muted foliage tones",
-    paletteDescription: "Desaturated olive foliage, organic earthen balance, and muted natural daylight tones.",
+    paletteDescription:
+      "Desaturated olive foliage, organic earthen balance, and muted natural daylight tones.",
   },
   {
     id: "moody",
@@ -48,7 +64,8 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "03",
     src: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=85",
     alt: "Moody color grading aesthetic with dramatic shadows",
-    paletteDescription: "Deep sculpted contrast, evocative twilight ambiance, and subtle shadow separation.",
+    paletteDescription:
+      "Deep sculpted contrast, evocative twilight ambiance, and subtle shadow separation.",
   },
   {
     id: "dark-aesthetic",
@@ -57,7 +74,8 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "04",
     src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=85",
     alt: "Dark aesthetic color grading with deep blacks and stark contrast",
-    paletteDescription: "Inky rich blacks, deliberate silhouette framing, and high-density monochrome edge clarity.",
+    paletteDescription:
+      "Inky rich blacks, deliberate silhouette framing, and high-density monochrome edge clarity.",
   },
   {
     id: "vintage-film",
@@ -66,7 +84,8 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "05",
     src: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=85",
     alt: "Vintage film color grading with organic grain and analog film response",
-    paletteDescription: "Warm analog grain emulation, soft rolled-off highlights, and nostalgic film curves.",
+    paletteDescription:
+      "Warm analog grain emulation, soft rolled-off highlights, and nostalgic film curves.",
   },
   {
     id: "high-contrast",
@@ -75,19 +94,46 @@ const COLOR_THEMES: ColorGradeTheme[] = [
     index: "06",
     src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
     alt: "High contrast color grading with bold dynamic range",
-    paletteDescription: "Bold punchy dynamic range, razor-sharp architectural midtones, and striking tonal punch.",
+    paletteDescription:
+      "Bold punchy dynamic range, razor-sharp architectural midtones, and striking tonal punch.",
   },
 ];
 
-export type ColorGradeLookbookProps = React.HTMLAttributes<HTMLElement>;
+export type ColorGradeLookbookProps = React.HTMLAttributes<HTMLElement> & {
+  initialLookbook?: COLORGRADING_QUERY_RESULT;
+};
 
 export function ColorGradeLookbook({
+  initialLookbook,
   className,
   ...props
 }: ColorGradeLookbookProps) {
   const sectionRef = React.useRef<HTMLElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const magneticButtonRef = React.useRef<HTMLDivElement>(null);
+
+  const themes = React.useMemo<ColorGradeTheme[]>(() => {
+    if (initialLookbook && initialLookbook.length > 0) {
+      return initialLookbook.map((doc, index) => {
+        const num = String(index + 1).padStart(2, "0");
+        const cleaned = cleanImageUrl(doc.image);
+        return {
+          id: doc._id || doc.slug?.current || `colorgrade-${index}`,
+          title: doc.title || "Untitled Look",
+          subtitle: doc.subTitle || "Color Curation",
+          index: num,
+          src:
+            cleaned ||
+            "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=85",
+          alt: `${doc.title || "Color Grade"} - ${doc.subTitle || "B studio"}`,
+          paletteDescription: doc.description || "",
+        };
+      });
+    }
+    return COLOR_THEMES;
+  }, [initialLookbook]);
+
+  const totalCountFormatted = String(themes.length).padStart(2, "0");
 
   const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = magneticButtonRef.current;
@@ -158,7 +204,7 @@ export function ColorGradeLookbook({
         gsap.killTweensOf(magneticBtn);
       }
     };
-  }, []);
+  }, [themes]);
 
   return (
     <section
@@ -167,7 +213,7 @@ export function ColorGradeLookbook({
       aria-label="Color Grade Lookbook"
       className={cn(
         "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
-        className
+        className,
       )}
       {...props}
     >
@@ -180,7 +226,7 @@ export function ColorGradeLookbook({
         <div className="w-[38vw] sm:w-[32vw] lg:w-[28vw] max-w-[460px] shrink-0 flex flex-col justify-center pr-4">
           <div className="mb-4 sm:mb-6 flex items-center gap-3 text-xs sm:text-sm font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
             <span className="w-8 h-[1px] bg-text-muted/40" />
-            <span>Lookbook // 01 — 06</span>
+            <span>{`Lookbook // 01 — ${totalCountFormatted}`}</span>
           </div>
 
           <h2 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-text-primary uppercase leading-[0.92]">
@@ -191,7 +237,8 @@ export function ColorGradeLookbook({
           </h2>
 
           <p className="font-serif italic text-base sm:text-lg text-text-muted mt-6 leading-relaxed">
-            Signature film emulsions and bespoke tonal palettes engineered to elevate emotional depth across every frame.
+            Signature film emulsions and bespoke tonal palettes engineered to
+            elevate emotional depth across every frame.
           </p>
 
           <div className="mt-8 flex items-center gap-2 text-xs font-sans font-bold tracking-[0.2em] text-text-primary/60 uppercase">
@@ -201,18 +248,29 @@ export function ColorGradeLookbook({
         </div>
 
         {/* Oversized Gallery Cards (60-80% Viewport Width) */}
-        {COLOR_THEMES.map((theme, index) => (
+        {themes.map((theme, index) => (
           <div
             key={theme.id}
             className="w-[78vw] sm:w-[72vw] lg:w-[68vw] max-w-[1100px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col relative"
           >
             <div className="group relative w-full h-full overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface shadow-xs transition-all duration-500 hover:border-text-primary/30 hover:shadow-xl">
               {/* Massive Image Container with Smooth Scale-Up on Hover */}
-              <Image
+              {/* <Image
                 src={theme.src}
                 alt={theme.alt}
                 fill
                 priority={index === 0}
+                sizes="(max-width: 1024px) 80vw, 68vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              /> */}
+
+              <OptimizedImage
+                src={theme.src}
+                alt={theme.alt}
+                format="auto"
+                quality="auto"
+                loading="eager"
+                fill
                 sizes="(max-width: 1024px) 80vw, 68vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
@@ -220,7 +278,7 @@ export function ColorGradeLookbook({
               {/* Top-Right Index Pill Badge */}
               <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
                 <span className="font-sans text-[11px] sm:text-xs font-bold tracking-widest text-text-primary bg-bg-base/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-border-subtle shadow-xs">
-                  {theme.index} / 06
+                  {`${theme.index} / ${totalCountFormatted}`}
                 </span>
               </div>
 
@@ -254,7 +312,8 @@ export function ColorGradeLookbook({
           </h3>
 
           <p className="font-serif italic text-base sm:text-lg text-text-muted max-w-md mt-4 mb-10 leading-relaxed">
-            Available worldwide for bespoke photography, editorial color grading, and commercial film direction.
+            Available worldwide for bespoke photography, editorial color
+            grading, and commercial film direction.
           </p>
 
           <div
@@ -270,7 +329,7 @@ export function ColorGradeLookbook({
                   "border border-text-primary bg-text-primary px-10 py-5 sm:px-14 sm:py-6",
                   "text-xs sm:text-sm md:text-base font-sans font-black uppercase tracking-[0.25em] text-bg-base",
                   "shadow-xl transition-all duration-300",
-                  "hover:border-text-primary hover:bg-bg-base hover:text-text-primary hover:shadow-2xl hover:scale-[1.03]"
+                  "hover:border-text-primary hover:bg-bg-base hover:text-text-primary hover:shadow-2xl hover:scale-[1.03]",
                 )}
               >
                 <span>WORK WITH US</span>

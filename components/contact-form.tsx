@@ -12,7 +12,7 @@ const SERVICES = [
   "Engagement Shoot",
   "Wedding Shoot",
   "Promotion Video",
-  "Other Service"
+  "Other Service",
 ] as const;
 
 export interface ContactFormProps extends React.HTMLAttributes<HTMLElement> {
@@ -28,7 +28,10 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
-  const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(
+    null,
+  );
 
   const dropdownContainerRef = React.useRef<HTMLSpanElement>(null);
   const magneticButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -103,7 +106,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -131,16 +134,49 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
     }
 
     setFeedbackMessage(null);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
 
-    // Reset feedback after a generous hold
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setName("");
-      setSelectedService("");
-      setDate("");
-      setEmail("");
-    }, 4500);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          service: selectedService,
+          eventDate: date.trim(),
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "Failed to submit inquiry. Please try again.",
+        );
+      }
+
+      setIsSubmitted(true);
+      setIsSubmitting(false);
+
+      // Reset feedback after a generous hold
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setName("");
+        setSelectedService("");
+        setDate("");
+        setEmail("");
+      }, 5000);
+    } catch (err: unknown) {
+      setIsSubmitting(false);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Failed to submit inquiry. Please try again.";
+      setFeedbackMessage(msg);
+    }
   };
 
   return (
@@ -148,7 +184,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
       id="contact"
       className={cn(
         "relative w-full bg-bg-base overflow-hidden px-6 sm:px-12 md:px-16 lg:px-24 py-28 sm:py-36 md:py-48 select-none border-t border-text-primary/10",
-        className
+        className,
       )}
       {...props}
     >
@@ -170,8 +206,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
         <form onSubmit={handleSubmit} noValidate>
           {/* Mad-Libs Conversational Sentence */}
           <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-[1.65] sm:leading-[1.7] md:leading-[1.8] font-serif italic text-text-primary tracking-tight">
-            <span>Hi B studio, my name is</span>{" "}
-            {/* [ Your Name ] Input */}
+            <span>Hi B studio, my name is</span> {/* [ Your Name ] Input */}
             <span className="inline-grid items-baseline relative mx-1.5 sm:mx-2.5 align-baseline">
               <span
                 aria-hidden="true"
@@ -200,7 +235,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                     ? "border-black"
                     : name
                       ? "border-text-primary"
-                      : "border-[#888888] hover:border-black"
+                      : "border-[#888888] hover:border-black",
                 )}
               />
             </span>
@@ -218,7 +253,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 className={cn(
                   "inline-flex items-center gap-1.5 sm:gap-2.5 bg-transparent border-b-2 px-1.5 pb-0.5 sm:pb-1 transition-colors duration-300 outline-none cursor-pointer",
                   "border-[#888888] hover:border-black",
-                  (isDropdownOpen || selectedService) && "border-black"
+                  (isDropdownOpen || selectedService) && "border-black",
                 )}
               >
                 <span
@@ -226,7 +261,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                     "font-sans not-italic transition-colors duration-200",
                     selectedService
                       ? "font-bold text-text-primary"
-                      : "font-normal text-text-muted/70 hover:text-text-primary"
+                      : "font-normal text-text-muted/70 hover:text-text-primary",
                   )}
                 >
                   {selectedService || "Select Service"}
@@ -234,7 +269,9 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 <ChevronDown
                   className={cn(
                     "w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 stroke-[2.25]",
-                    isDropdownOpen ? "rotate-180 text-black" : "text-text-muted"
+                    isDropdownOpen
+                      ? "rotate-180 text-black"
+                      : "text-text-muted",
                   )}
                 />
               </button>
@@ -249,14 +286,16 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                     "w-72 sm:w-84 max-w-[calc(100vw-2.5rem)]",
                     "bg-[#F7F7F5] border border-text-primary/15 rounded-2xl p-2 sm:p-2.5",
                     "shadow-2xl shadow-black/10 backdrop-blur-none",
-                    "animate-in fade-in zoom-in-95 duration-200"
+                    "animate-in fade-in zoom-in-95 duration-200",
                   )}
                 >
                   <div className="px-3 py-2 border-b border-text-primary/10 mb-1 flex items-center justify-between">
                     <span className="font-sans text-[11px] font-bold uppercase tracking-widest text-text-muted">
                       Select Service
                     </span>
-                    <span className="font-serif italic text-xs text-text-muted">{SERVICES.length} Offerings</span>
+                    <span className="font-serif italic text-xs text-text-muted">
+                      {SERVICES.length} Offerings
+                    </span>
                   </div>
                   <div className="py-1 flex flex-col gap-1">
                     {SERVICES.map((service, index) => {
@@ -276,7 +315,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                             "w-full text-left px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-between group cursor-pointer",
                             isSelected
                               ? "bg-text-primary text-bg-base font-sans font-bold shadow-sm"
-                              : "text-text-primary hover:bg-[#EBEBE8] font-sans font-medium"
+                              : "text-text-primary hover:bg-[#EBEBE8] font-sans font-medium",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -285,7 +324,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                                 "font-serif italic text-xs sm:text-sm",
                                 isSelected
                                   ? "text-bg-base/70"
-                                  : "text-text-muted group-hover:text-text-primary"
+                                  : "text-text-muted group-hover:text-text-primary",
                               )}
                             >
                               0{index + 1}.
@@ -294,7 +333,9 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                               {service}
                             </span>
                           </div>
-                          {isSelected && <Check className="w-4 h-4 stroke-[2.5]" />}
+                          {isSelected && (
+                            <Check className="w-4 h-4 stroke-[2.5]" />
+                          )}
                         </button>
                       );
                     })}
@@ -302,8 +343,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 </div>
               )}
             </span>{" "}
-            <span>for my upcoming event around</span>{" "}
-            {/* [ Date ] Input */}
+            <span>for my upcoming event around</span> {/* [ Date ] Input */}
             <span className="inline-grid items-baseline relative mx-1.5 sm:mx-2.5 align-baseline">
               <span
                 aria-hidden="true"
@@ -332,18 +372,17 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                     ? "border-black"
                     : date
                       ? "border-text-primary"
-                      : "border-[#888888] hover:border-black"
+                      : "border-[#888888] hover:border-black",
                 )}
               />
             </span>
-            <span>. You can reach me at</span>{" "}
-            {/* [ Email Address ] Input */}
+            <span>. You can reach me at</span> {/* [ Email Address ] Input */}
             <span className="inline-grid items-baseline relative mx-1.5 sm:mx-2.5 align-baseline">
               <span
                 aria-hidden="true"
                 className="invisible col-start-1 row-start-1 font-sans font-bold not-italic px-1.5 whitespace-pre pointer-events-none select-none min-w-[160px] sm:min-w-[210px]"
               >
-                {email || "Email Address"}
+                {email || "Email / Phone"}
               </span>
               <input
                 id="contact-email"
@@ -355,8 +394,8 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 }}
                 onFocus={() => setFocusedInput("email")}
                 onBlur={() => setFocusedInput(null)}
-                placeholder="Email Address"
-                aria-label="Email Address"
+                placeholder="Email / Phone"
+                aria-label="Email / Phone"
                 className={cn(
                   "col-start-1 row-start-1 w-full bg-transparent font-sans font-bold not-italic text-text-primary",
                   "border-b-2 outline-none px-1.5 pb-0.5 sm:pb-1 transition-colors duration-300",
@@ -366,7 +405,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                     ? "border-black"
                     : email
                       ? "border-text-primary"
-                      : "border-[#888888] hover:border-black"
+                      : "border-[#888888] hover:border-black",
                 )}
               />
             </span>{" "}
@@ -383,14 +422,21 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
               <button
                 ref={magneticButtonRef}
                 type="submit"
+                disabled={isSubmitting || isSubmitted}
                 className={cn(
                   "group relative inline-flex items-center justify-center gap-4 px-10 py-5 sm:px-14 sm:py-6 rounded-full",
                   "bg-text-primary text-bg-base font-sans font-bold text-sm sm:text-base md:text-lg tracking-widest uppercase",
                   "transition-all duration-300 ease-out cursor-pointer shadow-lg hover:shadow-2xl hover:bg-black",
-                  "active:scale-95 disabled:pointer-events-none"
+                  "active:scale-95 disabled:opacity-50 disabled:pointer-events-none",
                 )}
               >
-                <span>{isSubmitted ? "INQUIRY SENT" : "SEND INQUIRY"}</span>
+                <span>
+                  {isSubmitted
+                    ? "INQUIRY SENT"
+                    : isSubmitting
+                      ? "TRANSMITTING..."
+                      : "SEND INQUIRY"}
+                </span>
                 {isSubmitted ? (
                   <Check className="w-5 h-5 text-emerald-400 stroke-[3]" />
                 ) : (
@@ -409,7 +455,18 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                   {feedbackMessage}
                 </span>
               ) : (
-                <span>Direct inquiries: info@bstudio.com // Colombo, Sri Lanka</span>
+                <span>
+                  Direct inquiries: info@bstudio.com{" // "}WhatsApp:{" "}
+                  <a
+                    href="https://wa.me/94704028206"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-text-muted/40 hover:text-text-primary hover:decoration-black transition-colors"
+                  >
+                    +94 70 402 8206
+                  </a>{" "}
+                  {"// "}Colombo, Sri Lanka
+                </span>
               )}
             </div>
           </div>
