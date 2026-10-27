@@ -4,7 +4,7 @@ import { PackagesPage } from "@/components/packages/packages-page";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
 import { client } from "@/sanity/client";
-import { PACKAGES_QUERY } from "@/sanity/queries";
+import { CATEGORIES_QUERY, PACKAGES_QUERY } from "@/sanity/queries";
 
 export const metadata: Metadata = {
   title:
@@ -13,27 +13,39 @@ export const metadata: Metadata = {
     "Explore B studio's curated investment collections and pricing for wedding cinematography, editorial preshoots, birthday galas, and commercial campaigns.",
 };
 
-async function getPackagesData() {
+async function getPackagesPageData() {
   "use cache";
   try {
-    const packages = await client.fetch(PACKAGES_QUERY);
-    return packages || [];
+    const [categories, packages] = await Promise.all([
+      client.fetch(CATEGORIES_QUERY),
+      client.fetch(PACKAGES_QUERY),
+    ]);
+    return {
+      categories: categories || [],
+      packages: packages || [],
+    };
   } catch (error) {
     console.warn(
-      "Could not fetch packages from Sanity, falling back to sample data.",
+      "Could not fetch packages data from Sanity:",
       error,
     );
-    return [];
+    return {
+      categories: [],
+      packages: [],
+    };
   }
 }
 
 export default async function Page() {
-  const packages = await getPackagesData();
+  const { categories, packages } = await getPackagesPageData();
 
   return (
     <>
       {/* Curated Packages Exhibition */}
-      <PackagesPage initialPackages={packages} />
+      <PackagesPage
+        initialCategories={categories}
+        initialPackages={packages}
+      />
 
       {/* The Booking Transition */}
       <ContactForm prompt="READY TO INVEST IN YOUR STORY?" />

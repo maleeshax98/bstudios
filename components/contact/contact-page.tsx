@@ -134,7 +134,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
   };
 
   // Form submission handler with validation & smooth GSAP dissolve fade
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -164,32 +164,57 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
     setValidationError(null);
     setIsSubmitting(true);
 
-    // Smoothly dissolve the form container via GSAP
-    if (formContainerRef.current) {
-      gsap.to(formContainerRef.current, {
-        opacity: 0,
-        y: -18,
-        duration: 0.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-          setIsSubmitted(true);
-          setIsSubmitting(false);
-
-          // Animate confirmation message fade-in
-          requestAnimationFrame(() => {
-            if (successContainerRef.current) {
-              gsap.fromTo(
-                successContainerRef.current,
-                { opacity: 0, y: 24 },
-                { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }
-              );
-            }
-          });
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          service: selectedService,
+          eventDate: date.trim(),
+        }),
       });
-    } else {
-      setIsSubmitted(true);
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to submit inquiry. Please try again.");
+      }
+
+      // Smoothly dissolve the form container via GSAP
+      if (formContainerRef.current) {
+        gsap.to(formContainerRef.current, {
+          opacity: 0,
+          y: -18,
+          duration: 0.5,
+          ease: "power2.inOut",
+          onComplete: () => {
+            setIsSubmitted(true);
+            setIsSubmitting(false);
+
+            // Animate confirmation message fade-in
+            requestAnimationFrame(() => {
+              if (successContainerRef.current) {
+                gsap.fromTo(
+                  successContainerRef.current,
+                  { opacity: 0, y: 24 },
+                  { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }
+                );
+              }
+            });
+          },
+        });
+      } else {
+        setIsSubmitted(true);
+        setIsSubmitting(false);
+      }
+    } catch (err: unknown) {
       setIsSubmitting(false);
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setValidationError(msg);
     }
   };
 
@@ -277,6 +302,21 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   className="font-serif text-base sm:text-lg text-text-primary hover:text-black transition-colors block"
                 >
                   +94 (77) 203-8822
+                </a>
+              </div>
+
+              {/* WhatsApp */}
+              <div>
+                <h2 className="font-sans font-bold uppercase tracking-wider text-[11px] sm:text-xs text-text-muted mb-1.5">
+                  WHATSAPP
+                </h2>
+                <a
+                  href="https://wa.me/94704028206"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black transition-colors block underline decoration-text-primary/30 hover:decoration-black"
+                >
+                  +94 70 402 8206
                 </a>
               </div>
 

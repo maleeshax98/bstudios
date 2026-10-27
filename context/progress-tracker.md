@@ -8,17 +8,94 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Backend Feature 09: Fetching and showing sample images in home page from Cloudinary completed and verified. Ready for next user instruction.
+- Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp completed and verified. Ready for next user instruction.
 
 ## In Progress
 
-- None (Backend Feature 09 completed and verified. Awaiting next user instruction).
+- None (Feature completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp:
+  - Enhanced Pricing Scale (`components/packages/packages-page.tsx`):
+    - Scaled pricing typography to prominent brutalist display size (`text-3xl sm:text-4xl lg:text-[2.75rem] font-black tracking-tight leading-none text-text-primary mt-4`), providing immediate visual hierarchy and impact on each card.
+  - WhatsApp Direct Inquiry Integration (`components/packages/packages-page.tsx`):
+    - Replaced the `/contact` form redirect on the package card inquiry button (`[ INQUIRE NOW ]`) with a direct WhatsApp deep link (`https://wa.me/94704028206?text=...`) targeting studio number `+94 70 402 8206`.
+    - Automatically pre-composes a professional inquiry message detailing the specific package name, category, and price (e.g. `Hi B studio, I would like to inquire about the "VINTAGE" package (PRE SHOOT - Rs. 20000).`).
+    - Updated empty-state inquiry button (`[ REQUEST BESPOKE QUOTE ]`) to also redirect to WhatsApp with a pre-filled bespoke request for the selected category (`Hi B studio, I would like to inquire about bespoke packages for ${category}.`).
+    - Configured with `target="_blank"` and `rel="noopener noreferrer"`.
+    - Removed unused `Link` import from `next/link`.
+  - Verification:
+    - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+    - ESLint: `pnpm lint` passed with 0 errors.
+    - Production build: `pnpm build` in `bstudio/` compiled and prerendered all 24 routes cleanly.
+    - Runtime check: Verified live curl on `http://localhost:3000/packages` returning WhatsApp deep links with URL-encoded messages.
+
+- Packages Feature 02: Recreating packages page (`context/feature-specs/packages/02-recreating-packages.md`):
+  - Analyzed `packageType` in Sanity schema (`studio/schemaTypes/packageType.ts`):
+    - Identified fields: `title`, `category` (reference to `category`), `description`, `deliverables` (array of strings), `price`, `badge`, `order`.
+    - Corrected preview selection in `packageType.ts` from `serviceCategory` to `category.title`.
+  - Added Navbar Link:
+    - Updated `NAV_ITEMS` in `components/navbar.tsx` with `{ label: "Packages", href: "/packages", index: "03" }`, re-indexing subsequent items (`About` as "04", `Contact` as "05").
+    - Verified dynamic integration across both desktop navigation bar and full-screen mobile navigation overlay.
+  - Category Fetching & Selection:
+    - Implemented `CATEGORIES_QUERY` fetching all categories from Sanity (`*[_type == "category"] | order(title asc)`).
+    - Designed non-horizontal-scroll category tabs that break lines naturally on any screen size using `flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5`.
+    - Rendered active tab indicators in `bg-bg-surface text-[#111111] font-black shadow-xs ring-1 ring-border-subtle` and inactive tabs in `text-[#888888] hover:text-[#111111]`.
+  - Relevant Packages Fetching & Filtering:
+    - Updated `PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY` in `bstudio/sanity/queries.ts` to dereference `category->{ _id, title }`.
+    - Extracted schema and regenerated TypeScript types via `pnpm run typegen` in `studio/`.
+    - Server Component (`app/packages/page.tsx`): Marked `getPackagesPageData()` with `"use cache"` fetching both `CATEGORIES_QUERY` and `PACKAGES_QUERY` in parallel.
+    - Component filtering: Synchronously filters relevant packages matching selected category `_id` or `title`, with client-side fallback query `PACKAGES_BY_CATEGORY_QUERY` if not already loaded.
+  - Centered Layout & Empty State Message:
+    - Packages cards layout: Uses responsive flex system (`flex flex-wrap justify-center items-stretch gap-8 sm:gap-10 lg:gap-12 max-w-7xl mx-auto`) with individual card constraints (`w-full sm:w-[calc(50%-1.25rem)] lg:w-[calc(33.333%-2rem)] max-w-md`), ensuring 1, 2, or 3 cards are always centered in the viewport.
+    - Empty state message: When a selected category has 0 packages (e.g. `BIRTHDAY`), displays an elegant centered card with `PackageOpen` icon, Serif headline ("No packages available for this category yet."), custom consultation copy, and direct `[ REQUEST BESPOKE QUOTE ]` CTA button linking to `/contact?service=${categoryTitle}`.
+  - Verification:
+    - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+    - ESLint: `pnpm lint` passed with 0 errors.
+    - Next.js build: `pnpm build` in `bstudio/` compiled and prerendered all 24 routes cleanly.
+    - Sanity Studio build: `pnpm build` in `studio/` passed in 226ms.
+    - Runtime check: Verified live curl HTTP 200 on `/packages`, verified rendered Sanity categories (`[ BIRTHDAY ]`, `[ PRE SHOOT ]`, `[ WEDDING ]`), packages, and navbar links.
+
+- Contact Us Feature 02: Add WhatsApp Number (`context/feature-specs/contact-us/02-adding-wtsapp.md`):
+  - Added WhatsApp number `+94 70 402 8206` with direct chat link (`https://wa.me/94704028206`) to:
+    - Minimalist Site Footer (`components/footer.tsx`): Positioned within the sub-footer row between copyright and social links, styled with bold uppercase tag and interactive arrow icon.
+    - Dedicated Contact Page (`components/contact/contact-page.tsx`): Integrated as a first-class studio detail block (WHATSAPP) alongside Email, Phone, Studio Location, and Socials.
+    - Conversational Contact Form (`components/contact-form.tsx`): Integrated into direct inquiry helper metadata.
+    - Mobile Navigation Menu (`components/navbar.tsx`): Added to mobile overlay bottom info alongside email.
+  - Verification:
+    - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+    - ESLint: `pnpm lint` passed with 0 errors.
+    - Production build: `pnpm build` compiled and prerendered all 24 routes cleanly.
+    - Runtime check: Verified live curl HTTP 200 and WhatsApp link on `/` and `/contact`.
+
+- Backend Feature 10: Saving Contact Data to Sanity (`context/feature-specs/backend/10-saving-contact-data.md`):
+  - Created Sanity document schema `contactSubmissionType` in `studio/schemaTypes/contactSubmission.ts`:
+    - Document type `contactSubmission`.
+    - Fields: `name` (required string), `email` (required email string), `service` (required radio/list of 6 core services: Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, Promotion Video), `eventDate` (required string date/timeframe), `status` (read-only string defaulting to `"New"`), and `submittedAt` (read-only datetime timestamp defaulting to current ISO time).
+    - Added custom Sanity Studio preview displaying client name, requested service, date, and lead status.
+    - Registered schema in `studio/schemaTypes/index.ts`.
+    - Ran `pnpm run typegen` in `studio/`, extracting schema and generating TypeScript types in `bstudio/sanity.types.ts`.
+    - Verified Sanity Studio build (`pnpm build` in `studio/` passing cleanly in 238ms).
+  - Implemented Next.js Server-Side API Route (`bstudio/app/api/contact/route.ts`):
+    - App Router POST request handler using Next.js conventions (`NextResponse`).
+    - Validates incoming JSON payload (`name`, `email`, `service`, `eventDate` / `date`).
+    - Securely initializes Sanity write client using server-only `SANITY_API_TOKEN` environment variable with `useCdn: false`.
+    - Inserts a new document of `_type: 'contactSubmission'` into the Sanity dataset.
+    - Returns structured JSON response (`{ success: true, message: "Your story is safe with us. We will be in touch soon.", data: { id, name, email, service, eventDate, submittedAt } }`) with HTTP 201 Created.
+  - Connected Frontend Contact Forms to `/api/contact`:
+    - Updated `bstudio/components/contact/contact-page.tsx`: Asynchronously submits form payload to `/api/contact`, displays error messages on failure, and triggers smooth GSAP form dissolution into the editorial confirmation message on success.
+    - Updated `bstudio/components/contact-form.tsx`: Asynchronously submits form payload to `/api/contact`, renders `"TRANSMITTING..."` button state, displays feedback messages, and renders `"INQUIRY SENT"` confirmation state on success.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+    - ESLint (`pnpm lint`) passed with 0 errors.
+    - Production build (`pnpm build`) compiled and prerendered all 24 routes cleanly with dynamic route `ƒ /api/contact`.
+    - Dev server validation test: Invalid payload returns HTTP 400 with `{ success: false, error: "Name is required." }`.
+    - Live end-to-end integration test: Submitted valid payload via curl to `/api/contact`, successfully creating document `VdYqQiYvZQdrJTS4Fj4613` in Sanity dataset `production`.
 
 - Backend Feature 09: Fetching and showing sample images in home page from Cloudinary (`context/feature-specs/backend/09-fetching-sample-images.md`):
   - Updated `searchCloudinaryWithCache()` in `bstudio/lib/cd.ts` to support dynamic `sortDirection: "asc" | "desc"` (defaulting to `"asc"` for existing callers).
@@ -40,7 +117,6 @@ Update this file whenever the current phase, active feature, or implementation s
     - ESLint (`pnpm lint`) passed with 0 errors.
     - Production build (`pnpm build`) compiled and prerendered all 23 routes cleanly with Partial Prerendering.
     - Dev server HTTP 200 OK verified on `/`, and Cloudinary public IDs verified in rendered HTML.
-
 
 - Backend Feature 08: Client Space Fetch Wedding Albums from Sanity (`context/feature-specs/backend/08-client-space-fetch.md`):
   - Added `WEDDING_ALBUMS_QUERY` and `CLIENT_SPACE_ALBUMS_QUERY` in `bstudio/sanity/queries.ts` fetching the first 4 wedding albums (`*[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4]`).

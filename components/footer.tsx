@@ -202,6 +202,23 @@ export function Footer({ className, ...props }: FooterProps) {
           </span>
         </div>
 
+        {/* WhatsApp Contact */}
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
+          <span className="font-sans uppercase tracking-widest text-[10px] sm:text-[11px] font-bold text-text-muted">
+            WhatsApp
+          </span>
+          <a
+            href="https://wa.me/94704028206"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp +94 70 402 8206"
+            className="group inline-flex items-center gap-1 font-sans font-semibold tracking-wider text-text-primary hover:text-black transition-colors duration-200"
+          >
+            <span>+94 70 402 8206</span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-black" />
+          </a>
+        </div>
+
         {/* Social Links */}
         <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-7">
           {SOCIAL_LINKS.map((social) => (

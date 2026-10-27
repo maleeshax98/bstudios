@@ -90,7 +90,6 @@ export const PAGINATED_ALBUMS_QUERY = defineQuery(`
   }
 `);
 
-
 export const CATEGORIES_QUERY = defineQuery(`
   *[_type == "category"] | order(title asc) {
     _id,
@@ -129,7 +128,10 @@ export const PACKAGES_QUERY = defineQuery(`
   *[_type == "package"] | order(order asc, _createdAt asc) {
     _id,
     title,
-    serviceCategory,
+    category->{
+      _id,
+      title
+    },
     description,
     deliverables,
     price,
@@ -139,10 +141,13 @@ export const PACKAGES_QUERY = defineQuery(`
 `);
 
 export const PACKAGES_BY_CATEGORY_QUERY = defineQuery(`
-  *[_type == "package" && lower(serviceCategory) == lower($category)] | order(order asc, _createdAt asc) {
+  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {
     _id,
     title,
-    serviceCategory,
+    category->{
+      _id,
+      title
+    },
     description,
     deliverables,
     price,
@@ -174,4 +179,3 @@ export const COLORGRADING_QUERY = defineQuery(`
     publishedAt
   }
 `);
-

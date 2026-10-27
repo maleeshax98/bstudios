@@ -1633,3 +1633,265 @@ Implemented fetching and displaying the recent 12 sample images from Cloudinary'
 - TypeScript, ESLint, production build, and dev server runtime verified.
 - Memory saved and verified.
 
+---
+
+## 2026-10-27 — Backend Feature 10: Saving Contact Data to Sanity (`context/feature-specs/backend/10-saving-contact-data.md`)
+
+### Session Summary
+
+Implemented the Sanity schema and server-side Next.js App Router API route to store conversational "Mad-Libs" contact form submissions directly in Sanity.io according to `context/feature-specs/backend/10-saving-contact-data.md`:
+
+1. **Sanity Schema Definition (`studio/schemaTypes/contactSubmission.ts`):**
+   - Created `contactSubmissionType` document schema with fields:
+     - `name` (String, required): Prospective client's name.
+     - `email` (String, required): Prospective client's email address with format validation.
+     - `service` (String, required): Requested service with options matching 6 core services (Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, Promotion Video).
+     - `eventDate` (String, required): Requested date or timeframe.
+     - `status` (String, read-only): Lead status defaulting to `"New"` with options `["New", "Contacted", "Booked", "Archived"]`.
+     - `submittedAt` (Datetime, read-only): Timestamp initialized to current ISO timestamp.
+   - Configured custom Studio preview displaying client name, requested service, event date, and lead status badge.
+   - Registered `contactSubmissionType` in `studio/schemaTypes/index.ts`.
+   - Ran `pnpm run typegen` in `studio/`, extracting the schema and generating the TypeScript type `ContactSubmission` in `bstudio/sanity.types.ts`.
+   - Verified Studio production build (`pnpm build` in `studio/` passing cleanly in 238ms).
+
+2. **Next.js Server-Side API Route (`bstudio/app/api/contact/route.ts`):**
+   - Built App Router POST request handler using Next.js conventions (`NextResponse`).
+   - Securely initializes Sanity write client using server-only `SANITY_API_TOKEN` environment variable with `useCdn: false`.
+   - Validates required fields (`name`, `email` with `@` check, `service`, `eventDate` / `date`).
+   - Inserts document of `_type: 'contactSubmission'` into Sanity dataset.
+   - Returns structured JSON response (`{ success: true, message: "Your story is safe with us. We will be in touch soon.", data: { id, name, email, service, eventDate, submittedAt } }`) with status 201.
+   - Provides clear error responses for invalid input (400) and server errors (500).
+
+3. **Frontend Contact Forms Integration:**
+   - Updated `bstudio/components/contact/contact-page.tsx`: Asynchronously posts form payload to `/api/contact`, displays error messages on failure, and triggers smooth GSAP form dissolution into the editorial confirmation message on success.
+   - Updated `bstudio/components/contact-form.tsx`: Asynchronously posts form payload to `/api/contact`, displays `"TRANSMITTING..."` button state, and displays `"INQUIRY SENT"` state upon successful submission.
+
+4. **Verification:**
+   - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+   - ESLint (`pnpm lint`) passed with 0 errors.
+   - Production build (`pnpm build`) compiled and prerendered all 24 routes cleanly with dynamic route `ƒ /api/contact`.
+   - Dev server validation test: Invalid payload returns HTTP 400 with `{ success: false, error: "Name is required." }`.
+   - Live end-to-end integration test: Submitted valid inquiry via curl to `/api/contact`, successfully creating document `VdYqQiYvZQdrJTS4Fj4613` in Sanity dataset `production`.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `studio/schemaTypes/contactSubmission.ts`: Defined `contactSubmissionType`.
+  - `studio/schemaTypes/index.ts`: Registered `contactSubmissionType`.
+  - `bstudio/sanity.types.ts`: `ContactSubmission` type generated via typegen.
+  - `bstudio/app/api/contact/route.ts`: Secure POST handler with `SANITY_API_TOKEN` write client and validation.
+  - `bstudio/components/contact/contact-page.tsx`: Submits inquiry to `/api/contact` and triggers GSAP dissolution on success.
+  - `bstudio/components/contact-form.tsx`: Submits inquiry to `/api/contact` and updates button/feedback states.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Production build: `pnpm build` passed compiling all 24 routes.
+  - Runtime verification: Live document `VdYqQiYvZQdrJTS4Fj4613` created in Sanity `production` dataset.
+- **Incomplete / Next:**
+  - Awaiting next feature instruction from user.
+
+### Decisions & Rationale
+
+- **Server-Only `SANITY_API_TOKEN`:** The API token is strictly scoped to `app/api/contact/route.ts` and not prefixed with `NEXT_PUBLIC_`, ensuring write credentials are never leaked or exposed to the client bundle.
+- **Flexible Date Parameter Handling (`eventDate || date`):** Accommodates both conversational form state keys (`date`) and standard Sanity schema keys (`eventDate`), preventing mapping errors.
+- **`useCdn: false` for Write Operations:** Content mutations must bypass Sanity's Edge CDN cache to write immediately to the live dataset.
+- **Structured Success Message:** Returns `"Your story is safe with us. We will be in touch soon."` as specified in the feature requirements.
+
+### Continuation Context
+
+- Contact submissions from both `contact-page.tsx` and `contact-form.tsx` now save directly into Sanity's `production` dataset under document type `contactSubmission`.
+- Studio and Next.js builds verified.
+- Memory saved and verified.
+
+---
+
+## 2026-10-27 — Contact Us Feature 02: Add WhatsApp Number (`02-adding-wtsapp.md`)
+
+### Session Summary
+
+Implemented the WhatsApp number integration according to `context/feature-specs/contact-us/02-adding-wtsapp.md`. Added the studio WhatsApp number `+94 70 402 8206` with direct chat deep-link (`https://wa.me/94704028206`) across suitable locations on the website and specifically in the site footer. Positioned the WhatsApp contact entry in the minimalist sub-footer of `components/footer.tsx`, added a first-class `WHATSAPP` block under Studio Contact Details in `components/contact/contact-page.tsx`, integrated it into the direct inquiries helper line in `components/contact-form.tsx`, and added it alongside email in the mobile navigation overlay in `components/navbar.tsx`. Verified with TypeScript strict checks, ESLint, Next.js production build, and live dev server curl checks.
+
+### Key Changes
+
+1. **Site Footer (`components/footer.tsx`):**
+   - Added a dedicated WhatsApp contact block in the sub-footer row (`subFooterRef`) between copyright info and social links.
+   - Styled with bold uppercase tag (`WHATSAPP`), crisp Sans-Serif font for the number `+94 70 402 8206`, and Lucide `ArrowUpRight` stroke icon.
+   - Links directly to `https://wa.me/94704028206` with `target="_blank"` and `rel="noopener noreferrer"`.
+
+2. **Dedicated Contact Page (`components/contact/contact-page.tsx`):**
+   - Added a `WHATSAPP` section under the studio contact details grid right alongside `PHONE`.
+   - Displays `+94 70 402 8206` linking to `https://wa.me/94704028206` with underline hover transition matching the existing editorial contact styling.
+
+3. **Conversational Contact Form (`components/contact-form.tsx`):**
+   - Updated the direct inquiries helper text below the submit button to include WhatsApp: `Direct inquiries: info@bstudio.com // WhatsApp: +94 70 402 8206 // Colombo, Sri Lanka`.
+   - Wrapped `//` separators in JSX expression strings to satisfy ESLint `react/jsx-no-comment-textnodes`.
+
+4. **Mobile Navigation Overlay (`components/navbar.tsx`):**
+   - Added WhatsApp `+94 70 402 8206` alongside the email in the mobile menu bottom metadata row so mobile visitors can start a WhatsApp conversation with a single tap.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `components/footer.tsx`: WhatsApp number and link added to sub-footer.
+  - `components/contact/contact-page.tsx`: WhatsApp block added to Studio Contact Details.
+  - `components/contact-form.tsx`: WhatsApp added to direct inquiries text.
+  - `components/navbar.tsx`: WhatsApp added to mobile navigation overlay.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Production build: `pnpm build` passed compiling and prerendering all 24 routes cleanly.
+  - Runtime verification: Live curl requests to `/` and `/contact` confirmed `href="https://wa.me/94704028206"` is returned.
+- **Incomplete / Next:**
+  - Awaiting next feature instruction from user.
+
+### Decisions & Rationale
+
+- **Standard `wa.me` Deep-Link:** Used `https://wa.me/94704028206` without country code prefix `+` or spaces in the URL target per WhatsApp API standards, ensuring immediate cross-platform resolution on mobile and desktop web.
+- **Editorial Placement:** Placed the WhatsApp number directly in the sub-footer so it is visible globally across all routes (Home, Works, Services, Packages, About, Contact) without cluttering the screen or relying on intrusive floating widgets.
+
+### Continuation Context
+
+- WhatsApp number `+94 70 402 8206` is active and verified across `Footer`, `ContactPage`, `ContactForm`, and `Navbar`.
+- Progress tracker and memory updated and verified.
+
+---
+
+## 2026-10-27 — Packages Feature 02: Recreating packages page (`02-recreating-packages.md`)
+
+### Session Summary
+
+Recreated the dedicated packages experience according to `context/feature-specs/packages/02-recreating-packages.md`. Analyzed `packageType` in Sanity Studio, corrected preview field selection, added "Packages" to global site navigation (desktop and mobile), fetched all categories dynamically from Sanity and displayed them as non-horizontally-scrolling, line-wrapping selectable pill buttons. Connected data fetching to retrieve and filter relevant packages for the selected category from Sanity, displaying package cards centered using a responsive flex system. Added an elegant, editorial empty state message when a category has 0 packages (e.g. `BIRTHDAY`). Verified with TypeScript strict checks, ESLint, Next.js production builds, Sanity Studio builds, and live HTTP checks.
+
+### Key Changes
+
+1. **Sanity Schema & Query Alignment (`studio/schemaTypes/packageType.ts`, `bstudio/sanity/queries.ts`):**
+   - Analyzed `packageType`: `title` (string), `category` (reference to `category`), `description` (text), `deliverables` (array of strings), `price` (string), `badge` (string), `order` (number).
+   - Fixed preview in `packageType.ts` from `serviceCategory` to `category.title`.
+   - Updated `PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY` in `bstudio/sanity/queries.ts` to dereference `category->{ _id, title }`.
+   - Ran `pnpm run typegen` in `studio/` regenerating `PACKAGES_QUERY_RESULT` and `PACKAGES_BY_CATEGORY_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+
+2. **Global Navigation Link (`components/navbar.tsx`):**
+   - Added `{ label: "Packages", href: "/packages", index: "03" }` to `NAV_ITEMS`.
+   - Updated subsequent indices (`About` -> "04", `Contact` -> "05").
+   - Verified that both the desktop navigation bar and the full-screen mobile navigation overlay dynamically render the Packages link.
+
+3. **Dynamic Category Fetching & Selection (`components/packages/packages-page.tsx`, `app/packages/page.tsx`):**
+   - Server Component (`app/packages/page.tsx`): Fetches `CATEGORIES_QUERY` and `PACKAGES_QUERY` in parallel via `getPackagesPageData()` marked with `"use cache"`.
+   - Replaced fixed horizontal scrolling category bar with responsive line-wrapping buttons (`flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5`) without `overflow-x-auto`, breaking lines naturally on any screen size.
+   - User category selection smoothly switches the active category and filters packages matching category `_id` or `title`.
+
+4. **Centered Package Cards & Empty State Message (`components/packages/packages-page.tsx`):**
+   - Replaced rigid grid with centered flex system (`flex flex-wrap justify-center items-stretch gap-8 sm:gap-10 lg:gap-12 max-w-7xl mx-auto`) with individual card constraints (`w-full sm:w-[calc(50%-1.25rem)] lg:w-[calc(33.333%-2rem)] max-w-md`), ensuring 1, 2, or 3 cards are always centered in the viewport.
+   - When a category has 0 packages (e.g. `BIRTHDAY`), renders an editorial empty state box with `PackageOpen` icon, Serif headline ("No packages available for this category yet."), custom consultation text, and `[ REQUEST BESPOKE QUOTE ]` CTA button linking to `/contact?service=${categoryTitle}`.
+   - GSAP animation lifecycle: Animate cards and empty state on category tab switch with clean unmount teardown via `gsap.context()`.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `studio/schemaTypes/packageType.ts`: Corrected preview select for category.title.
+  - `bstudio/sanity/queries.ts`: Updated `PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY`.
+  - `bstudio/sanity.types.ts`: Regenerated types via Sanity TypeGen.
+  - `bstudio/components/navbar.tsx`: Packages link added to `NAV_ITEMS`.
+  - `bstudio/app/packages/page.tsx`: Updated to fetch categories and packages from Sanity with `"use cache"`.
+  - `bstudio/components/packages/packages-page.tsx`: Recreated with line-wrapping categories, centered cards, and empty state.
+  - `bstudio/components/packages-page.tsx`: Re-export updated with `CategoryItem`.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Next.js build: `pnpm build` in `bstudio/` compiled and prerendered all 24 routes cleanly.
+  - Sanity Studio build: `pnpm build` in `studio/` passed in 226ms.
+  - Runtime check: Verified live curl HTTP 200 on `/packages`, verified rendered Sanity categories (`[ BIRTHDAY ]`, `[ PRE SHOOT ]`, `[ WEDDING ]`), packages, and navbar links.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Derived Active Category ID:** Derived `effectiveCategoryId = selectedCategoryId || categories[0]?._id || ""` directly during render rather than setting state synchronously inside a `useEffect`, eliminating React 19 compiler cascading-render lint errors.
+- **Non-Horizontally-Scrollable Category Navigation:** Switched category tabs from `overflow-x-auto` to `flex flex-wrap items-center justify-center` so categories wrap across lines gracefully on mobile/tablet viewports as specified.
+- **Centered Responsive Flex Layout:** Used `flex flex-wrap justify-center` so that when a category contains only 1 or 2 packages, they are centered aesthetically on the page instead of left-aligned with empty space.
+- **Clean Fallback to Empty State (No Mock Fallback):** When a category has no packages in Sanity (e.g. `BIRTHDAY`), display the empty state message and quote request button instead of falling back to mock sample data, adhering to the spec.
+
+### Continuation Context
+
+- Recreated packages page is live and verified on `/packages`.
+- Navbar link "Packages" is active across desktop and mobile.
+- Progress tracker and memory updated and verified.
+
+---
+
+## 2026-10-27 — Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp
+
+### Session Summary
+
+Refined the packages page (`components/packages/packages-page.tsx`) per user direction: scaled up the pricing typography to be prominently big, and updated the inquiry action buttons so that clicking them redirects directly to a WhatsApp chat with a pre-filled inquiry message targeting the studio number `+94 70 402 8206` instead of navigating to the `/contact` page. Verified with TypeScript checks, ESLint, Next.js production builds, and runtime curl checks.
+
+### Key Changes
+
+1. **Prominent Pricing Scale (`components/packages/packages-page.tsx`):**
+   - Upgraded the pricing container and typography from small muted tracking (`text-xs font-bold`) to high-impact bold typography (`text-3xl sm:text-4xl lg:text-[2.75rem] font-black tracking-tight leading-none text-text-primary mt-4`).
+   - Ensures prices (e.g. `Rs. 18000`, `Rs. 20000`, `$2,800`) are immediately readable and command attention on each card.
+
+2. **Direct WhatsApp Inquiry Deep Link (`components/packages/packages-page.tsx`):**
+   - Replaced internal Next.js `<Link href="/contact...">` with direct external anchor link targeting `https://wa.me/94704028206?text=...`.
+   - Pre-composes a detailed, professional message based on the specific package and category clicked: `Hi B studio, I would like to inquire about the "${pkg.title}" package (${categoryTitle} - ${pkg.price}).`
+   - Configured empty-state consultation button (`[ REQUEST BESPOKE QUOTE ]`) to also redirect to WhatsApp: `Hi B studio, I would like to inquire about bespoke packages for ${categoryTitle}.`
+   - Added `target="_blank"` and `rel="noopener noreferrer"`.
+   - Removed unused `next/link` import.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `components/packages/packages-page.tsx`: Pricing enlarged to `text-3xl sm:text-4xl lg:text-[2.75rem]`, buttons redirect to WhatsApp chat.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Production build: `pnpm build` in `bstudio/` compiled and prerendered all 24 routes cleanly.
+  - Runtime check: Verified live curl on `http://localhost:3000/packages` returning WhatsApp deep links with URL-encoded messages.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Pre-filled Message Context:** Passing pre-filled query parameters (`text=...`) directly to `wa.me/94704028206` eliminates customer friction, instantly identifying which package tier and category they are interested in when the WhatsApp conversation opens.
+- **`target="_blank"` and `rel="noopener noreferrer"`:** Allows prospective clients to open WhatsApp in a separate tab or native app without navigating away from the B Studio packages experience.
+
+### Continuation Context
+
+- All package cards now feature large brutalist price typography and direct WhatsApp inquiry buttons.
+- Empty-state category views also feature direct WhatsApp consultation requests.
+- Progress tracker and memory updated and verified saved.
+
+---
+
+## 2026-10-27 — Push to GitHub (Development Branch Sync)
+
+### Session Summary
+
+Staged, committed, and pushed the latest feature implementations to GitHub remote `origin/development` (`https://github.com/maleeshax98/bstudios.git`). Verified that all type checks, lint checks, and Next.js production builds compile cleanly with zero errors before pushing. Also cleanly committed local Sanity studio schema updates to `studio/` on `main`.
+
+### Key Changes Pushed
+
+1. **Contact Data Backend Saving & API (`app/api/contact/route.ts`, `components/contact-form.tsx`):**
+   - Implemented Next.js route handler saving validated contact submissions to Sanity CMS under `contactSubmission` type.
+   - Built resilient client form handling with loading states, inline validation, and error feedback.
+
+2. **WhatsApp Integration (`components/contact/contact-page.tsx`, `components/footer.tsx`, `components/packages/packages-page.tsx`):**
+   - Added direct studio WhatsApp inquiry actions (`https://wa.me/94704028206`) across Contact page, Footer, and Package cards.
+   - Configured pre-composed contextual messages tailored to specific package selections.
+
+3. **Recreated Packages Experience (`app/packages/page.tsx`, `components/packages/packages-page.tsx`, `components/navbar.tsx`, `sanity/queries.ts`):**
+   - Added `Packages` link to navigation and mobile menu.
+   - Dynamic category fetch with natural line wrapping (non-horizontal scroll).
+   - Dynamic package filtering with centered flex cards and bespoke consultation empty state.
+   - High-impact bold price typography.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `git commit` and `git push origin development` to `https://github.com/maleeshax98/bstudios.git`.
+  - Next.js build: `pnpm build` in `bstudio/` verified (24/24 routes prerendered).
+  - TypeScript: `pnpm exec tsc --noEmit` passed (0 errors).
+  - ESLint: `pnpm lint` passed (0 errors).
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+

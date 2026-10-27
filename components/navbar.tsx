@@ -16,8 +16,9 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Work", href: "/works", index: "01" },
   { label: "Services", href: "/services", index: "02" },
-  { label: "About", href: "/about", index: "03" },
-  { label: "Contact", href: "/contact", index: "04" },
+  { label: "Packages", href: "/packages", index: "03" },
+  { label: "About", href: "/about", index: "04" },
+  { label: "Contact", href: "/contact", index: "05" },
 ];
 
 export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
@@ -148,7 +149,7 @@ export function Navbar({
           ease: "power2.in",
           stagger: 0.02,
         },
-        0
+        0,
       );
     }
 
@@ -159,7 +160,7 @@ export function Navbar({
         duration: 0.25,
         ease: "power2.inOut",
       },
-      0.03
+      0.03,
     );
   }, [isOpen]);
 
@@ -189,7 +190,7 @@ export function Navbar({
         gsap.fromTo(
           overlayRef.current,
           { opacity: 0 },
-          { opacity: 1, duration: 0.3, ease: "power2.out" }
+          { opacity: 1, duration: 0.3, ease: "power2.out" },
         );
       }
       if (menuListRef.current) {
@@ -203,7 +204,7 @@ export function Navbar({
             duration: 0.4,
             ease: "power3.out",
             delay: 0.1,
-          }
+          },
         );
       }
     } else {
@@ -231,7 +232,7 @@ export function Navbar({
           isTransparent
             ? "bg-transparent border-b border-transparent"
             : "bg-bg-base border-b border-border-subtle",
-          className
+          className,
         )}
         {...props}
       >
@@ -250,7 +251,7 @@ export function Navbar({
                   "font-sans font-extrabold uppercase tracking-tighter text-xl sm:text-2xl transition-colors duration-300",
                   isTransparent
                     ? "text-white group-hover:text-white/80"
-                    : "text-text-primary group-hover:text-accent-primary"
+                    : "text-text-primary group-hover:text-accent-primary",
                 )}
               >
                 B STUDIO
@@ -258,7 +259,7 @@ export function Navbar({
               <span
                 className={cn(
                   "ml-1 w-1.5 h-1.5 rounded-full inline-block transition-all duration-300 group-hover:scale-125",
-                  isTransparent ? "bg-white" : "bg-accent-primary"
+                  isTransparent ? "bg-white" : "bg-accent-primary",
                 )}
               />
             </Link>
@@ -274,7 +275,7 @@ export function Navbar({
                   "group flex items-baseline gap-1.5 text-xs uppercase tracking-widest transition-colors duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
                   isTransparent
                     ? "text-white/70 hover:text-white"
-                    : "text-text-muted hover:text-accent-primary"
+                    : "text-text-muted hover:text-accent-primary",
                 )}
               >
                 <span
@@ -282,7 +283,7 @@ export function Navbar({
                     "font-serif italic text-xs transition-colors duration-300",
                     isTransparent
                       ? "text-white/50 group-hover:text-white"
-                      : "text-text-muted/70 group-hover:text-accent-primary"
+                      : "text-text-muted/70 group-hover:text-accent-primary",
                   )}
                 >
                   {item.index}
@@ -306,7 +307,7 @@ export function Navbar({
                   "group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-sans text-xs uppercase tracking-widest font-semibold transition-all duration-300 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                   isTransparent
                     ? "bg-white text-accent-primary hover:bg-white/90"
-                    : "bg-accent-primary text-bg-base hover:bg-text-primary"
+                    : "bg-accent-primary text-bg-base hover:bg-text-primary",
                 )}
               >
                 <span>{ctaLabel}</span>
@@ -327,7 +328,7 @@ export function Navbar({
                 "p-2 -mr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary transition-colors duration-300",
                 isTransparent
                   ? "text-white hover:text-white/80"
-                  : "text-text-primary hover:text-accent-primary"
+                  : "text-text-primary hover:text-accent-primary",
               )}
             >
               <Menu className="w-6 h-6 stroke-[1.75]" />
@@ -394,9 +395,24 @@ export function Navbar({
               <p className="font-serif italic text-sm text-text-muted">
                 Cinematic Photography & Direction
               </p>
-              <p className="font-sans text-xs tracking-wider uppercase text-text-primary mt-1">
-                hello@bstudio.com
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 text-xs tracking-wider uppercase">
+                <a
+                  href="mailto:hello@bstudio.com"
+                  className="font-sans text-text-primary hover:text-accent-primary transition-colors"
+                >
+                  hello@bstudio.com
+                </a>
+                <span className="hidden sm:inline text-text-muted/40">•</span>
+                <a
+                  href="https://wa.me/94704028206"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-sans font-semibold text-text-primary hover:text-accent-primary transition-colors inline-flex items-center gap-1"
+                >
+                  <span>WhatsApp: +94 70 402 8206</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </a>
+              </div>
             </div>
 
             <Link

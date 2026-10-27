@@ -15,6 +15,33 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type ContactSubmission = {
+  _id: string;
+  _type: "contactSubmission";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  email?: string;
+  service?:
+    | "Preshoot"
+    | "Casual Shoot"
+    | "Birthday Shoot"
+    | "Engagement Shoot"
+    | "Wedding Shoot"
+    | "Promotion Video";
+  eventDate?: string;
+  status?: "New" | "Contacted" | "Booked" | "Archived";
+  submittedAt?: string;
+};
+
+export type CategoryReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "category";
+};
+
 export type Package = {
   _id: string;
   _type: "package";
@@ -22,8 +49,7 @@ export type Package = {
   _updatedAt: string;
   _rev: string;
   title?: string;
-  serviceCategory?:
-    "preshoot" | "casual" | "birthday" | "engagement" | "wedding" | "promotion";
+  category?: CategoryReference;
   description?: string;
   deliverables?: Array<string>;
   price?: string;
@@ -63,13 +89,6 @@ export type Services = {
   description?: string;
   slug?: Slug;
   publishedAt?: string;
-};
-
-export type CategoryReference = {
-  _ref: string;
-  _type: "reference";
-  _weak?: boolean;
-  [internalGroqTypeReferenceTo]?: "category";
 };
 
 export type Album = {
@@ -218,11 +237,12 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
+  | ContactSubmission
+  | CategoryReference
   | Package
   | Colorgrading
   | Slug
   | Services
-  | CategoryReference
   | Album
   | Media
   | Category
@@ -366,18 +386,14 @@ export type ALBUM_SLUGS_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PACKAGES_QUERY
-// Query: *[_type == "package"] | order(order asc, _createdAt asc) {    _id,    title,    serviceCategory,    description,    deliverables,    price,    badge,    order  }
+// Query: *[_type == "package"] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order  }
 export type PACKAGES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
-  serviceCategory:
-    | "birthday"
-    | "casual"
-    | "engagement"
-    | "preshoot"
-    | "promotion"
-    | "wedding"
-    | null;
+  category: {
+    _id: string;
+    title: string | null;
+  } | null;
   description: string | null;
   deliverables: Array<string> | null;
   price: string | null;
@@ -387,18 +403,14 @@ export type PACKAGES_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PACKAGES_BY_CATEGORY_QUERY
-// Query: *[_type == "package" && lower(serviceCategory) == lower($category)] | order(order asc, _createdAt asc) {    _id,    title,    serviceCategory,    description,    deliverables,    price,    badge,    order  }
+// Query: *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order  }
 export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
-  serviceCategory:
-    | "birthday"
-    | "casual"
-    | "engagement"
-    | "preshoot"
-    | "promotion"
-    | "wedding"
-    | null;
+  category: {
+    _id: string;
+    title: string | null;
+  } | null;
   description: string | null;
   deliverables: Array<string> | null;
   price: string | null;
@@ -442,8 +454,8 @@ declare global {
     '\n  *[_type == "category"] | order(title asc) {\n    _id,\n    title\n  }\n': CATEGORIES_QUERY_RESULT;
     '\n  *[_type == "album" && slug.current == $slug][0] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current)] {\n    "slug": slug.current\n  }\n': ALBUM_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    serviceCategory,\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_QUERY_RESULT;
-    '\n  *[_type == "package" && lower(serviceCategory) == lower($category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    serviceCategory,\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
+    '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_QUERY_RESULT;
+    '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
     '\n  *[_type == "services"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': SERVICES_QUERY_RESULT;
     '\n  *[_type == "colorgrading"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': COLORGRADING_QUERY_RESULT;
   }
