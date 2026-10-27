@@ -45,6 +45,30 @@ export const FEATURED_ALBUMS_QUERY = defineQuery(`
 
 export const FEATURED_WORKS_QUERY = FEATURED_ALBUMS_QUERY;
 
+export const WEDDING_ALBUMS_QUERY = defineQuery(`
+  *[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4] {
+    _id,
+    title,
+    description,
+    date,
+    category->{
+      _id,
+      title
+    },
+    alt,
+    thumbnail,
+    cloudinaryFolder,
+    Media,
+    count,
+    duration,
+    slug,
+    isFeatured,
+    publishedAt
+  }
+`);
+
+export const CLIENT_SPACE_ALBUMS_QUERY = WEDDING_ALBUMS_QUERY;
+
 export const PAGINATED_ALBUMS_QUERY = defineQuery(`
   *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {
     _id,

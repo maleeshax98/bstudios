@@ -1506,4 +1506,69 @@ Implemented fetching and displaying featured works from Sanity on the home page 
 - Dev server and production build verified.
 - Memory saved and verified.
 
+---
+
+## 2026-10-27 — Backend Feature 08: Client Space Fetch Wedding Albums from Sanity (`context/feature-specs/backend/08-client-space-fetch.md`)
+
+### Session Summary
+
+Implemented fetching and displaying the first 4 wedding albums from Sanity in the client space teaser section (`client-space-teaser.tsx`) on the home page per `context/feature-specs/backend/08-client-space-fetch.md`:
+
+1. **Sanity GROQ Query & TypeGen (`bstudio/sanity/queries.ts` & `bstudio/sanity.types.ts`):**
+   - Defined `WEDDING_ALBUMS_QUERY` (and alias `CLIENT_SPACE_ALBUMS_QUERY`) in `bstudio/sanity/queries.ts`:
+     `*[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4]`
+   - Fields projected: `_id, title, description, date, category->{ _id, title }, alt, thumbnail, cloudinaryFolder, Media, count, duration, slug, isFeatured, publishedAt`.
+   - Ran `pnpm run typegen` in `studio/`, extracting schema and generating precise TypeScript query types `WEDDING_ALBUMS_QUERY_RESULT` and `CLIENT_SPACE_ALBUMS_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+2. **Server-Side Data Fetching (`bstudio/app/page.tsx`):**
+   - Updated `getHomeData()` marked with `"use cache"` to fetch `WEDDING_ALBUMS_QUERY` concurrently alongside `SERVICES_QUERY`, `COLORGRADING_QUERY`, and `FEATURED_ALBUMS_QUERY` in `Promise.all`.
+   - Included resilient `try/catch` with empty array fallback ensuring transient network timeouts during build prerendering or ISR do not fail.
+   - Passed `weddingAlbums` as `initialAlbums` prop to `<ClientSpaceTeaser />`.
+3. **Client Space Teaser Component Refactor (`bstudio/components/client-space-teaser.tsx`):**
+   - Updated `ClientSpaceTeaserProps` to accept `initialAlbums?: WEDDING_ALBUMS_QUERY_RESULT`.
+   - Mapped Sanity wedding albums to the `PersonalAlbum` data model:
+     - `galleryId`: Zero-padded string (`GALLERY #01`, `GALLERY #02`, etc.).
+     - `client`: Album title or fallback wedding narrative label.
+     - `shootType`: Truncated description or date/category label.
+     - `assetCount`: Formatted photo count or video duration master indicator (`XX Assets // 4K Master` or `XX Film // 4K Master`).
+     - `src`: Sanitized thumbnail URL via `cleanImageUrl` with fallback to sample albums.
+     - `link`: Direct link to single album gallery `/album/${slug}`.
+   - Replaced `next/image` with `<OptimizedImage>` from `@/components/optimized-image` for automatic Cloudinary CDN format/quality optimization, skeleton pulsing loaders, and error retry buttons.
+   - Wrapped cards in Next.js `<Link>` allowing users to click any card in the album spread to open `/album/[slug]`.
+   - Dynamically linked the primary "VIEW SAMPLE ALBUM" CTA button to the first wedding album's gallery or `/works`.
+   - Implemented defensive padding: if Sanity returns fewer than 4 wedding albums, remaining slots are padded with sample albums, ensuring the 4-card GSAP fan-out spread animation always functions smoothly without undefined ref indexing.
+4. **Verification:**
+   - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+   - ESLint (`pnpm lint`) passed with 0 errors.
+   - Next.js production build (`pnpm build`) compiled all 23 routes cleanly with Partial Prerendering.
+   - Dev server HTTP 200 OK verified on `/`.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `bstudio/sanity/queries.ts`: `WEDDING_ALBUMS_QUERY` and `CLIENT_SPACE_ALBUMS_QUERY` defined.
+  - `bstudio/sanity.types.ts`: `WEDDING_ALBUMS_QUERY_RESULT` generated via typegen.
+  - `bstudio/app/page.tsx`: Fetches wedding albums in `getHomeData()` and passes `initialAlbums` to `<ClientSpaceTeaser />`.
+  - `bstudio/components/client-space-teaser.tsx`: Dynamic album mapping, `OptimizedImage` integration, interactive card and CTA links to `/album/[slug]`.
+  - `context/feature-specs/backend/08-client-space-fetch.md`: Marked as `COMPLETED`.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Production build: `pnpm build` passed compiling all 23 routes.
+  - Dev server: HTTP 200 OK verified on `/`.
+- **Incomplete / Next:**
+  - Awaiting next feature instruction from user.
+
+### Decisions & Rationale
+
+- **Robust Wedding Category Matching (`lower(category->title) == "wedding" || category->title match "*wedding*"`):** Accommodates potential variations in category titling (e.g., uppercase `"WEDDING"`, titlecase `"Wedding"`, or compound names) while maintaining strict semantic filtering.
+- **4-Card GSAP Layout Integrity:** The client space teaser animation relies on an explicit 4-card deck spread (`cards[0]` through `cards[3]` with specific rotations and translations). If the Sanity CMS contains fewer than 4 wedding albums, padding the mapped array with sample albums guarantees that the GSAP timeline and CSS perspective stack never suffer null ref errors or broken visual alignments.
+- **Direct Navigation to `/album/[slug]`:** Both the primary CTA button ("VIEW SAMPLE ALBUM") and the individual album cards now route directly to the single album experience via Next.js `<Link>`, linking the homepage teaser directly to the album gallery.
+- **Image Optimization & Fallback:** Cloudinary thumbnails and external image URLs are rendered with `<OptimizedImage>`, ensuring fast CDN delivery, skeleton placeholders, and error retry states.
+
+### Continuation Context
+
+- The first 4 wedding albums from Sanity are now live in `<ClientSpaceTeaser />` on the home page.
+- Build and dev server verified.
+- Memory saved and verified.
+
 

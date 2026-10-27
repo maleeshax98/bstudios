@@ -1,17 +1,33 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Globe, ArrowUpRight, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { WEDDING_ALBUMS_QUERY_RESULT } from "@/sanity.types";
+import { OptimizedImage } from "@/components/optimized-image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-export type ClientSpaceTeaserProps = React.HTMLAttributes<HTMLElement>;
+function cleanImageUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  const match = trimmed.match(
+    /^(https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|avif|gif))([a-zA-Z\s].*)$/i,
+  );
+  if (match) {
+    return match[1];
+  }
+  return trimmed;
+}
+
+export interface ClientSpaceTeaserProps extends React.HTMLAttributes<HTMLElement> {
+  initialAlbums?: WEDDING_ALBUMS_QUERY_RESULT;
+}
 
 interface PersonalAlbum {
   id: string;
@@ -21,9 +37,11 @@ interface PersonalAlbum {
   assetCount: string;
   src: string;
   alt: string;
+  slug?: string;
+  link?: string;
 }
 
-const ALBUMS: PersonalAlbum[] = [
+const SAMPLE_ALBUMS: PersonalAlbum[] = [
   {
     id: "album-01",
     galleryId: "GALLERY #01",
@@ -32,6 +50,7 @@ const ALBUMS: PersonalAlbum[] = [
     assetCount: "340 Assets // 4K Master",
     src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=85",
     alt: "Client wedding album preview",
+    link: "/works",
   },
   {
     id: "album-02",
@@ -41,6 +60,7 @@ const ALBUMS: PersonalAlbum[] = [
     assetCount: "215 Assets // 35mm Analog",
     src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=85",
     alt: "Client editorial preshoot album preview",
+    link: "/works",
   },
   {
     id: "album-03",
@@ -50,6 +70,7 @@ const ALBUMS: PersonalAlbum[] = [
     assetCount: "420 Assets // HDR Masters",
     src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85",
     alt: "Client luxury reception album preview",
+    link: "/works",
   },
   {
     id: "album-04",
@@ -59,13 +80,70 @@ const ALBUMS: PersonalAlbum[] = [
     assetCount: "190 Assets // Ultra-Res",
     src: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=1000&q=85",
     alt: "Client monograph album preview",
+    link: "/works",
   },
 ];
 
-export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProps) {
+export function ClientSpaceTeaser({
+  initialAlbums,
+  className,
+  ...props
+}: ClientSpaceTeaserProps) {
   const sectionRef = React.useRef<HTMLElement>(null);
   const cardsRef = React.useRef<(HTMLDivElement | null)[]>([]);
   const magneticBtnRef = React.useRef<HTMLAnchorElement>(null);
+
+  const albums = React.useMemo<PersonalAlbum[]>(() => {
+    if (!initialAlbums || initialAlbums.length === 0) {
+      return SAMPLE_ALBUMS;
+    }
+
+    const sanityMapped: PersonalAlbum[] = initialAlbums
+      .slice(0, 4)
+      .map((album, idx) => {
+        const galleryNum = String(idx + 1).padStart(2, "0");
+        const countText = album.count
+          ? `${album.count} Assets // 4K Master`
+          : album.duration
+          ? `${album.duration} Film // 4K Master`
+          : "300+ Assets // 4K Master";
+
+        const shootType = album.description
+          ? album.description.length > 36
+            ? `${album.description.slice(0, 36).trim()}...`
+            : album.description
+          : (album.date || "Wedding Collection");
+
+        const slug = album.slug?.current;
+        const link = slug ? `/album/${slug}` : "/works";
+
+        return {
+          id: album._id,
+          galleryId: `GALLERY #${galleryNum}`,
+          client: album.title || `Wedding Story #${galleryNum}`,
+          shootType,
+          assetCount: countText,
+          src:
+            cleanImageUrl(album.thumbnail) ||
+            SAMPLE_ALBUMS[idx % SAMPLE_ALBUMS.length].src,
+          alt: album.alt || album.title || "Client wedding album preview",
+          slug,
+          link,
+        };
+      });
+
+    if (sanityMapped.length < 4) {
+      const remaining = SAMPLE_ALBUMS.slice(sanityMapped.length, 4).map(
+        (fallback, i) => ({
+          ...fallback,
+          galleryId: `GALLERY #${String(sanityMapped.length + i + 1).padStart(2, "0")}`,
+        }),
+      );
+      return [...sanityMapped, ...remaining];
+    }
+
+    return sanityMapped;
+  }, [initialAlbums]);
 
   // GSAP ScrollTrigger album fan out / spread animation
   React.useEffect(() => {
@@ -219,7 +297,7 @@ export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProp
     return () => {
       ctx.revert();
     };
-  }, []);
+  }, [albums]);
 
   // Magnetic hover effect on primary CTA button
   const handleMagneticMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -331,16 +409,16 @@ export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProp
 
             {/* Call to Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-8 sm:mt-10">
-              <a
+              <Link
                 ref={magneticBtnRef}
-                href="#client-login"
+                href={albums[0]?.link || "/works"}
                 onMouseMove={handleMagneticMove}
                 onMouseLeave={handleMagneticLeave}
                 className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-text-primary text-bg-base font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:bg-black hover:shadow-xl active:scale-95 will-change-transform"
               >
                 <span>VIEW SAMPLE ALBUM</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
+              </Link>
 
               <a
                 href="#client-login"
@@ -355,7 +433,7 @@ export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProp
           {/* Right Column: The Album Spread Animation Stage */}
           <div className="lg:col-span-7 flex items-center justify-center relative w-full h-[360px] sm:h-[450px] md:h-[500px] lg:h-[560px] perspective-[1000px]">
             <div className="relative w-full h-full flex items-center justify-center">
-              {ALBUMS.map((album, index) => (
+              {albums.map((album, index) => (
                 <div
                   key={album.id}
                   ref={(el) => {
@@ -363,9 +441,13 @@ export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProp
                   }}
                   className="group absolute w-[190px] sm:w-[240px] md:w-[280px] lg:w-[310px] aspect-[3/4] rounded-2xl overflow-hidden border border-border-subtle bg-bg-surface shadow-[0_20px_50px_rgba(0,0,0,0.12)] will-change-transform transition-shadow duration-500 hover:shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
                 >
-                  {/* High Quality Cinematic Image */}
-                  <div className="relative w-full h-full overflow-hidden">
-                    <Image
+                  <Link
+                    href={album.link || "/works"}
+                    className="block relative w-full h-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary rounded-2xl"
+                    aria-label={`View ${album.client} album`}
+                  >
+                    {/* High Quality Cinematic Image via OptimizedImage */}
+                    <OptimizedImage
                       src={album.src}
                       alt={album.alt}
                       fill
@@ -397,7 +479,7 @@ export function ClientSpaceTeaser({ className, ...props }: ClientSpaceTeaserProp
                         <span className="font-mono text-[9px]">4K HDR</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               ))}
             </div>

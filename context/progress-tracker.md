@@ -8,17 +8,36 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Backend Feature 07: Featured Works from Sanity on Home Page completed and verified. Ready for next user instruction.
+- Backend Feature 08: Client Space Wedding Albums Fetch completed and verified. Ready for next user instruction.
 
 ## In Progress
 
-- None (Backend Feature 07 completed and verified. Awaiting next user instruction).
+- None (Backend Feature 08 completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Backend Feature 08: Client Space Fetch Wedding Albums from Sanity (`context/feature-specs/backend/08-client-space-fetch.md`):
+  - Added `WEDDING_ALBUMS_QUERY` and `CLIENT_SPACE_ALBUMS_QUERY` in `bstudio/sanity/queries.ts` fetching the first 4 wedding albums (`*[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4]`).
+  - Executed `pnpm run typegen` in `studio/`, extracting schema and generating precise TypeScript query types `WEDDING_ALBUMS_QUERY_RESULT` and `CLIENT_SPACE_ALBUMS_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+  - Updated `bstudio/app/page.tsx`:
+    - Added `WEDDING_ALBUMS_QUERY` to `getHomeData()` marked with `"use cache"` and resilient `try/catch` fallback.
+    - Passed `weddingAlbums` as `initialAlbums` prop to `<ClientSpaceTeaser />`.
+  - Updated `bstudio/components/client-space-teaser.tsx`:
+    - Accepts `initialAlbums?: WEDDING_ALBUMS_QUERY_RESULT`.
+    - Dynamically maps Sanity wedding albums to the `PersonalAlbum` model (`id`, `galleryId`, `client`, `shootType`, `assetCount`, `src`, `alt`, `slug`, `link`).
+    - Integrates `<OptimizedImage>` with Cloudinary auto-format/auto-quality CDN optimization, skeleton loading states, and retry handling.
+    - Wraps cards with Next.js `<Link>` for direct navigation to `/album/${slug}`.
+    - Dynamically links the primary "VIEW SAMPLE ALBUM" CTA to the first wedding album or `/works`.
+    - Preserves pre-curated sample albums as fallback if fewer than 4 wedding albums exist in Sanity, preserving the 4-card spread animation without breaking layout or GSAP mechanics.
+  - Verification:
+    - `pnpm exec tsc --noEmit` passed with 0 errors.
+    - `pnpm lint` passed with 0 errors.
+    - `pnpm build` passed compiling all 23 routes cleanly with Partial Prerendering.
+    - Dev server HTTP 200 OK verified on `/`.
 
 - Backend Feature 07: Featured Works from Sanity on Home Page (`context/feature-specs/backend/07-featured-works.md`):
   - Analyzed `albumType` schema in Sanity (`studio/schemaTypes/albumType.ts` and `bstudio/sanity.types.ts`), identifying the `isFeatured` boolean flag.
