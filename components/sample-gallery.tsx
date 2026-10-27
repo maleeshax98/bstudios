@@ -1,19 +1,22 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
+import { OptimizedImage } from "@/components/optimized-image";
+import type { CloudinaryResource } from "@/lib/cd";
 
 export interface SampleGalleryItem {
   id: string;
   src: string;
   alt: string;
-  aspectRatio: string;
-  title: string;
-  category: string;
+  aspectRatio?: string;
+  width?: number;
+  height?: number;
+  title?: string;
+  category?: string;
 }
 
 const SAMPLE_IMAGES: SampleGalleryItem[] = [
@@ -115,10 +118,44 @@ const SAMPLE_IMAGES: SampleGalleryItem[] = [
   },
 ];
 
-export type SampleGalleryProps = React.HTMLAttributes<HTMLElement>;
+export interface SampleGalleryProps
+  extends React.HTMLAttributes<HTMLElement> {
+  initialImages?: CloudinaryResource[];
+}
 
-export function SampleGallery({ className, ...props }: SampleGalleryProps) {
+function getAspectClass(width?: number, height?: number): string {
+  if (!width || !height) return "aspect-[3/4]";
+  const ratio = width / height;
+  if (ratio >= 1.4) return "aspect-[16/10]";
+  if (ratio >= 1.15) return "aspect-[4/3]";
+  if (ratio >= 0.9) return "aspect-[1/1]";
+  if (ratio >= 0.7) return "aspect-[4/5]";
+  return "aspect-[2/3]";
+}
+
+export function SampleGallery({
+  initialImages,
+  className,
+  ...props
+}: SampleGalleryProps) {
   const magneticButtonRef = React.useRef<HTMLDivElement>(null);
+
+  const displayImages: SampleGalleryItem[] = React.useMemo(() => {
+    if (initialImages && initialImages.length > 0) {
+      return initialImages.map((img, idx) => ({
+        id: img.asset_id || img.public_id || `sample-cloud-${idx}`,
+        src: img.public_id || img.secure_url,
+        alt:
+          (typeof img.display_name === "string" && img.display_name) ||
+          (typeof img.filename === "string" && img.filename) ||
+          `B Studio Cinematic Editorial ${idx + 1}`,
+        width: img.width,
+        height: img.height,
+        aspectRatio: getAspectClass(img.width, img.height),
+      }));
+    }
+    return SAMPLE_IMAGES;
+  }, [initialImages]);
 
   // Magnetic button cursor interaction
   const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -164,20 +201,30 @@ export function SampleGallery({ className, ...props }: SampleGalleryProps) {
     <section
       className={cn(
         "relative w-full bg-bg-base overflow-hidden px-4 sm:px-6 md:px-10 lg:px-16 pt-8 pb-32 sm:pb-40 md:pb-48 select-none",
-        className
+        className,
       )}
       {...props}
     >
       {/* Masonry-Style Pinterest Grid (CSS Columns) */}
       <div className="mx-auto max-w-[1700px]">
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6">
-          {SAMPLE_IMAGES.map((item) => (
+          {displayImages.map((item) => (
             <div
               key={item.id}
               className="group relative mb-4 sm:mb-6 break-inside-avoid overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-all duration-500 hover:border-text-primary/25 hover:shadow-lg"
             >
-              <div className={cn("relative w-full overflow-hidden", item.aspectRatio)}>
-                <Image
+              <div
+                className={cn(
+                  "relative w-full overflow-hidden",
+                  item.aspectRatio,
+                )}
+                style={
+                  item.width && item.height
+                    ? { aspectRatio: `${item.width} / ${item.height}` }
+                    : undefined
+                }
+              >
+                <OptimizedImage
                   src={item.src}
                   alt={item.alt}
                   fill
@@ -212,7 +259,7 @@ export function SampleGallery({ className, ...props }: SampleGalleryProps) {
                 "border border-text-primary/20 bg-[#F7F7F5]/90 px-8 py-4 sm:px-10 sm:py-4.5",
                 "text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-text-primary",
                 "shadow-lg backdrop-blur-md transition-all duration-300",
-                "hover:border-text-primary hover:bg-text-primary hover:text-bg-base hover:shadow-2xl hover:scale-[1.02]"
+                "hover:border-text-primary hover:bg-text-primary hover:text-bg-base hover:shadow-2xl hover:scale-[1.02]",
               )}
             >
               <span className="font-sans font-semibold">See More</span>

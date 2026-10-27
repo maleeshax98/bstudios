@@ -8,17 +8,39 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Backend Feature 08: Client Space Wedding Albums Fetch completed and verified. Ready for next user instruction.
+- Backend Feature 09: Fetching and showing sample images in home page from Cloudinary completed and verified. Ready for next user instruction.
 
 ## In Progress
 
-- None (Backend Feature 08 completed and verified. Awaiting next user instruction).
+- None (Backend Feature 09 completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Backend Feature 09: Fetching and showing sample images in home page from Cloudinary (`context/feature-specs/backend/09-fetching-sample-images.md`):
+  - Updated `searchCloudinaryWithCache()` in `bstudio/lib/cd.ts` to support dynamic `sortDirection: "asc" | "desc"` (defaulting to `"asc"` for existing callers).
+  - Implemented `getSampleImages(limit = 12)` in `bstudio/lib/cd.ts`:
+    - Searches `(asset_folder="SAMPLE-IMAGES-HOME-PAGE" OR asset_folder="SIHP") AND resource_type=image`.
+    - Sorts by `created_at: "desc"` to fetch the 12 most recent images uploaded to the folder.
+    - Caches responses locally with Next.js native `fetch` caching (`revalidate: 3600`) to avoid hitting Cloudinary API limits.
+    - Provides resilient secondary fallback to Cloudinary SDK and empty array fallback on failure.
+  - Updated `bstudio/app/page.tsx`:
+    - Added `getSampleImages()` to `getHomeData()` marked with `"use cache"`.
+    - Returned `sampleImages` and passed it as `initialImages` prop to `<SampleGallery initialImages={sampleImages} />`.
+  - Updated `bstudio/components/sample-gallery.tsx`:
+    - Accepts `initialImages?: CloudinaryResource[]`.
+    - Dynamically maps Cloudinary resources to gallery items preserving exact image aspect ratios (`style={{ aspectRatio: `${item.width} / ${item.height}` }}`).
+    - Replaced standard Next.js `<Image>` with `<OptimizedImage>` from `@/components/optimized-image` to provide automatic next-gen format and quality optimization (WebP/AVIF), skeleton pulsing loaders, and error retry states.
+    - Retained pre-curated sample images as graceful fallback if Cloudinary returns 0 assets.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+    - ESLint (`pnpm lint`) passed with 0 errors.
+    - Production build (`pnpm build`) compiled and prerendered all 23 routes cleanly with Partial Prerendering.
+    - Dev server HTTP 200 OK verified on `/`, and Cloudinary public IDs verified in rendered HTML.
+
 
 - Backend Feature 08: Client Space Fetch Wedding Albums from Sanity (`context/feature-specs/backend/08-client-space-fetch.md`):
   - Added `WEDDING_ALBUMS_QUERY` and `CLIENT_SPACE_ALBUMS_QUERY` in `bstudio/sanity/queries.ts` fetching the first 4 wedding albums (`*[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4]`).

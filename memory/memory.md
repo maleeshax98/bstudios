@@ -1572,4 +1572,64 @@ Implemented fetching and displaying the first 4 wedding albums from Sanity in th
 - Committed in `14fd9e9` ("feat: implement client space wedding albums fetch from Sanity") and pushed to `origin/development`.
 - Memory saved and verified.
 
+---
+
+## 2026-10-27 — Backend Feature 09: Fetching Sample Images from Cloudinary on Home Page (`context/feature-specs/backend/09-fetching-sample-images.md`)
+
+### Session Summary
+
+Implemented fetching and displaying the recent 12 sample images from Cloudinary's `SAMPLE-IMAGES-HOME-PAGE` folder in the sample masonry gallery (`sample-gallery.tsx`) on the home page according to `context/feature-specs/backend/09-fetching-sample-images.md`:
+
+1. **Cloudinary Asset Folder & Query Analysis (`bstudio/lib/cd.ts`):**
+   - Verified that Cloudinary contains 107 image assets in asset folder `SIHP` (and alias `SAMPLE-IMAGES-HOME-PAGE`).
+   - Extended `searchCloudinaryWithCache(expression, nextCursor, limit, sortDirection = "asc")` to support sorting directions (`"asc" | "desc"`).
+   - Implemented `getSampleImages(limit = 12)` in `lib/cd.ts`:
+     - Expression: `(asset_folder="SAMPLE-IMAGES-HOME-PAGE" OR asset_folder="SIHP") AND resource_type=image`.
+     - Sorted by `created_at: "desc"` to fetch the 12 most recent images.
+     - Caches search responses with Next.js native fetch caching (`revalidate: 3600`) to avoid API limits.
+     - Resilient secondary fallback to Cloudinary SDK search and safe empty result fallback on error.
+2. **Server-Side Data Fetching (`bstudio/app/page.tsx`):**
+   - Updated `getHomeData()` marked with `"use cache"` to call `getSampleImages()` concurrently in `Promise.all` alongside Sanity queries (`SERVICES_QUERY`, `COLORGRADING_QUERY`, `FEATURED_ALBUMS_QUERY`, `WEDDING_ALBUMS_QUERY`).
+   - Guarded with `try/catch` fallback returning `sampleImages: []` so transient network errors do not crash Next.js Partial Prerendering.
+   - Passed `initialImages={sampleImages}` to `<SampleGallery />`.
+3. **Sample Gallery Component Refactor (`bstudio/components/sample-gallery.tsx`):**
+   - Updated `SampleGalleryProps` to accept `initialImages?: CloudinaryResource[]`.
+   - Computed dynamic gallery items preserving exact image aspect ratios (`style={{ aspectRatio: `${item.width} / ${item.height}` }}`) derived from Cloudinary width/height metadata, with responsive CSS class fallbacks.
+   - Replaced standard Next.js `<Image>` with `<OptimizedImage>` from `@/components/optimized-image` delivering automatic format and quality optimization (WebP/AVIF via `<CldImage>`), skeleton pulsing loaders on `#EBEBE8`, and graceful error retry buttons.
+   - Preserved pre-curated `SAMPLE_IMAGES` as fallback if Cloudinary returns 0 items.
+   - Retained the bottom teaser gradient overlay and magnetic "See More" button linking to `/works`.
+4. **Verification:**
+   - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+   - ESLint (`pnpm lint`) passed with 0 errors.
+   - Next.js production build (`pnpm build`) compiled and prerendered all 23 routes cleanly with Partial Prerendering.
+   - Dev server HTTP 200 OK verified on `/`, and Cloudinary public IDs verified in rendered HTML output.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `bstudio/lib/cd.ts`: `searchCloudinaryWithCache()` supports sort order, `getSampleImages()` fetches recent 12 images from `SAMPLE-IMAGES-HOME-PAGE` / `SIHP` with caching.
+  - `bstudio/app/page.tsx`: Fetches sample images in `getHomeData()` and passes `initialImages` to `<SampleGallery />`.
+  - `bstudio/components/sample-gallery.tsx`: Accepts `initialImages`, computes dynamic aspect ratios, renders with `<OptimizedImage>`.
+  - `context/feature-specs/backend/09-fetching-sample-images.md`: Marked as `COMPLETED`.
+  - `context/progress-tracker.md`: Updated to completed.
+  - TypeScript: `pnpm exec tsc --noEmit` passed with 0 errors.
+  - ESLint: `pnpm lint` passed with 0 errors.
+  - Production build: `pnpm build` passed compiling all 23 routes.
+  - Dev server: HTTP 200 OK verified on `/`.
+- **Incomplete / Next:**
+  - Awaiting next feature instruction from user.
+
+### Decisions & Rationale
+
+- **Asset Folder Matching (`(asset_folder="SAMPLE-IMAGES-HOME-PAGE" OR asset_folder="SIHP") AND resource_type=image`):** Accommodates both the full descriptive folder name (`SAMPLE-IMAGES-HOME-PAGE`) and the root asset folder (`SIHP`) where the user's images are stored in Cloudinary.
+- **Descending Order by Creation Date (`sort_by: [{ created_at: "desc" }]`):** Strictly satisfies the specification requirement to "Fetch recent 12 images".
+- **Dynamic Exact Aspect Ratios:** Cloudinary returns exact `width` and `height` in resource metadata. Setting `style={{ aspectRatio: `${item.width} / ${item.height}` }}` eliminates Cumulative Layout Shift (CLS = 0) in the CSS columns masonry grid while preserving the natural aspect ratios of all photos.
+- **`<OptimizedImage>` Integration:** Provides next-gen WebP/AVIF formatting, responsive sizes, skeleton loading states, and error retry handling.
+- **Defensive Fallback:** If Cloudinary encounters network timeouts or returns 0 images, `<SampleGallery />` seamlessly falls back to pre-curated photography so the layout never breaks or appears empty.
+
+### Continuation Context
+
+- Recent 12 Cloudinary sample images are now live in `<SampleGallery />` on the home page.
+- TypeScript, ESLint, production build, and dev server runtime verified.
+- Memory saved and verified.
 

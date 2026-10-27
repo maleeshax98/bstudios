@@ -46,6 +46,7 @@ async function searchCloudinaryWithCache(
   expression: string,
   nextCursor?: string | null,
   limit = 12,
+  sortDirection: "asc" | "desc" = "asc",
 ): Promise<CloudinaryPaginationResult> {
   const cloudName =
     process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
@@ -62,7 +63,7 @@ async function searchCloudinaryWithCache(
   const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
   const bodyPayload: Record<string, unknown> = {
     expression,
-    sort_by: [{ created_at: "asc" }],
+    sort_by: [{ created_at: sortDirection }],
     max_results: limit,
   };
 
@@ -175,4 +176,35 @@ const getVideos = async (
   }
 };
 
-export { getImages, getVideos, searchCloudinaryWithCache };
+const getSampleImages = async (
+  limit = 12,
+): Promise<CloudinaryPaginationResult> => {
+  const expression = `(asset_folder="SAMPLE-IMAGES-HOME-PAGE" OR asset_folder="SIHP") AND resource_type=image`;
+
+  // 1. Primary: Next.js native fetch caching with revalidate: 3600
+  try {
+    return await searchCloudinaryWithCache(expression, null, limit, "desc");
+  } catch (fetchErr) {
+    console.warn("Native fetch caching fallback to Cloudinary SDK:", fetchErr);
+  }
+
+  // 2. Secondary fallback via Cloudinary SDK
+  try {
+    const search = cloudinary.search
+      .expression(expression)
+      .sort_by("created_at", "desc")
+      .max_results(limit);
+
+    const resources = await search.execute();
+    return {
+      resources: (resources?.resources as CloudinaryResource[]) || [],
+      nextCursor: resources?.next_cursor || null,
+      totalCount: resources?.total_count || 0,
+    };
+  } catch (err) {
+    console.error("Cloudinary getSampleImages error:", err);
+    return { resources: [], nextCursor: null, totalCount: 0 };
+  }
+};
+
+export { getImages, getVideos, searchCloudinaryWithCache, getSampleImages };

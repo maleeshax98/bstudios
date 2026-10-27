@@ -17,27 +17,35 @@ import {
   FEATURED_ALBUMS_QUERY,
   WEDDING_ALBUMS_QUERY,
 } from "@/sanity/queries";
+import { getSampleImages } from "@/lib/cd";
 
 async function getHomeData() {
   "use cache";
   try {
-    const [services, colorgrading, featuredWorks, weddingAlbums] =
-      await Promise.all([
-        client.fetch(SERVICES_QUERY),
-        client.fetch(COLORGRADING_QUERY),
-        client.fetch(FEATURED_ALBUMS_QUERY),
-        client.fetch(WEDDING_ALBUMS_QUERY),
-      ]);
+    const [
+      services,
+      colorgrading,
+      featuredWorks,
+      weddingAlbums,
+      sampleImagesData,
+    ] = await Promise.all([
+      client.fetch(SERVICES_QUERY),
+      client.fetch(COLORGRADING_QUERY),
+      client.fetch(FEATURED_ALBUMS_QUERY),
+      client.fetch(WEDDING_ALBUMS_QUERY),
+      getSampleImages(),
+    ]);
 
     return {
       services: services || [],
       colorgrading: colorgrading || [],
       featuredWorks: featuredWorks || [],
       weddingAlbums: weddingAlbums || [],
+      sampleImages: sampleImagesData?.resources || [],
     };
   } catch (error) {
     console.warn(
-      "Could not fetch home data from Sanity, falling back to sample data.",
+      "Could not fetch home data, falling back to sample data.",
       error,
     );
     return {
@@ -45,13 +53,19 @@ async function getHomeData() {
       colorgrading: [],
       featuredWorks: [],
       weddingAlbums: [],
+      sampleImages: [],
     };
   }
 }
 
 export default async function Home() {
-  const { services, colorgrading, featuredWorks, weddingAlbums } =
-    await getHomeData();
+  const {
+    services,
+    colorgrading,
+    featuredWorks,
+    weddingAlbums,
+    sampleImages,
+  } = await getHomeData();
 
   return (
     <>
@@ -61,7 +75,7 @@ export default async function Home() {
       <SelectedWorks initialWorks={featuredWorks} />
       <Philosophy />
       <ServicesExhibition initialServices={services} />
-      <SampleGallery />
+      <SampleGallery initialImages={sampleImages} />
       <ClientSpaceTeaser initialAlbums={weddingAlbums} />
       <ColorGradeLookbook initialLookbook={colorgrading} />
       <ContactForm />
