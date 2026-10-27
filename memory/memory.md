@@ -1569,6 +1569,7 @@ Implemented fetching and displaying the first 4 wedding albums from Sanity in th
 
 - The first 4 wedding albums from Sanity are now live in `<ClientSpaceTeaser />` on the home page.
 - Build and dev server verified.
+- Committed in `14fd9e9` ("feat: implement client space wedding albums fetch from Sanity") and pushed to `origin/development`.
 - Memory saved and verified.
 
 
