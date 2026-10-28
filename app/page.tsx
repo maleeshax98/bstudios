@@ -72,6 +72,9 @@ export default async function Home() {
       <ServicesExhibition initialServices={services} />
       <SampleGallery initialImages={sampleImages} />
       <ClientSpaceTeaser initialAlbums={weddingAlbums} />
+      <br />
+      <br />
+      <br />
       <ColorGradeLookbook initialLookbook={colorgrading} />
       <ContactForm />
       <Footer />

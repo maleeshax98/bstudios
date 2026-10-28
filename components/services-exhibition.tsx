@@ -224,13 +224,13 @@ export function ServicesExhibition({
       >
         {/* Intro Section Headline Card */}
         <div className="w-[38vw] sm:w-[32vw] lg:w-[28vw] max-w-[460px] shrink-0 flex flex-col justify-center pr-4">
-          <div className="mb-4 sm:mb-6 flex items-center gap-3 text-xs sm:text-sm font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
+          {/* <div className="mb-4 sm:mb-6 flex items-center gap-3 text-xs sm:text-sm font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
             <span className="w-8 h-[1px] bg-text-muted/40" />
             <span>{`Services // 01 — ${totalCountFormatted}`}</span>
-          </div>
+          </div> */}
 
           <h2 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-text-primary uppercase leading-[0.92]">
-            Cinematic{" "}
+            Service{" "}
             <span className="font-serif italic font-normal lowercase tracking-normal text-text-muted">
               offerings
             </span>
@@ -242,8 +242,8 @@ export function ServicesExhibition({
           </p>
 
           <div className="mt-8 flex items-center gap-2 text-xs font-sans font-bold tracking-[0.2em] text-text-primary/60 uppercase">
-            <span>Scroll horizontally</span>
-            <span className="animate-pulse">→</span>
+            <span>Keep Scrolling</span>
+            <span className="animate-pulse">⬇</span>
           </div>
         </div>
 

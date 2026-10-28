@@ -313,7 +313,7 @@ export function SelectedWorks({
               style={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center  pointer-events-none will-change-transform "
             >
-              <div className="w-full max-w-6xl mx-auto flex items-center justify-center gap-10">
+              <div className="w-full max-w-6xl mx-auto flex md:items-center md:justify-center flex-wrap gap-10 p-10">
                 {/* Text Block */}
                 <div
                   ref={(el) => {
