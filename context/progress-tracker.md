@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Dynamic Theme Switching & Floating Toggle Button completed and verified. Ready for next user instruction.
+- Keep Scrolling Inactivity Indicator completed and verified. Ready for next user instruction.
 
 ## In Progress
 
@@ -19,6 +19,21 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Keep Scrolling Inactivity Indicator (`context/feature-specs/scroll-hint/01-keep-scrolling-indicator.md`):
+  - Created `KeepScrollingIndicator` client component (`components/keep-scrolling-indicator.tsx`):
+    - Positioned at `fixed bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-40`.
+    - Automatically detects route via `usePathname()`, restricting appearance strictly to the Home page (`/`) and About Us page (`/about`).
+    - 10-second idle countdown: tracks user scroll, wheel, and touchmove interactions; if inactive for 10 seconds, smoothly reveals the indicator.
+    - Animated pulse effect: badge features `animate-pulse` and refined editorial styling (`bg-bg-surface/90 text-text-primary border border-border-subtle shadow-xl backdrop-blur-md`).
+    - Bottom-of-page suppression: automatically prevents showing if user is already at the bottom of the document.
+    - Interactive click: clicking smoothly scrolls down the viewport by 75vh and dismisses the prompt.
+    - Hydration-safe mounting via `useSyncExternalStore` adhering to React 19 rules and avoiding cascading render warnings.
+  - Integrated into root layout (`app/layout.tsx`) inside `ThemeProvider`.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+
 
 - Theme Toggle Feature: Dynamic Theme Switching & Floating Toggle Button (`context/feature-specs/toggel-theme/01-toggle-theme.md`):
   - Installed `next-themes` and implemented `ThemeProvider` wrapper (`components/theme-provider.tsx`) with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.

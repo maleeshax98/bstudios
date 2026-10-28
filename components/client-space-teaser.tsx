@@ -411,17 +411,19 @@ export function ClientSpaceTeaser({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Editorial Information & CTA */}
           <div className="lg:col-span-5 flex flex-col justify-center text-left z-20">
-            {/* Massive Brutalist Sans-Serif Headline */}
-            <h2 className="font-sans font-black uppercase tracking-tighter leading-[0.88] text-text-primary text-4xl sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]">
-              YOUR PERSONAL PREMIERE
-            </h2>
+            <div className="mt-10">
+              {/* Massive Brutalist Sans-Serif Headline */}
+              <h2 className="font-sans font-black uppercase tracking-tighter leading-[0.88] text-text-primary text-4xl sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]">
+                YOUR PERSONAL PREMIERE
+              </h2>
 
-            {/* Elegant Italicized Serif Description */}
-            <p className="font-serif italic text-text-primary/90 text-lg sm:text-xl md:text-2xl leading-relaxed mt-4 sm:mt-6 max-w-xl">
-              Every memory, beautifully curated. Access your high-resolution
-              digital albums in one dedicated space—designed for private viewing
-              or sharing publicly with the world.
-            </p>
+              {/* Elegant Italicized Serif Description */}
+              <p className="font-serif italic text-text-primary/90 text-lg sm:text-xl md:text-2xl leading-relaxed mt-4 sm:mt-6 max-w-xl">
+                Every memory, beautifully curated. Access your high-resolution
+                digital albums in one dedicated space—designed for private
+                viewing or sharing publicly with the world.
+              </p>
+            </div>
 
             {/* Feature Highlights */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-6 border-t border-text-primary/10 mt-6 sm:mt-8 max-w-xl">

@@ -1965,3 +1965,43 @@ Implemented dynamic theme switching and the floating theme toggle button accordi
 - Ready for next instruction or milestone.
 
 
+
+---
+
+## 2026-10-28 — Feature: Keep Scrolling Inactivity Indicator (`01-keep-scrolling-indicator.md`)
+
+### Session Summary
+
+Implemented a floating "Keep scrolling" indicator positioned at the bottom center of the viewport that automatically reveals with an animated pulse when the user does not scroll for 10 seconds. The indicator is strictly restricted to the Home page (`/`) and About Us page (`/about`). As soon as the user scrolls, uses the mouse wheel, or swipes on touch screens, the indicator immediately fades out and the 10-second timer resets. Clicking the indicator smoothly scrolls the viewport by 75vh and dismisses the badge.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Created Feature Specification: `context/feature-specs/scroll-hint/01-keep-scrolling-indicator.md`.
+  - Implemented `components/keep-scrolling-indicator.tsx`:
+    - Strict Route Filtering: Evaluates `usePathname()` to ensure it renders exclusively on `/` and `/about` (ignoring trailing slashes). Returns `null` on all other routes.
+    - 10-Second Idle Timer: Automatically sets a 10,000ms inactivity timeout. Listens to `window` `scroll`, `wheel`, and `touchmove` events to immediately dismiss the cue and reset the countdown.
+    - Bottom Detection: Suppresses the indicator if the user is already at the bottom of the document (`window.innerHeight + window.scrollY >= scrollHeight - 50`).
+    - Animated Pulse & Editorial Styling: Pill design with `animate-pulse`, `bg-bg-surface/90 text-text-primary border border-border-subtle shadow-xl backdrop-blur-md`, uppercase tracked typography (`font-sans font-bold uppercase tracking-[0.2em] text-xs`), and Lucide `ChevronDown`.
+    - Smooth Transitions: `transition-all duration-500 ease-out` with `opacity-100 translate-y-0` when active and `opacity-0 translate-y-4 pointer-events-none` when hidden.
+    - Hydration Safety: Uses React 18/19 `useSyncExternalStore` and deferred async timer initialization to comply with `react-hooks/set-state-in-effect` lint rules with 0 warnings.
+  - Integrated into `app/layout.tsx`:
+    - Placed inside `ThemeProvider` alongside `FloatingThemeToggle`.
+  - Updated `context/progress-tracker.md`.
+  - Verification:
+    - `pnpm exec tsc --noEmit` passed with 0 errors.
+    - `pnpm lint` passed with 0 errors.
+    - Verified dev server response on `http://localhost:3000/` and `/about`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Sub-Component Separation (`KeepScrollingIndicatorContent`):** Kept the timer and event subscription logic inside a dedicated inner component that only mounts when `mounted && isEligiblePage`. This cleanly guarantees that non-eligible pages never register scroll listeners or run timeouts, and cleanly satisfies React 19's `set-state-in-effect` compiler rule with zero synchronous render cycles.
+- **Multi-Gesture Inactivity Tracking (`scroll`, `wheel`, `touchmove`):** By listening to passive `scroll`, `wheel`, and `touchmove` events, the indicator detects smooth-scroller inertia and user touchpad gestures instantly without relying exclusively on scroll position ticks.
+- **Bottom-of-Page Protection:** Prevents prompting users to scroll when they are already viewing the footer.
+
+### Continuation Context
+
+- The "Keep scrolling" cue is fully integrated and active on `/` and `/about`.
+- Ready for next instruction or milestone.
