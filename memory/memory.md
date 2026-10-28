@@ -2082,6 +2082,7 @@ Executed `rm -rf .next && pnpm run build` without build cache per the user's exp
 ### Continuation Context
 
 - Production build is 100% operational and verified.
+- Disables `cacheComponents` and `partialPrefetching` flags in `next.config.ts` and removes legacy fetch caching from `lib/cd.ts`.
 - Ready for next instruction or task.
 
 
