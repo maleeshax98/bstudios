@@ -1893,5 +1893,25 @@ Staged, committed, and pushed the latest feature implementations to GitHub remot
   - TypeScript: `pnpm exec tsc --noEmit` passed (0 errors).
   - ESLint: `pnpm lint` passed (0 errors).
 - **Incomplete / Next:**
-  - Awaiting next user instruction.
+  - Selected works redesign.
+
+---
+
+## 2026-10-28: Selected Works Redesign & Push to GitHub
+
+### Summary
+
+Refined the layout and animations of the Selected Works section on the home page (`components/selected-works.tsx`) and verified production build and linting before pushing to remote `origin/development`.
+
+### Key Changes
+
+1. **Selected Works Component Refinement (`components/selected-works.tsx`):**
+   - Streamlined pinned scroll transitions: removed unnecessary horizontal transform offsets (`xPercent`) in favor of smooth fade and scale transitions with adjusted power easing.
+   - Refined gallery stage container layout and image containment dimensions (`max-w-[600px] h-[400px]`).
+   - Cleaned up unused variables and GSAP initializers.
+2. **Context & Documentation (`context/16-redesigning-selected-work.md`, `context/progress-tracker.md`, `memory/memory.md`):**
+   - Added task specification and progress tracker session notes.
+3. **Verification:**
+   - Next.js production build (`pnpm build`) compiled successfully with 24/24 static routes.
+   - ESLint validated.
 
