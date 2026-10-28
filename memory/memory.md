@@ -2050,5 +2050,6 @@ Reviewed feature specification `context/feature-specs/auth/setup-clerk.md` targe
 - `context/progress-tracker.md` is currently marked as In Progress.
 - Clerk dependencies and UI components (`ClerkProvider` in `app/layout.tsx`, auth buttons in `components/navbar.tsx`, `next.config.ts` dev origins, and Prisma/pg dependencies) wired up.
 - Code committed to `development` branch and pushed to GitHub remote `origin/development`.
+- Cleaned up unused database dependencies (`prisma`, `pg`, `dotenv`, `tsx`) from `package.json` and `pnpm-lock.yaml`.
 
 
