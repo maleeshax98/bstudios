@@ -284,7 +284,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                   className={cn(
                     "absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full mt-3 z-50",
                     "w-72 sm:w-84 max-w-[calc(100vw-2.5rem)]",
-                    "bg-[#F7F7F5] border border-text-primary/15 rounded-2xl p-2 sm:p-2.5",
+                    "bg-bg-base border border-text-primary/15 rounded-2xl p-2 sm:p-2.5",
                     "shadow-2xl shadow-black/10 backdrop-blur-none",
                     "animate-in fade-in zoom-in-95 duration-200",
                   )}
@@ -315,7 +315,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                             "w-full text-left px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-between group cursor-pointer",
                             isSelected
                               ? "bg-text-primary text-bg-base font-sans font-bold shadow-sm"
-                              : "text-text-primary hover:bg-[#EBEBE8] font-sans font-medium",
+                              : "text-text-primary hover:bg-bg-surface font-sans font-medium",
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -426,7 +426,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 className={cn(
                   "group relative inline-flex items-center justify-center gap-4 px-10 py-5 sm:px-14 sm:py-6 rounded-full",
                   "bg-text-primary text-bg-base font-sans font-bold text-sm sm:text-base md:text-lg tracking-widest uppercase",
-                  "transition-all duration-300 ease-out cursor-pointer shadow-lg hover:shadow-2xl hover:bg-black",
+                  "transition-all duration-300 ease-out cursor-pointer shadow-lg hover:shadow-2xl ",
                   "active:scale-95 disabled:opacity-50 disabled:pointer-events-none",
                 )}
               >

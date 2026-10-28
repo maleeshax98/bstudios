@@ -306,8 +306,8 @@ export function Navbar({
                 className={cn(
                   "group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-sans text-xs uppercase tracking-widest font-semibold transition-all duration-300 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
                   isTransparent
-                    ? "bg-white text-accent-primary hover:bg-white/90"
-                    : "bg-accent-primary text-bg-base hover:bg-text-primary",
+                    ? "bg-white text-black hover:bg-white/90"
+                    : "bg-accent-primary text-black hover:bg-text-primary",
                 )}
               >
                 <span>{ctaLabel}</span>

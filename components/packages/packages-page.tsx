@@ -216,8 +216,8 @@ export function PackagesPage({
                 className={cn(
                   "relative px-4 sm:px-6 py-2 sm:py-2.5 text-xs font-sans font-bold uppercase tracking-[0.2em] transition-all duration-200 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-primary",
                   isActive
-                    ? "text-[#111111] bg-bg-surface font-black shadow-xs ring-1 ring-border-subtle"
-                    : "text-[#888888] hover:text-[#111111] hover:bg-bg-surface/50",
+                    ? "text-text-primary bg-bg-surface font-black shadow-xs ring-1 ring-border-subtle"
+                    : "text-text-muted hover:text-text-primary hover:bg-bg-surface/50",
                 )}
               >
                 [ {cat.title} ]
@@ -309,7 +309,7 @@ export function PackagesPage({
                         </div>
 
                         {/* Title: Bold Sans-Serif Package Name */}
-                        <h2 className="font-sans font-black uppercase text-2xl sm:text-3xl lg:text-[1.85rem] tracking-tight leading-[1.05] text-text-primary group-hover:text-black transition-colors">
+                        <h2 className="font-sans font-black uppercase text-2xl sm:text-3xl lg:text-[1.85rem] tracking-tight leading-[1.05] text-text-primary group-hover:text-black group-hover:dark:text-text-primary transition-colors">
                           {pkg.title}
                         </h2>
 

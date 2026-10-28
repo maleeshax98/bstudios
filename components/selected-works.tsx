@@ -167,8 +167,6 @@ export function SelectedWorks({
 
     const ctx = gsap.context(() => {
       // 1. Initial deterministic setup for all slides:
-      // Even projects: Text starts offscreen left (-140%), Image starts offscreen right (+140%)
-      // Odd projects: Text starts offscreen right (+140%), Image starts offscreen left (-140%)
       projects.forEach((_, idx) => {
         const slide = slideRefs.current[idx];
         const textEl = textRefs.current[idx];
@@ -176,16 +174,12 @@ export function SelectedWorks({
 
         if (!slide || !textEl || !imgEl) return;
 
-        const isEven = idx % 2 === 0;
-
         gsap.set(slide, { autoAlpha: 0, pointerEvents: "none" });
         gsap.set(textEl, {
-          xPercent: isEven ? -140 : 140,
           scale: 1,
           opacity: 0,
         });
         gsap.set(imgEl, {
-          xPercent: isEven ? 140 : -140,
           scale: 1,
           opacity: 0,
         });
@@ -235,7 +229,6 @@ export function SelectedWorks({
           pointerEvents: "auto",
         })
           .to(textEl, {
-            xPercent: 0,
             opacity: 1,
             duration: 1.2,
             ease: "power1.out",
@@ -243,7 +236,6 @@ export function SelectedWorks({
           .to(
             imgEl,
             {
-              xPercent: 0,
               opacity: 1,
               duration: 1.2,
               ease: "power1.out",
@@ -255,7 +247,7 @@ export function SelectedWorks({
           // Phase C: The Exit - Smoothly scale down and fade to 0
           .to([textEl, imgEl], {
             opacity: 0,
-            duration: 0.9,
+            duration: 1.2,
             ease: "power1.in",
           })
           .set(slide, {
@@ -308,7 +300,7 @@ export function SelectedWorks({
       </div>
 
       {/* Centered Gallery Stage for all Projects */}
-      <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative w-full h-full ">
         {projects.map((project, idx) => {
           const isEven = idx % 2 === 0;
 
@@ -319,16 +311,16 @@ export function SelectedWorks({
                 slideRefs.current[idx] = el;
               }}
               style={{ opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center p-6 sm:p-10 md:p-12 lg:p-16 pointer-events-none will-change-transform"
+              className="absolute inset-0 flex items-center justify-center  pointer-events-none will-change-transform "
             >
-              <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
+              <div className="w-full max-w-6xl mx-auto flex items-center justify-center gap-10">
                 {/* Text Block */}
                 <div
                   ref={(el) => {
                     textRefs.current[idx] = el;
                   }}
                   className={cn(
-                    "flex flex-col justify-center will-change-transform transform-gpu",
+                    "flex flex-col justify-center will-change-transform transform-gpu ",
                     isEven ? "md:order-1" : "md:order-2",
                   )}
                 >
@@ -373,7 +365,7 @@ export function SelectedWorks({
                     imageRefs.current[idx] = el;
                   }}
                   className={cn(
-                    "relative w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[4/5] max-h-[55vh] md:max-h-[65vh] overflow-hidden rounded-xs bg-bg-surface border border-black/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] group will-change-transform transform-gpu",
+                    "relative w-full max-w-[600px] h-[400px] overflow-hidden rounded-xs bg-bg-surface border border-black/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] group will-change-transform transform-gpu ",
                     isEven ? "md:order-2" : "md:order-1",
                   )}
                 >

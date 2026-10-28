@@ -59,13 +59,8 @@ async function getHomeData() {
 }
 
 export default async function Home() {
-  const {
-    services,
-    colorgrading,
-    featuredWorks,
-    weddingAlbums,
-    sampleImages,
-  } = await getHomeData();
+  const { services, colorgrading, featuredWorks, weddingAlbums, sampleImages } =
+    await getHomeData();
 
   return (
     <>

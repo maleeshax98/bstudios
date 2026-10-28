@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp completed and verified. Ready for next user instruction.
+- Dynamic Theme Switching & Floating Toggle Button completed and verified. Ready for next user instruction.
 
 ## In Progress
 
@@ -19,6 +19,22 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Theme Toggle Feature: Dynamic Theme Switching & Floating Toggle Button (`context/feature-specs/toggel-theme/01-toggle-theme.md`):
+  - Installed `next-themes` and implemented `ThemeProvider` wrapper (`components/theme-provider.tsx`) with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.
+  - Implemented `FloatingThemeToggle` client component (`components/floating-theme-toggle.tsx`):
+    - Positioned at `fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-50`.
+    - Sleek circular high-contrast design (`w-12 h-12 lg:w-14 lg:h-14`, `bg-text-primary text-bg-base`, `border border-border-subtle shadow-2xl`).
+    - Lucide `Sun` and `Moon` stroke icons with smooth rotation and scale transitions (`duration-500 ease-in-out`).
+    - Tactile hover interactions with GSAP magnetic pull on mouse move and elastic snap-back on leave.
+    - Hydration-safe mounting using `useSyncExternalStore` to avoid cascading render lint issues in React 19.
+  - Defined `.dark` theme variables in `app/globals.css` ensuring seamless inversion of `--bg-base`, `--bg-surface`, `--bg-subtle`, `--text-primary`, `--border-subtle`, and shadcn tokens adhering to `@custom-variant dark (&:is(.dark *));`.
+  - Integrated `ThemeProvider` and `FloatingThemeToggle` in `app/layout.tsx` with `suppressHydrationWarning`.
+  - Verification:
+    - TypeScript strict mode: `pnpm exec tsc --noEmit` passed with 0 errors.
+    - ESLint: `pnpm lint` passed with 0 errors.
+    - Production build: `pnpm build` compiled and prerendered all 24 routes cleanly.
+    - Runtime check: Verified live on `localhost:3000` via browser subagent click test toggling themes smoothly.
 
 - Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp:
   - Enhanced Pricing Scale (`components/packages/packages-page.tsx`):
@@ -587,3 +603,24 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Session Notes
 
 - Fetching Albums from Sanity for Works Page completed and verified. Analyzed `albumType`, `categoryType`, and `mediaType` schemas in `studio/schemaTypes/`. Created `ALBUMS_QUERY` and `CATEGORIES_QUERY` with `defineQuery`. Ran TypeGen in `studio/` to generate TypeScript types. Added `res.cloudinary.com` remote pattern to `next.config.ts`. Updated `components/works/works-page.tsx` with `mapSanityAlbum`, dynamic category tabs, mixed media support, and error retry logic. Integrated data fetching into `app/works/page.tsx` with `"use cache"` and `<Suspense>`. Verified with TypeScript strict checks (`tsc --noEmit`), ESLint (`pnpm lint`), production build (`pnpm build` in 1007ms, 10/10 routes passing), and runtime browser verification rendering the published Sanity album. Ready for next user instruction.
+  - Updated `components/navbar.tsx` desktop and mobile nav items to route "About" directly to `/about`.
+  - Strictly locked to Off-Light theme (`#F7F7F5` base, `#111111` text, `#888888` muted text, zero dark mode styling).
+  - Verified with full TypeScript check (`tsc --noEmit`), ESLint (`pnpm lint`), Next.js production build (`pnpm build`), and dev server curl verification (HTTP 200).
+
+## Open Questions
+
+- None currently.
+
+## Architecture Decisions
+
+- Theme: Locked to Off-Light Modern Editorial palette (`--bg-base: #F7F7F5`, `--bg-surface: #EBEBE8`, `--bg-subtle: #DFDFDC`, `--border-subtle: rgba(17, 17, 17, 0.08)`, `--text-primary: #111111`, `--text-muted: #888888`, `--accent-primary: #000000`) with `color-scheme: light;`.
+- Dedicated Works Architecture: Component `components/works/works-page.tsx` exporting `WorksPage` with dual interactive filtering (Media Format: ALL, PHOTOS, VIDEOS, MIXED; Shoot Category: strictly derived from categories fetched from Sanity), Next.js `<Image>` optimization with `res.cloudinary.com` remote pattern, `SkeletonCard` pulse loader, image `onError` fallback with retry logic, and responsive CSS grid.
+- Sanity Works Integration: GROQ queries in `sanity/queries.ts` (`ALBUMS_QUERY`, `CATEGORIES_QUERY`). Next.js 16 Partial Prerendering architecture with `getWorksData()` cached via `"use cache"` and `<Suspense fallback={<WorksFallback />}>` in `app/works/page.tsx`.
+- Dedicated Contact Page Architecture: Split-screen editorial magazine layout in `components/contact/contact-page.tsx` (`min-h-[100dvh]`). Left column features brutalist Sans-Serif headline ("LET'S CREATE"), italicized Serif statement, and studio contact details (small bold Sans-Serif headers, Serif values). Right column features interactive Mad-Libs conversational form with auto-expanding CSS Grid underlines transitioning from `#888888` to `#000000` on focus, floating service dropdown for 6 core services, magnetic "SEND INQUIRY" button, and smooth GSAP dissolution into an elegant Serif confirmation message (_"Your story is safe with us. We will be in touch soon."_).
+- Route Structure: Dedicated route `app/works/page.tsx` rendering `WorksGallery` with Suspense streaming, composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`.
+
+## Session Notes
+
+- Fetching Albums from Sanity for Works Page completed and verified. Analyzed `albumType`, `categoryType`, and `mediaType` schemas in `studio/schemaTypes/`. Created `ALBUMS_QUERY` and `CATEGORIES_QUERY` with `defineQuery`. Ran TypeGen in `studio/` to generate TypeScript types. Added `res.cloudinary.com` remote pattern to `next.config.ts`. Updated `components/works/works-page.tsx` with `mapSanityAlbum`, dynamic category tabs, mixed media support, and error retry logic. Integrated data fetching into `app/works/page.tsx` with `"use cache"` and `<Suspense>`. Verified with TypeScript strict checks (`tsc --noEmit`), ESLint (`pnpm lint`), production build (`pnpm build` in 1007ms, 10/10 routes passing), and runtime browser verification rendering the published Sanity album.
+- Redesigned Selected Works layout and animations (`components/selected-works.tsx`): refined pinned scroll animation timing and transitions, improved layout containment and responsive image container styling, cleaned up unused GSAP transform parameters and variables. Verified with `pnpm run build` and `pnpm run lint`. Ready for GitHub push.
+

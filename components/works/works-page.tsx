@@ -260,9 +260,9 @@ export function SkeletonCard() {
       className="group relative flex flex-col w-full select-none"
     >
       {/* Thumbnail Skeleton */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-border-subtle bg-[#EBEBE8] animate-pulse">
-        <div className="absolute top-4 right-4 h-6 w-20 rounded-full bg-[#DFDFDC] animate-pulse" />
-        <div className="absolute bottom-4 left-4 h-5 w-28 rounded-md bg-[#DFDFDC] animate-pulse" />
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-border-subtle bg-[#EBEBE8] dark:bg-bg-surface animate-pulse">
+        <div className="absolute top-4 right-4 h-6 w-20 rounded-full bg-[#DFDFDC] animate-pulse dark:bg-bg-surface" />
+        <div className="absolute bottom-4 left-4 h-5 w-28 rounded-md bg-[#DFDFDC] animate-pulse dark:bg-bg-surface" />
       </div>
 
       {/* Meta Bar Skeleton */}
@@ -667,7 +667,7 @@ export function WorksPage({
         <header className="border-b border-border-subtle pb-10 sm:pb-14">
           {/* Massive Brutalist Headline */}
           <h1 className="font-sans font-black uppercase text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight leading-[0.9] text-text-primary">
-            SELECTED WORKS
+            WORKS
           </h1>
 
           {/* Interactive Dual Filtering Tabs */}
