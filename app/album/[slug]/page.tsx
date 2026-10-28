@@ -12,7 +12,6 @@ interface PageProps {
 }
 
 async function getAlbumData(slug: string) {
-  "use cache";
   try {
     const album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
     return album;
