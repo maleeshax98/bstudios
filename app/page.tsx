@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Suspense } from "react";
 import { HomeLoader } from "@/components/home-loader";
 import { Hero } from "@/components/hero";
 import { PinnedScrollText } from "@/components/pinned-scroll-text";
@@ -57,15 +58,12 @@ async function getHomeData() {
   }
 }
 
-export default async function Home() {
+async function DynamicHomeSections() {
   const { services, colorgrading, featuredWorks, weddingAlbums, sampleImages } =
     await getHomeData();
 
   return (
     <>
-      <HomeLoader />
-      <Hero />
-      <PinnedScrollText />
       <SelectedWorks initialWorks={featuredWorks} />
       <Philosophy />
       <ServicesExhibition initialServices={services} />
@@ -75,6 +73,35 @@ export default async function Home() {
       <br />
       <br />
       <ColorGradeLookbook initialLookbook={colorgrading} />
+    </>
+  );
+}
+
+function HomeSectionsFallback() {
+  return (
+    <>
+      <SelectedWorks initialWorks={[]} />
+      <Philosophy />
+      <ServicesExhibition initialServices={[]} />
+      <SampleGallery initialImages={[]} />
+      <ClientSpaceTeaser initialAlbums={[]} />
+      <br />
+      <br />
+      <br />
+      <ColorGradeLookbook initialLookbook={[]} />
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <HomeLoader />
+      <Hero />
+      <PinnedScrollText />
+      <Suspense fallback={<HomeSectionsFallback />}>
+        <DynamicHomeSections />
+      </Suspense>
       <ContactForm />
       <Footer />
     </>

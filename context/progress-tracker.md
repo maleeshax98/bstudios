@@ -26,6 +26,17 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- Next.js 16 Prerender Build Fix (Partial Prerendering Suspense Boundaries without Caching):
+  - Analyzed Next.js 16 build error: `Error: Route "/services": Next.js encountered uncached or runtime data during prerendering.`
+  - Identified uncached Sanity / Cloudinary fetch calls executing directly at the page level outside of `<Suspense>` on `/services`, `/packages`, and `/`.
+  - Refactored `app/services/page.tsx`, `app/packages/page.tsx`, and `app/page.tsx` into decoupled static shell layouts with dynamic async content wrapped in `<Suspense fallback={...}>`.
+  - Maintained zero usage of `"use cache"` or cache directives, adhering to strict user constraints and preventing promise serialization deadlocks.
+  - Verification:
+    - Production build (`rm -rf .next && pnpm run build`) succeeded with exit code 0.
+    - All 31 routes generated cleanly with Partial Prerendering (◐) and static shells (○).
+    - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+    - ESLint (`pnpm lint`) passed with 0 errors.
+
 - Keep Scrolling Inactivity Indicator (`context/feature-specs/scroll-hint/01-keep-scrolling-indicator.md`):
   - Created `KeepScrollingIndicator` client component (`components/keep-scrolling-indicator.tsx`):
     - Positioned at `fixed bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-40`.
