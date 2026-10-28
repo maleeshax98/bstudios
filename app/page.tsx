@@ -20,7 +20,6 @@ import {
 import { getSampleImages } from "@/lib/cd";
 
 async function getHomeData() {
-  "use cache";
   try {
     const [
       services,

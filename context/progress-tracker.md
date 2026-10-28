@@ -8,11 +8,17 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Keep Scrolling Inactivity Indicator completed and verified. Ready for next user instruction.
+- Implement Clerk authentication integration according to `context/feature-specs/auth/setup-clerk.md`.
 
 ## In Progress
 
-- None (Feature completed and verified. Awaiting next user instruction).
+- Clerk Authentication Setup (`context/feature-specs/auth/setup-clerk.md`):
+  - Setup Clerk in Next.js project with `@clerk/nextjs` (and `@clerk/ui` if using shadcn/ui).
+  - Configure `ClerkProvider` inside `<body>` in root layout (`app/layout.tsx`).
+  - Configure Next.js middleware with `clerkMiddleware()`.
+  - Add auth controls (`<SignedIn>`, `<SignedOut>`, `<SignInButton>`, `<SignUpButton>`, `<UserButton>`, `<Show>`) worked into layout / navigation.
+  - Implement sign-in and sign-up catch-all routes wrapped in `<Suspense>`.
+  - Verify with type checks, linting, build, and `clerk doctor`.
 
 ## Next Up
 

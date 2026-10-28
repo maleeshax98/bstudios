@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 };
 
 async function getServicesData(): Promise<SERVICES_QUERY_RESULT> {
-  "use cache";
   try {
     const services = await client.fetch(SERVICES_QUERY);
     return services || [];

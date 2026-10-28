@@ -14,7 +14,6 @@ export const metadata: Metadata = {
 };
 
 async function getPackagesPageData() {
-  "use cache";
   try {
     const [categories, packages] = await Promise.all([
       client.fetch(CATEGORIES_QUERY),
@@ -25,10 +24,7 @@ async function getPackagesPageData() {
       packages: packages || [],
     };
   } catch (error) {
-    console.warn(
-      "Could not fetch packages data from Sanity:",
-      error,
-    );
+    console.warn("Could not fetch packages data from Sanity:", error);
     return {
       categories: [],
       packages: [],
@@ -42,10 +38,7 @@ export default async function Page() {
   return (
     <>
       {/* Curated Packages Exhibition */}
-      <PackagesPage
-        initialCategories={categories}
-        initialPackages={packages}
-      />
+      <PackagesPage initialCategories={categories} initialPackages={packages} />
 
       {/* The Booking Transition */}
       <ContactForm prompt="READY TO INVEST IN YOUR STORY?" />

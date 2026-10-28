@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  allowedDevOrigins: ["parted-sigillate-kendal.ngrok-free.dev"],
 };
 
 export default nextConfig;
