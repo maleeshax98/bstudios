@@ -2066,6 +2066,7 @@ Executed `rm -rf .next && pnpm run build` without build cache per the user's exp
   - `bstudio/app/services/page.tsx`: Isolated `ServicesContent` inside `<Suspense fallback={<ServicesVertical initialServices={[]} />}>`.
   - `bstudio/app/packages/page.tsx`: Isolated `PackagesContent` inside `<Suspense fallback={<PackagesPage initialCategories={[]} initialPackages={[]} />}>`.
   - `bstudio/app/page.tsx`: Isolated `DynamicHomeSections` inside `<Suspense fallback={<HomeSectionsFallback />}>`.
+  - `bstudio/app/album/[slug]/page.tsx`: Removed `"use cache"` directive from `getAlbumData()` to align with no-cache dynamic streaming architecture.
   - Zero `"use cache"` or cache directives added.
   - Production build (`rm -rf .next && pnpm run build`) succeeded with exit code 0; all 31 routes generated cleanly.
   - TypeScript strict checks (`pnpm exec tsc --noEmit`) passed with 0 errors.
