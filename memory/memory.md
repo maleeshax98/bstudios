@@ -2052,4 +2052,36 @@ Reviewed feature specification `context/feature-specs/auth/setup-clerk.md` targe
 - Code committed to `development` branch and pushed to GitHub remote `origin/development`.
 - Cleaned up unused database dependencies (`prisma`, `pg`, `dotenv`, `tsx`) from `package.json` and `pnpm-lock.yaml`.
 
+---
+
+## 2026-10-29 — Build Fix: Next.js 16 Partial Prerendering Streaming Fix Without Cache
+
+### Session Summary
+
+Executed `rm -rf .next && pnpm run build` without build cache per the user's explicit directive. Analyzed prerender build failure: Next.js 16 Cache Components / Partial Prerendering halted at `/services` (`Error: Route "/services": Next.js encountered uncached or runtime data during prerendering`) because dynamic Sanity HTTP fetches occurred directly inside the page root component outside a `<Suspense>` boundary. Following the instruction to avoid the cache directive (`"use cache"`), refactored `/services`, `/packages`, and `/` (`app/page.tsx`) to isolate dynamic fetching into child server components wrapped in `<Suspense fallback={...}>`. Verified the production build passes cleanly across all 31 routes without cache.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `bstudio/app/services/page.tsx`: Isolated `ServicesContent` inside `<Suspense fallback={<ServicesVertical initialServices={[]} />}>`.
+  - `bstudio/app/packages/page.tsx`: Isolated `PackagesContent` inside `<Suspense fallback={<PackagesPage initialCategories={[]} initialPackages={[]} />}>`.
+  - `bstudio/app/page.tsx`: Isolated `DynamicHomeSections` inside `<Suspense fallback={<HomeSectionsFallback />}>`.
+  - Zero `"use cache"` or cache directives added.
+  - Production build (`rm -rf .next && pnpm run build`) succeeded with exit code 0; all 31 routes generated cleanly.
+  - TypeScript strict checks (`pnpm exec tsc --noEmit`) passed with 0 errors.
+  - ESLint (`pnpm lint`) passed with 0 errors.
+- **Incomplete / Next:**
+  - Awaiting next user instruction (or continuing Clerk authentication setup).
+
+### Decisions & Rationale
+
+- **Suspense-Based Streaming vs. `"use cache"`:** Next.js 16 with Partial Prerendering allows either caching runtime data (`"use cache"`) or wrapping dynamic data accesses in `<Suspense>`. Per the user's explicit instruction not to use the cache mechanism, and following the pattern already established in `app/works/page.tsx` and `app/album/[slug]/page.tsx`, `<Suspense>` boundaries were placed around dynamic fetching segments. This enables Next.js to prerender the static shell (hero, landing, footers, loaders) and defer dynamic CMS data fetching to runtime streaming without build errors.
+- **Graceful Fallbacks:** Utilized existing built-in static default arrays (`initialServices={[]}`, `initialCategories={[]}`, `initialPackages={[]}`, and `HomeSectionsFallback`) as Suspense fallbacks so the static prerender shell renders polished fallback UI without blank flashes.
+
+### Continuation Context
+
+- Production build is 100% operational and verified.
+- Ready for next instruction or task.
+
+
 
