@@ -41,7 +41,7 @@ function WorksFallback() {
       <div className="max-w-7xl mx-auto">
         <header className="border-b border-border-subtle pb-10 sm:pb-14">
           <h1 className="font-sans font-black uppercase text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight leading-[0.9] text-text-primary">
-            SELECTED WORKS
+            WORKS
           </h1>
         </header>
         <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12">

@@ -60,9 +60,9 @@
   color-scheme: light;
 
   /* Editorial Off-Light Tokens (context/ui-context.md) */
-  --bg-base: #F7F7F5;
-  --bg-surface: #EBEBE8;
-  --bg-subtle: #DFDFDC;
+  --bg-base: #f7f7f5;
+  --bg-surface: #ebebe8;
+  --bg-subtle: #dfdfdc;
   --border-subtle: rgba(17, 17, 17, 0.08);
   --text-primary: #111111;
   --text-muted: #888888;
@@ -76,7 +76,7 @@
   --popover: var(--bg-surface);
   --popover-foreground: var(--text-primary);
   --primary: var(--accent-primary);
-  --primary-foreground: #F7F7F5;
+  --primary-foreground: #f7f7f5;
   --secondary: var(--bg-subtle);
   --secondary-foreground: var(--text-primary);
   --muted: var(--bg-subtle);
@@ -84,7 +84,7 @@
   --accent: var(--bg-surface);
   --accent-foreground: var(--accent-primary);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #F7F7F5;
+  --destructive-foreground: #f7f7f5;
   --border: rgba(17, 17, 17, 0.1);
   --input: rgba(17, 17, 17, 0.14);
   --ring: var(--accent-primary);
@@ -97,10 +97,55 @@
   --sidebar: var(--bg-surface);
   --sidebar-foreground: var(--text-primary);
   --sidebar-primary: var(--accent-primary);
-  --sidebar-primary-foreground: #F7F7F5;
+  --sidebar-primary-foreground: #f7f7f5;
   --sidebar-accent: var(--bg-subtle);
   --sidebar-accent-foreground: var(--text-primary);
   --sidebar-border: rgba(17, 17, 17, 0.1);
+  --sidebar-ring: var(--accent-primary);
+}
+
+:root.dark,
+html.dark,
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Editorial Dark Tokens */
+  --bg-base: #0c0c0c;
+  --bg-surface: #171717;
+  --bg-subtle: #242424;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #f7f7f5;
+  --text-muted: #888888;
+  --accent-primary: #ffffff;
+
+  /* shadcn/ui mappings */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-primary);
+  --primary-foreground: #0c0c0c;
+  --secondary: var(--bg-subtle);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-subtle);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--bg-surface);
+  --accent-foreground: var(--accent-primary);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #f7f7f5;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: var(--accent-primary);
+  --sidebar: var(--bg-surface);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--accent-primary);
+  --sidebar-primary-foreground: #0c0c0c;
+  --sidebar-accent: var(--bg-subtle);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: var(--accent-primary);
 }
 

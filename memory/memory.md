@@ -1915,3 +1915,53 @@ Refined the layout and animations of the Selected Works section on the home page
    - Next.js production build (`pnpm build`) compiled successfully with 24/24 static routes.
    - ESLint validated.
 
+---
+
+## 2026-10-28 — Feature: Dynamic Theme Switching & Floating Toggle Button (`01-toggle-theme.md`)
+
+### Session Summary
+
+Implemented dynamic theme switching and the floating theme toggle button according to `context/feature-specs/toggel-theme/01-toggle-theme.md`. Installed `next-themes`, created `components/theme-provider.tsx` configured with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`. Created `components/floating-theme-toggle.tsx` positioned fixed at bottom-right with high-contrast styling (`bg-text-primary text-bg-base`), smooth rotation/scale icon transitions using Lucide `Sun` and `Moon`, and tactile hover interactions with GSAP magnetic pull and elastic return. Defined `.dark` CSS tokens in `app/globals.css` adhering to `@custom-variant dark (&:is(.dark *));` so custom palette tokens invert seamlessly across light and dark modes. Wrapped `app/layout.tsx` with `ThemeProvider` and `FloatingThemeToggle`. Verified with TypeScript strict checks, ESLint, Next.js production build, and runtime browser verification.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Installed `next-themes` (v0.4.6) in `bstudio/`.
+  - Created `components/theme-provider.tsx`:
+    - Wraps `NextThemesProvider` with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.
+  - Created `components/floating-theme-toggle.tsx`:
+    - Fixed position: `fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-50`.
+    - Sleek circular high-contrast design: `w-12 h-12 lg:w-14 lg:h-14 rounded-full`, `bg-text-primary text-bg-base border border-border-subtle shadow-2xl`.
+    - Lucide `Sun` and `Moon` stroke icons with smooth rotation and scale transitions (`duration-500 ease-in-out`).
+    - GSAP magnetic cursor pull on hover with elastic return on mouse leave, with clean tween unmount teardown.
+    - Hydration-safe mounting using `useSyncExternalStore` to avoid cascading render lint issues in React 19.
+  - Configured `app/globals.css`:
+    - Defined `.dark` theme variables (`--bg-base: #0c0c0c`, `--bg-surface: #171717`, `--bg-subtle: #242424`, `--text-primary: #F7F7F5`, `--border-subtle: rgba(255, 255, 255, 0.1)`, plus shadcn mappings).
+    - Preserved `@custom-variant dark (&:is(.dark *));` for full compatibility with Tailwind CSS v4.
+    - Broadened `.dark` selector in `app/globals.css` to `:root.dark, html.dark, .dark, [data-theme="dark"]` for high CSS specificity over `:root`.
+    - Switched remaining hardcoded hex colors in `sample-gallery.tsx`, `contact-form.tsx`, and `packages-page.tsx` to semantic tokens (`bg-bg-base`, `bg-bg-surface`, `text-text-primary`).
+  - Configured `app/layout.tsx`:
+    - Wrapped root layout tree in `<ThemeProvider>`.
+    - Mounted `<FloatingThemeToggle />` accessible across all routes.
+    - Added `suppressHydrationWarning` to `<html>` and smooth `transition-colors duration-300` to `<body>`.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`) passed with 0 errors.
+    - ESLint (`pnpm lint`) passed with 0 errors.
+    - Production build (`pnpm build`) compiled and prerendered all 24 routes cleanly.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Direct DOM Class Ground-Truth in `toggleTheme`:** Fixed issue where the button appeared but failed to toggle the theme. The previous `emptySubscribe` store never fired a notification to React, causing `mounted` to stay `false` and `toggleTheme` to continually pass `setTheme("dark")`. By inspecting `document.documentElement.classList.contains("dark") || resolvedTheme === "dark"` directly inside the click handler, the toggle decision reflects ground-truth DOM state on every click, flawlessly flipping between light and dark.
+- **Asynchronous Mount Setter (`setTimeout(..., 0)`):** Solved React 19's `react-hooks/set-state-in-effect` compiler lint error by deferring `setMounted(true)` to an asynchronous macrotask, allowing clean client-side hydration without cascading render warnings.
+- **Multi-Selector Specificity (`:root.dark, html.dark, .dark, [data-theme="dark"]`):** Guarantees that dark mode tokens take precedence over `:root` regardless of stylesheet bundling or class placement on the `<html>` root.
+
+### Continuation Context
+
+- Dynamic theme switching is completely operational and verified across all pages.
+- Clicking the floating toggle button flips between Off-Light editorial and Cinematic Dark themes with smooth color transitions and icon animations.
+- Code committed and pushed to GitHub remote `origin/development`.
+- Ready for next instruction or milestone.
+
+

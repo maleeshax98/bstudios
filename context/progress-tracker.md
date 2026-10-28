@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp completed and verified. Ready for next user instruction.
+- Dynamic Theme Switching & Floating Toggle Button completed and verified. Ready for next user instruction.
 
 ## In Progress
 
@@ -19,6 +19,22 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Theme Toggle Feature: Dynamic Theme Switching & Floating Toggle Button (`context/feature-specs/toggel-theme/01-toggle-theme.md`):
+  - Installed `next-themes` and implemented `ThemeProvider` wrapper (`components/theme-provider.tsx`) with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.
+  - Implemented `FloatingThemeToggle` client component (`components/floating-theme-toggle.tsx`):
+    - Positioned at `fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-50`.
+    - Sleek circular high-contrast design (`w-12 h-12 lg:w-14 lg:h-14`, `bg-text-primary text-bg-base`, `border border-border-subtle shadow-2xl`).
+    - Lucide `Sun` and `Moon` stroke icons with smooth rotation and scale transitions (`duration-500 ease-in-out`).
+    - Tactile hover interactions with GSAP magnetic pull on mouse move and elastic snap-back on leave.
+    - Hydration-safe mounting using `useSyncExternalStore` to avoid cascading render lint issues in React 19.
+  - Defined `.dark` theme variables in `app/globals.css` ensuring seamless inversion of `--bg-base`, `--bg-surface`, `--bg-subtle`, `--text-primary`, `--border-subtle`, and shadcn tokens adhering to `@custom-variant dark (&:is(.dark *));`.
+  - Integrated `ThemeProvider` and `FloatingThemeToggle` in `app/layout.tsx` with `suppressHydrationWarning`.
+  - Verification:
+    - TypeScript strict mode: `pnpm exec tsc --noEmit` passed with 0 errors.
+    - ESLint: `pnpm lint` passed with 0 errors.
+    - Production build: `pnpm build` compiled and prerendered all 24 routes cleanly.
+    - Runtime check: Verified live on `localhost:3000` via browser subagent click test toggling themes smoothly.
 
 - Packages Feature: Make Pricing Big & Redirect Inquire Button to WhatsApp:
   - Enhanced Pricing Scale (`components/packages/packages-page.tsx`):

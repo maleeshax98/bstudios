@@ -429,7 +429,7 @@ export function AlbumGallery({
           ref={introOverlayRef}
           role="dialog"
           aria-label="Welcome Title Sequence"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white pointer-events-auto select-none"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-bg-subtle subtle pointer-events-auto select-none"
         >
           {/* Skip Intro Button */}
           <button
@@ -445,7 +445,7 @@ export function AlbumGallery({
             {/* The Name Reveal: elegant italicized Serif */}
             <h1
               ref={introTitleRef}
-              className="font-serif italic font-normal text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] text-[#111111] leading-[1.08] tracking-tight"
+              className="font-serif italic font-normal text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] text-[#111111] dark:text-text-muted leading-[1.08] tracking-tight"
             >
               {album.title}
             </h1>
@@ -464,7 +464,7 @@ export function AlbumGallery({
             {album.date && (
               <p
                 ref={introDateRef}
-                className="absolute inset-x-0 mx-auto font-sans font-black text-xl sm:text-3xl md:text-4xl uppercase tracking-[0.25em] text-[#111111] text-center"
+                className="absolute inset-x-0 mx-auto font-sans font-black text-xl sm:text-3xl md:text-4xl uppercase tracking-[0.25em] text-[#111111] dark:text-text-muted text-center"
               >
                 {album.date}
               </p>
@@ -612,7 +612,7 @@ export function AlbumGallery({
       {/* =================================================================== */}
       <footer className="fixed bottom-0 inset-x-0 z-30 pointer-events-none select-none">
         {/* Gradient Container fading transparent to solid Off-White */}
-        <div className="w-full bg-gradient-to-t from-[#F7F7F5] via-[#F7F7F5]/95 to-transparent pt-16 pb-8 px-6 pointer-events-auto flex flex-col items-center justify-center">
+        <div className="w-full bg-gradient-to-t from-[#F7F7F5] via-[#F7F7F5]/95 dark:from-[#0c0c0c] dark:via-[#0c0c0c]/95 to-transparent pt-16 pb-8 px-6 pointer-events-auto flex flex-col items-center justify-center">
           {/* Centered exactly two elegant text buttons: [ PHOTOS ] and [ VIDEOS ] */}
           <div className="flex items-center justify-center gap-6 sm:gap-10">
             {hasPhotos && (

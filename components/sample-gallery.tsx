@@ -241,7 +241,7 @@ export function SampleGallery({
       {/* Fades from transparent at top to solid Off-White (#F7F7F5) at the bottom */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-72 sm:h-80 md:h-[420px] lg:h-[480px] bg-gradient-to-t from-[#F7F7F5] from-15% via-[#F7F7F5]/85 via-50% to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-72 sm:h-80 md:h-[420px] lg:h-[480px] bg-gradient-to-t from-bg-base from-15% via-bg-base/85 via-50% to-transparent"
       />
 
       {/* Centered Magnetic Call to Action Button */}
@@ -256,7 +256,7 @@ export function SampleGallery({
               href="/works"
               className={cn(
                 "group/btn relative inline-flex items-center gap-3 rounded-full",
-                "border border-text-primary/20 bg-[#F7F7F5]/90 px-8 py-4 sm:px-10 sm:py-4.5",
+                "border border-text-primary/20 bg-bg-base/90 px-8 py-4 sm:px-10 sm:py-4.5",
                 "text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-text-primary",
                 "shadow-lg backdrop-blur-md transition-all duration-300",
                 "hover:border-text-primary hover:bg-text-primary hover:text-bg-base hover:shadow-2xl hover:scale-[1.02]",

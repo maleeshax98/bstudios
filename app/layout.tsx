@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { ThemeProvider } from "@/components/theme-provider";
+import { FloatingThemeToggle } from "@/components/floating-theme-toggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,13 +31,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-bg-base text-text-primary font-sans">
-        <SmoothScroll>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-        </SmoothScroll>
+      <body className="min-h-full flex flex-col bg-bg-base text-text-primary font-sans transition-colors duration-300">
+        <ThemeProvider>
+          <SmoothScroll>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </SmoothScroll>
+          <FloatingThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

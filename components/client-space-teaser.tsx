@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Globe, ArrowUpRight, Share2 } from "lucide-react";
+import { ArrowUpRight, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WEDDING_ALBUMS_QUERY_RESULT } from "@/sanity.types";
 import { OptimizedImage } from "@/components/optimized-image";
@@ -105,14 +105,14 @@ export function ClientSpaceTeaser({
         const countText = album.count
           ? `${album.count} Assets // 4K Master`
           : album.duration
-          ? `${album.duration} Film // 4K Master`
-          : "300+ Assets // 4K Master";
+            ? `${album.duration} Film // 4K Master`
+            : "300+ Assets // 4K Master";
 
         const shootType = album.description
           ? album.description.length > 36
             ? `${album.description.slice(0, 36).trim()}...`
             : album.description
-          : (album.date || "Wedding Collection");
+          : album.date || "Wedding Collection";
 
         const slug = album.slug?.current;
         const link = slug ? `/album/${slug}` : "/works";
@@ -148,7 +148,9 @@ export function ClientSpaceTeaser({
   // GSAP ScrollTrigger album fan out / spread animation
   React.useEffect(() => {
     const section = sectionRef.current;
-    const cards = cardsRef.current.filter((c): c is HTMLDivElement => c !== null);
+    const cards = cardsRef.current.filter(
+      (c): c is HTMLDivElement => c !== null,
+    );
 
     if (!section || cards.length === 0) return;
 
@@ -158,10 +160,34 @@ export function ClientSpaceTeaser({
       // Desktop layout (>= 1024px)
       mm.add("(min-width: 1024px)", () => {
         // Initial stacked deck positioning
-        gsap.set(cards[0], { xPercent: -5, yPercent: 4, rotation: -4, scale: 0.94, zIndex: 1 });
-        gsap.set(cards[1], { xPercent: 3, yPercent: -2, rotation: 3, scale: 0.96, zIndex: 2 });
-        gsap.set(cards[2], { xPercent: -2, yPercent: 2, rotation: -1.5, scale: 0.98, zIndex: 3 });
-        gsap.set(cards[3], { xPercent: 0, yPercent: 0, rotation: 0, scale: 1.0, zIndex: 4 });
+        gsap.set(cards[0], {
+          xPercent: -5,
+          yPercent: 4,
+          rotation: -4,
+          scale: 0.94,
+          zIndex: 1,
+        });
+        gsap.set(cards[1], {
+          xPercent: 3,
+          yPercent: -2,
+          rotation: 3,
+          scale: 0.96,
+          zIndex: 2,
+        });
+        gsap.set(cards[2], {
+          xPercent: -2,
+          yPercent: 2,
+          rotation: -1.5,
+          scale: 0.98,
+          zIndex: 3,
+        });
+        gsap.set(cards[3], {
+          xPercent: 0,
+          yPercent: 0,
+          rotation: 0,
+          scale: 1.0,
+          zIndex: 4,
+        });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -185,7 +211,7 @@ export function ClientSpaceTeaser({
             scale: 0.92,
             ease: "power2.out",
           },
-          0
+          0,
         )
           .to(
             cards[1],
@@ -196,7 +222,7 @@ export function ClientSpaceTeaser({
               scale: 0.96,
               ease: "power2.out",
             },
-            0
+            0,
           )
           .to(
             cards[2],
@@ -207,7 +233,7 @@ export function ClientSpaceTeaser({
               scale: 0.98,
               ease: "power2.out",
             },
-            0
+            0,
           )
           .to(
             cards[3],
@@ -218,17 +244,41 @@ export function ClientSpaceTeaser({
               scale: 1.0,
               ease: "power2.out",
             },
-            0
+            0,
           );
       });
 
       // Mobile & Tablet layout (< 1024px)
       mm.add("(max-width: 1023px)", () => {
         // Subtle stack setup fitting narrower viewport
-        gsap.set(cards[0], { xPercent: -3, yPercent: 3, rotation: -3, scale: 0.92, zIndex: 1 });
-        gsap.set(cards[1], { xPercent: 2, yPercent: -2, rotation: 2, scale: 0.95, zIndex: 2 });
-        gsap.set(cards[2], { xPercent: -1, yPercent: 1, rotation: -1, scale: 0.98, zIndex: 3 });
-        gsap.set(cards[3], { xPercent: 0, yPercent: 0, rotation: 0, scale: 1.0, zIndex: 4 });
+        gsap.set(cards[0], {
+          xPercent: -3,
+          yPercent: 3,
+          rotation: -3,
+          scale: 0.92,
+          zIndex: 1,
+        });
+        gsap.set(cards[1], {
+          xPercent: 2,
+          yPercent: -2,
+          rotation: 2,
+          scale: 0.95,
+          zIndex: 2,
+        });
+        gsap.set(cards[2], {
+          xPercent: -1,
+          yPercent: 1,
+          rotation: -1,
+          scale: 0.98,
+          zIndex: 3,
+        });
+        gsap.set(cards[3], {
+          xPercent: 0,
+          yPercent: 0,
+          rotation: 0,
+          scale: 1.0,
+          zIndex: 4,
+        });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -251,7 +301,7 @@ export function ClientSpaceTeaser({
             scale: 0.88,
             ease: "power2.out",
           },
-          0
+          0,
         )
           .to(
             cards[1],
@@ -262,7 +312,7 @@ export function ClientSpaceTeaser({
               scale: 0.92,
               ease: "power2.out",
             },
-            0
+            0,
           )
           .to(
             cards[2],
@@ -273,7 +323,7 @@ export function ClientSpaceTeaser({
               scale: 0.96,
               ease: "power2.out",
             },
-            0
+            0,
           )
           .to(
             cards[3],
@@ -284,7 +334,7 @@ export function ClientSpaceTeaser({
               scale: 1.0,
               ease: "power2.out",
             },
-            0
+            0,
           );
       });
     }, section);
@@ -346,7 +396,7 @@ export function ClientSpaceTeaser({
       aria-label="Dedicated Client Space"
       className={cn(
         "relative w-full h-[100dvh] min-h-[680px] bg-bg-base text-text-primary overflow-hidden flex items-center select-none",
-        className
+        className,
       )}
       {...props}
     >
@@ -361,14 +411,6 @@ export function ClientSpaceTeaser({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Editorial Information & CTA */}
           <div className="lg:col-span-5 flex flex-col justify-center text-left z-20">
-            {/* Shareable Kicker */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-surface w-fit mb-4 sm:mb-6">
-              <Globe className="w-3.5 h-3.5 text-text-primary stroke-[1.75]" />
-              <span className="font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
-                Dedicated Client Space
-              </span>
-            </div>
-
             {/* Massive Brutalist Sans-Serif Headline */}
             <h2 className="font-sans font-black uppercase tracking-tighter leading-[0.88] text-text-primary text-4xl sm:text-6xl md:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]">
               YOUR PERSONAL PREMIERE
@@ -376,7 +418,9 @@ export function ClientSpaceTeaser({
 
             {/* Elegant Italicized Serif Description */}
             <p className="font-serif italic text-text-primary/90 text-lg sm:text-xl md:text-2xl leading-relaxed mt-4 sm:mt-6 max-w-xl">
-              Every memory, beautifully curated. Access your high-resolution digital albums in one dedicated space—designed for private viewing or sharing publicly with the world.
+              Every memory, beautifully curated. Access your high-resolution
+              digital albums in one dedicated space—designed for private viewing
+              or sharing publicly with the world.
             </p>
 
             {/* Feature Highlights */}
@@ -414,19 +458,19 @@ export function ClientSpaceTeaser({
                 href={albums[0]?.link || "/works"}
                 onMouseMove={handleMagneticMove}
                 onMouseLeave={handleMagneticLeave}
-                className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-text-primary text-bg-base font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:bg-black hover:shadow-xl active:scale-95 will-change-transform"
+                className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-text-primary text-bg-base font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300  hover:shadow-xl active:scale-95 will-change-transform"
               >
                 <span>VIEW SAMPLE ALBUM</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
 
-              <a
+              {/* <a
                 href="#client-login"
                 className="group inline-flex items-center gap-2 px-6 py-3.5 sm:py-4 rounded-full border border-border-subtle bg-bg-surface text-text-primary font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:border-text-primary hover:bg-bg-subtle active:scale-95"
               >
                 <Share2 className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary transition-colors duration-200 stroke-[1.75]" />
                 <span>ACCESS GALLERY</span>
-              </a>
+              </a> */}
             </div>
           </div>
 
