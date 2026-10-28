@@ -80,9 +80,6 @@ async function searchCloudinaryWithCache(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(bodyPayload),
-      next: {
-        revalidate: 3600, // Cache locally for 1 hour
-      },
     },
   );
 

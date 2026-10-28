@@ -14,6 +14,7 @@ interface PageProps {
 async function getAlbumData(slug: string) {
   try {
     const album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
+    console.log(album);
     return album;
   } catch (error) {
     console.warn(`Could not fetch album data for ${slug}:`, error);
@@ -40,6 +41,7 @@ async function getCachedAlbumMedia(folderName: string) {
       totalCount: 0,
     })),
   ]);
+
   return { imagesRes, videosRes };
 }
 
@@ -78,7 +80,6 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  "use cache";
   const { slug } = await params;
   let album = null;
   try {
