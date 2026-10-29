@@ -8,17 +8,38 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Sanity Live Content audit and implementation completed and verified across the codebase (`context/error/02-adding-sanity-live.md`). Awaiting next user instruction.
+- Feature 17 completed and verified. Awaiting next user instruction.
 
 ## In Progress
 
-- None (Sanity Live Content implementation completed and verified. Awaiting next user instruction).
+- None (Feature 17 completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Feature 17: Changing Selected Work UI in Home Page (`context/feature-specs/17-changing-selected-work-ui.md`):
+  - Updated `<SelectedWorks />` component (`components/selected-works.tsx`):
+    - Converted project image presentation from a split side-by-side card to a full-bleed cinematic background image (`absolute inset-0 w-full h-full`) utilizing `<OptimizedImage fill sizes="100vw" ... />`.
+    - Added dual gradient scrims (bottom-up `bg-gradient-to-t from-black/90 via-black/45 to-black/20` and left-to-right `bg-gradient-to-r from-black/70 via-black/25 to-transparent`) ensuring strong text contrast and legibility over photos.
+    - Repositioned project text to the bottom left within the standard editorial grid (`max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20`).
+    - Styled typography for the background-image aesthetic:
+      - Category & Year Eyebrow: `font-serif italic text-white/75` with subtle dot indicator.
+      - Structural Title: `font-sans font-black text-white` uppercase display scaling up to `text-8xl`.
+      - Editorial Description: `font-serif italic sm:font-normal text-white/80 max-w-xl`.
+      - "View Project" CTA Button: pill button with stroke `ArrowUpRight`, styled in `border-white/30 bg-black/40 hover:bg-white hover:text-black text-white backdrop-blur-sm`.
+    - Added a subtle floating index badge at the top-right corner (`{project.index} / {totalCountFormatted}`).
+    - Updated GSAP ScrollTrigger timeline:
+      - Initial state: image scales at 1.06 with opacity 0; text translates at `y: 40` with opacity 0.
+      - Entry: image settles smoothly to `scale: 1` and `opacity: 1`, text glides up to `y: 0` and `opacity: 1`.
+      - Hold: still in viewport for user engagement and interaction.
+      - Exit: smooth scale and fade transition out before next slide arrives.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
 
 - Sanity Live Content Integration Across Codebase (`context/error/02-adding-sanity-live.md`):
   - Phase 1 & 2 Audit & Research:

@@ -2227,3 +2227,42 @@ Audited and implemented official Sanity Live Content integration across the enti
 - Working tree clean and synced with remote `origin/development-sanity-live`.
 
 
+
+## Session 2026-10-29 — Feature 17: Changing Selected Work UI in Home Page
+
+### Session Summary
+
+Implemented `context/feature-specs/17-changing-selected-work-ui.md` updating `<SelectedWorks />` on the Home page. Replaced the previous split/floating card presentation with a full-bleed cinematic background image (`absolute inset-0 w-full h-full`) using `<OptimizedImage fill sizes="100vw" ... />` and dual dark gradient scrims (`bg-gradient-to-t from-black/90 via-black/45 to-black/20` and `bg-gradient-to-r from-black/70 via-black/25 to-transparent`) to ensure optimal legibility for text. Positioned project information (index, category, year, massive structural title, description, and "View Project" CTA button) at the bottom left (`max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20`). Added a subtle floating index badge at the top-right corner (`{project.index} / {totalCountFormatted}`). Refined the GSAP ScrollTrigger timeline to orchestrate a subtle background zoom and smooth upward text glide on entry, hold during scroll for reading/interaction, and depth-scale fade on exit.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `components/navbar.tsx`:
+    - Updated CTA button text styling (`bg-accent-primary text-white dark:text-black hover:bg-text-primary`) for high-contrast visibility across light and dark themes.
+  - `components/selected-works.tsx`:
+    - Converted slides to full-bleed background images with `<OptimizedImage fill sizes="100vw" ... />`.
+    - Added bottom-up and left-to-right gradient overlays protecting text legibility across diverse image brightness levels.
+    - Positioned project typography and "View Project" CTA button at the bottom left.
+    - Added top-right subtle index badge (`{project.index} / {totalCountFormatted}`).
+    - Styled typography in high-contrast crisp white (`text-white`) with italic serif accents (`text-white/75` eyebrow, `text-white/80` description).
+    - Styled "View Project" button as a glassmorphic pill (`border-white/30 bg-black/40 hover:bg-white hover:text-black text-white backdrop-blur-sm`).
+    - GSAP ScrollTrigger timeline smoothly animates background scale (1.06 to 1) and text glide (`y: 40` to `y: 0`), holds for interaction, and transitions out cleanly.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Next.js webpack production build (`pnpm exec next build --webpack`): compiled all 14 routes cleanly.
+  - Git & Push:
+    - Staged all changes (`components/selected-works.tsx`, `components/navbar.tsx`, `context/feature-specs/17-changing-selected-work-ui.md`, `context/progress-tracker.md`, `memory/memory.md`).
+    - Committed as `feat: update SelectedWorks UI with full-bleed background images and bottom-left text` and pushed to remote `origin/development-sanity-live`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Full-Bleed Image Presentation & Gradient Scrims:** Setting the image as the slide background creates an immersive full-screen cinematic visual impact. Because user-uploaded Sanity/Cloudinary thumbnails can vary greatly in luminance, a dual gradient scrim (vertical from bottom and horizontal from left) was applied, keeping the photographic subject visible while ensuring the bottom-left text and button have crisp readability.
+- **GSAP Scrub Coordination:** Initialized elements with deterministic states (`imgEl`: `scale: 1.06, opacity: 0`; `textEl`: `y: 40, opacity: 0`) and scrubbed entry over duration 1.2, followed by a 2.0s hold and 1.0s exit fade, ensuring smooth bidirectional scrubbing with Lenis.
+
+### Continuation Context
+
+- `<SelectedWorks />` now displays featured albums as full-bleed background images with bottom-left text.
+- Verified and documented in `context/progress-tracker.md` and `memory/memory.md`.
