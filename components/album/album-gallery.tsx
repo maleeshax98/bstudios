@@ -429,13 +429,13 @@ export function AlbumGallery({
           ref={introOverlayRef}
           role="dialog"
           aria-label="Welcome Title Sequence"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-bg-subtle subtle pointer-events-auto select-none"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-black pointer-events-auto select-none"
         >
           {/* Skip Intro Button */}
           <button
             type="button"
             onClick={() => setIsIntroComplete(true)}
-            className="absolute top-8 right-8 z-50 text-[11px] font-sans font-bold uppercase tracking-[0.25em] text-text-muted hover:text-text-primary transition-colors py-2 px-3 border border-border-subtle rounded-full bg-white/80 backdrop-blur-sm"
+            className="absolute top-8 right-8 z-50 text-[11px] font-sans font-bold uppercase tracking-[0.25em] text-text-muted hover:text-text-primary transition-colors py-2 px-3 border border-border-subtle rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm"
           >
             [ SKIP ]
           </button>
