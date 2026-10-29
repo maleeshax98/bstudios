@@ -5,6 +5,8 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FloatingThemeToggle } from "@/components/floating-theme-toggle";
 import { KeepScrollingIndicator } from "@/components/keep-scrolling-indicator";
+import { ClerkProvider } from "@clerk/nextjs";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,10 +27,15 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: "B studio — High-End Photography & Videography",
-  description: "B studio is a premium, cinematic visual studio framing photography and videography in an off-light editorial experience.",
+  description:
+    "B studio is a premium, cinematic visual studio framing photography and videography in an off-light editorial experience.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
@@ -36,14 +43,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg-base text-text-primary font-sans transition-colors duration-300">
-        <ThemeProvider>
-          <SmoothScroll>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-          </SmoothScroll>
-          <FloatingThemeToggle />
-          <KeepScrollingIndicator />
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider>
+            <SmoothScroll>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+            </SmoothScroll>
+            <FloatingThemeToggle />
+            <KeepScrollingIndicator />
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
