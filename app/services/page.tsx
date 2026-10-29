@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import * as React from "react";
+import { Suspense } from "react";
 import { WhisperLoader } from "@/components/services/whisper-loader";
 import { ServicesLanding } from "@/components/services/services-landing";
 import { ServicesVertical } from "@/components/services/services-horizontal";
@@ -28,9 +29,12 @@ async function getServicesData(): Promise<SERVICES_QUERY_RESULT> {
   }
 }
 
-export default async function ServicesPage() {
+async function ServicesContent() {
   const services = await getServicesData();
+  return <ServicesVertical initialServices={services} />;
+}
 
+export default function ServicesPage() {
   return (
     <>
       {/* 1. The Loading Sequence (The Whisper Intro) */}
@@ -39,8 +43,10 @@ export default async function ServicesPage() {
       {/* 2. The Landing (The Anchor) */}
       <ServicesLanding />
 
-      {/* 3. The Horizontal Exhibition (The Core) */}
-      <ServicesVertical initialServices={services} />
+      {/* 3. The Horizontal Exhibition (The Core) wrapped in Suspense for Partial Prerendering */}
+      <Suspense fallback={<ServicesVertical initialServices={[]} />}>
+        <ServicesContent />
+      </Suspense>
 
       {/* 4. The Booking Transition (The End) */}
       <ContactForm prompt="READY TO SHOOT?" />

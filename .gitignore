@@ -43,3 +43,5 @@ next-env.d.ts
 # large media assets
 public/hero2.mp4
 
+
+/lib/generated/prisma

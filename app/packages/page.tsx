@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import * as React from "react";
+import { Suspense } from "react";
 import { PackagesPage } from "@/components/packages/packages-page";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
@@ -27,10 +28,7 @@ async function getPackagesPageData() {
       packages: packages || [],
     };
   } catch (error) {
-    console.warn(
-      "Could not fetch packages data from Sanity:",
-      error,
-    );
+    console.warn("Could not fetch packages data from Sanity:", error);
     return {
       categories: [],
       packages: [],
@@ -38,16 +36,25 @@ async function getPackagesPageData() {
   }
 }
 
-export default async function Page() {
+async function PackagesContent() {
   const { categories, packages } = await getPackagesPageData();
+  return (
+    <PackagesPage
+      initialCategories={categories}
+      initialPackages={packages}
+    />
+  );
+}
 
+export default function Page() {
   return (
     <>
-      {/* Curated Packages Exhibition */}
-      <PackagesPage
-        initialCategories={categories}
-        initialPackages={packages}
-      />
+      {/* Curated Packages Exhibition wrapped in Suspense for Partial Prerendering */}
+      <Suspense
+        fallback={<PackagesPage initialCategories={[]} initialPackages={[]} />}
+      >
+        <PackagesContent />
+      </Suspense>
 
       {/* The Booking Transition */}
       <ContactForm prompt="READY TO INVEST IN YOUR STORY?" />
