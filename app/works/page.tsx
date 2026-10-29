@@ -20,8 +20,6 @@ async function getWorksData() {
       client.fetch(PAGINATED_ALBUMS_QUERY, { start: 0, end: 6 }),
       client.fetch(CATEGORIES_QUERY),
     ]);
-
-    console.log(albums)
     return {
       albums: albums || [],
       categories: categories || [],
