@@ -2123,3 +2123,30 @@ Created new branch `v2` directly from the local `recovery` branch state at commi
 ### Continuation Context
 
 - Active branch is `v2`, synced with `origin/v2` at `5e56284`.
+
+
+---
+
+## 2026-10-29 — Branch Management: Aligned Merge of v2 into Main
+
+### Session Summary
+
+Merged `v2` into `main` and ensured `main`'s tree is 100% identical to `v2`. Extra code from historical `development` PRs (including `@clerk/nextjs` auth wrappers in `layout.tsx`, package dependencies, and dev origin configs) was completely removed so `main` contains exclusively the code from `v2`. Verified TypeScript compilation and pushed cleanly to `origin/main`.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Fast-forwarded local `main` to `origin/main` (`265b16f`).
+  - Initiated merge of `v2` with `main` and checked out all files from `v2` (`git checkout v2 -- .`), completely purging all extra code from historical merges.
+  - Confirmed `git diff v2 main` is empty (0 file differences).
+  - Verified `pnpm exec tsc --noEmit` passed with 0 errors.
+  - Verified `pnpm lint` passed with 0 errors.
+  - Committed merge commit [`b61d389`](file:///Users/maleeshanayanashan/Projects/BINUKA/bstudio/memory/memory.md).
+  - Pushed `main` to `origin/main`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Continuation Context
+
+- `main` and `v2` are now completely identical in code tree.
+- `main` is up to date with `origin/main` at commit `b61d389`.
