@@ -2306,3 +2306,29 @@ Implemented `context/feature-specs/17-changing-selected-work-ui.md` updating `<S
 
 - Active branch is `development-v2`.
 - Ready for next instruction or feature development.
+
+---
+
+## Session 2026-10-29 (Session Update: Clerk Authentication & Prisma Database Setup)
+
+### Progress & Completed Work
+
+- **Clerk Authentication Setup:**
+  - Integrated `@clerk/nextjs` wrapped within `app/layout.tsx` (`<ClerkProvider>`).
+  - Updated `components/navbar.tsx` with Clerk authentication components (`<Show when="signed-out">`, `<SignInButton>`, `<SignUpButton>`, `<Show when="signed-in">`, `<UserButton>`).
+  - Created Clerk webhook route handler at `app/api/webhooks/clerk/route.ts` using `@clerk/nextjs/webhooks` (`verifyWebhook`).
+  - Added Next.js middleware / proxy configuration in `proxy.ts` using `clerkMiddleware()`.
+- **Database & Prisma ORM:**
+  - Installed `@prisma/client`, `prisma`, `@prisma/adapter-pg`, `pg`, `dotenv`.
+  - Configured PostgreSQL datasource in `prisma/schema.prisma` with `User` model (`clerkId`, `name`, `bio`, `dpLink`, `coverImageLink`, `contactNumber`, `whatsappNumber`, `birthDay`, `email`).
+  - Added Prisma client singleton with PG adapter in `lib/prisma.ts`.
+  - Added initial database migration (`20261029135559_init`).
+  - Configured Prisma 7 setup in `prisma7.config.ts`.
+- **Environment & Configuration:**
+  - Added ngrok dev origin support in `next.config.ts` (`allowedDevOrigins`).
+  - Updated `.gitignore` to exclude `/generated/prisma` and webhook test payloads (`app/api/webhooks/**/test.md`).
+- **Verification:**
+  - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+  - ESLint check (`pnpm lint`): passed with 0 errors.
+  - Next.js production build (`pnpm exec next build --webpack`): compiled all 15 routes successfully including `/api/webhooks/clerk`.
+

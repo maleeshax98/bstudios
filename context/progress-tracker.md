@@ -4,21 +4,29 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Phase 2: Headless CMS Architecture & Content Management
+- Phase 3: User Authentication & Database Architecture
 
 ## Current Goal
 
-- Feature 17 completed and verified. Awaiting next user instruction.
+- Clerk Authentication and Prisma ORM integration on `development-v2`.
 
 ## In Progress
 
-- None (Feature 17 completed and verified. Awaiting next user instruction).
+- Clerk User Sync and Webhook Profile Management.
 
 ## Next Up
 
-- Next milestone feature awaiting user instruction.
+- Link Clerk webhook events (`user.created`, `user.updated`, `user.deleted`) to Prisma User records.
 
 ## Completed
+
+- Clerk Authentication & Prisma Database Setup:
+  - Integrated `@clerk/nextjs` with `<ClerkProvider>` in `app/layout.tsx`.
+  - Added Clerk interactive auth controls (Sign In, Sign Up, User Profile) into `components/navbar.tsx`.
+  - Configured Prisma with PostgreSQL adapter (`lib/prisma.ts`, `prisma/schema.prisma`, `prisma7.config.ts`).
+  - Added Clerk webhook handler stub (`app/api/webhooks/clerk/route.ts`).
+  - Configured Next.js dev origins and proxy middleware (`proxy.ts`).
+  - Verification: `tsc --noEmit` (0 errors), `pnpm lint` (0 errors), `next build --webpack` (15/15 routes passed).
 
 - Feature 17: Changing Selected Work UI in Home Page (`context/feature-specs/17-changing-selected-work-ui.md`):
   - Updated `<SelectedWorks />` component (`components/selected-works.tsx`):

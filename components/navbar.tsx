@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Suspense } from "react";
 
 export interface NavItem {
   label: string;
@@ -301,7 +303,26 @@ export function Navbar({
               onMouseLeave={handleMagneticLeave}
               className="inline-block"
             >
-              <Link
+              <Suspense>
+                <div className="flex gap-5">
+                  <Show when="signed-out">
+                    <SignInButton>
+                      <button className="text-[#000000] dark:text-white cursor-pointer">
+                        Sign In
+                      </button>
+                    </SignInButton>
+                    <SignUpButton>
+                      <button className="bg-[#000000] dark:bg-white text-white dark:text-black rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
+                        Sign Up
+                      </button>
+                    </SignUpButton>
+                  </Show>
+                  <Show when="signed-in">
+                    <UserButton />
+                  </Show>
+                </div>
+              </Suspense>
+              {/* <Link
                 href={ctaHref}
                 className={cn(
                   "group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-sans text-xs uppercase tracking-widest font-semibold transition-all duration-300 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
@@ -312,7 +333,7 @@ export function Navbar({
               >
                 <span>{ctaLabel}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              </Link> */}
             </div>
           </div>
 

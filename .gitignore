@@ -51,3 +51,7 @@ skills-lock.json
 generated/
 
 
+
+/generated/prisma
+app/api/webhooks/**/test.md
+
