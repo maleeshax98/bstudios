@@ -2102,3 +2102,24 @@ Diagnosed and resolved the runtime crash `NotFoundError: Failed to execute 'remo
 - Navigation from Home page to all other routes (`/works`, `/packages`, `/about`, `/services`, `/contact`) is clean and crash-free.
 - Pinned animations remain fully functional and tear down synchronously on unmount.
 - Ready for next instruction or milestone.
+
+
+---
+
+## 2026-10-29 — Branch Management: v2 Creation from Local Recovery Code (5e56284)
+
+### Session Summary
+
+Created new branch `v2` directly from the local `recovery` branch state at commit `5e56284` (containing the GSAP route transition fix, without remote Clerk merges) per explicit user confirmation, and pushed `v2` to GitHub with tracking set to `origin/v2`.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Checked out new branch `v2` from local `recovery` at commit `5e56284`.
+  - Pushed `v2` to remote (`origin/v2`) with upstream tracking set.
+- **Incomplete / Next:**
+  - Awaiting next user instruction for v2 development.
+
+### Continuation Context
+
+- Active branch is `v2`, synced with `origin/v2` at `5e56284`.
