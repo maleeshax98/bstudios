@@ -43,6 +43,7 @@ next-env.d.ts
 # large media assets
 public/hero2.mp4
 
+# IDE / agent skills and generated output
 # prisma
 /generated/prisma
 
@@ -51,4 +52,6 @@ public/hero2.mp4
 .claude/
 .windsurf/
 skills-lock.json
+generated/
+
 

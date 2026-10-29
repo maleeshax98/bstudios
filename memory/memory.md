@@ -2150,3 +2150,197 @@ Merged `v2` into `main` and ensured `main`'s tree is 100% identical to `v2`. Ext
 
 - `main` and `v2` are now completely identical in code tree.
 - `main` is up to date with `origin/main` at commit `b61d389`.
+
+---
+
+## 2026-10-29 — Sanity Live Content Implementation Across Next.js Codebase (`02-adding-sanity-live.md`)
+
+### Session Summary
+
+Audited and implemented official Sanity Live Content integration across the entire Next.js codebase per `context/error/02-adding-sanity-live.md`. Configured `defineLive`, `sanityFetch`, and `<SanityLive />` from `next-sanity/live` (v13.4.0) so changes published in Sanity Studio trigger on-demand cache revalidation and real-time UI updates across the website without requiring manual cache clearing or Vercel redeployments.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - **Audit:**
+    - Confirmed Next.js 16.4.3, React 19.3.0, and `next-sanity` 13.4.0.
+    - Verified experimental `"use cache"` and `cacheComponents` are disabled, eliminating previous module-scoped cache deadlock conflicts.
+    - Identified all Sanity data-fetching entry points across server components, metadata generators, and server actions.
+  - **Shared Live Content Infrastructure (`sanity/live.ts` & `sanity/client.ts`):**
+    - Configured `sanity/client.ts` with `useCdn: true` and environment fallbacks (`brst44qi`, `production`).
+    - Implemented `sanity/live.ts` with `defineLive`: wired `client`, `serverToken: process.env.SANITY_API_READ_TOKEN || process.env.SANITY_API_TOKEN || false`, and `browserToken: process.env.NEXT_PUBLIC_SANITY_API_READ_TOKEN || false`. Strict separation guarantees write tokens are never leaked to client bundles.
+    - Mounted `<SanityLive />` globally in `app/layout.tsx` inside `ThemeProvider`.
+  - **Data-Fetching Migration:**
+    - Migrated all read queries to `sanityFetch` with explicit `stega: false` to preserve pure TypeGen types:
+      - `app/page.tsx`: `SERVICES_QUERY`, `COLORGRADING_QUERY`, `FEATURED_ALBUMS_QUERY`, `WEDDING_ALBUMS_QUERY`.
+      - `app/works/page.tsx`: `PAGINATED_ALBUMS_QUERY`, `CATEGORIES_QUERY`.
+      - `app/services/page.tsx`: `SERVICES_QUERY`.
+      - `app/packages/page.tsx`: `CATEGORIES_QUERY`, `PACKAGES_QUERY`.
+      - `app/album/[slug]/page.tsx`: `ALBUM_BY_SLUG_QUERY` across `getAlbumData()` and `generateMetadata()`.
+      - `lib/actions.ts`: `fetchMoreAlbums()` server action with `PAGINATED_ALBUMS_QUERY`.
+    - Maintained write-client isolation in `app/api/contact/route.ts` using `getWriteClient()`.
+  - **Caching Layer Resolution:**
+    - Purged brute-force `export const dynamic = "force-dynamic"` and `export const revalidate = 0` from routes, enabling Next.js tag-based ISR (`revalidate = 60`) combined with `<SanityLive />`'s real-time Server Action invalidation (`revalidateSyncTagsAction`).
+  - **Verification:**
+    - TypeScript compiler (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Next.js production build (`pnpm exec next build --webpack`): compiled all 14 routes cleanly with ISR / dynamic rendering.
+  - **Git & Push:**
+    - Committed Sanity Live Content integration, custom `revalidateAndRefresh` action, client component prop synchronization, and `.gitignore` updates to `development-sanity-live`.
+    - Pushed to remote `origin/development-sanity-live`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Custom `revalidateAndRefresh` Action on `<SanityLive />`:** In `next-sanity` v13, the default `revalidateSyncTagsAction` returns `undefined` in development mode (`return;`), which prevents `SanityLive` from calling `router.refresh()` when live events arrive. In production, v13 defaults to stale-while-revalidate without immediate refresh. Created `sanity/action.ts` (`revalidateAndRefresh`) that executes `revalidateTag(tag, "max")`, clears layout paths via `revalidatePath("/", "layout")`, and explicitly returns `"refresh"`, guaranteeing `router.refresh()` executes across all environments.
+- **Client Component Prop Synchronization:** In `components/works/works-page.tsx` and `components/packages/packages-page.tsx`, `useState(initialAlbums)` and `useState(initialPackages)` failed to update when Server Components passed fresh props. Added `useEffect` hooks synchronizing internal state with incoming props.
+- **CORS Support for 127.0.0.1:** Added `http://127.0.0.1:3000` to Sanity project `brst44qi` CORS origins with credentials enabled to prevent browser SSE connection drops when testing locally via loopback IP.
+- **Literal `stega: false` on `sanityFetch`:** `next-sanity/live`'s `defineLive` returns a typed `sanityFetch` overload that brands all string fields as `StegaString<T>` unless `stega: false` is explicitly supplied. Passing `stega: false` ensures exact compatibility with generated TypeGen union types (e.g. `Media: "PHOTOS" | "VIDEOS" | "MIXED"`).
+- **Tag-Based Revalidation (`revalidate = 60`):** Replacing `force-dynamic` with `revalidate = 60` allows fast edge serving and caching while `<SanityLive />` provides instantaneous on-demand cache invalidation via SSE events and `router.refresh()`.
+
+### Continuation Context
+
+- Live updates are wired end-to-end with server action revalidation and client state synchronization.
+- Memory saved and verified.
+
+## Session 2026-10-29 (Session Update: Sanity Client CDN Configuration & GitHub Push)
+
+### Progress & Completed Work
+
+- **Sanity Client Direct Lake Access (`sanity/client.ts`):**
+  - Updated `useCdn: false` in `sanity/client.ts` to ensure all read queries hit the Sanity Content Lake directly, eliminating CDN replication latency during live update tag revalidations.
+- **Verification:**
+  - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+  - ESLint (`pnpm lint`): passed with 0 errors (5 warnings in footer for unused imports).
+- **Git & Push:**
+  - Staged `sanity/client.ts` and `memory/memory.md`.
+  - Committed and pushed to `origin/development-sanity-live`.
+
+### Decisions & Rationale
+
+- **Bypassing Sanity API CDN (`useCdn: false`):**
+  - Although Sanity's API CDN is fast, live editing workflows can experience a brief propagation delay (several seconds) on CDN edge nodes. Setting `useCdn: false` guarantees that when `<SanityLive />` and Server Actions trigger a revalidation and refresh, the subsequent fetch queries get the freshest data directly from the live Content Lake.
+
+### Continuation Context
+
+- Working tree clean and synced with remote `origin/development-sanity-live`.
+
+
+
+## Session 2026-10-29 — Feature 17: Changing Selected Work UI in Home Page
+
+### Session Summary
+
+Implemented `context/feature-specs/17-changing-selected-work-ui.md` updating `<SelectedWorks />` on the Home page. Replaced the previous split/floating card presentation with a full-bleed cinematic background image (`absolute inset-0 w-full h-full`) using `<OptimizedImage fill sizes="100vw" ... />` and dual dark gradient scrims (`bg-gradient-to-t from-black/90 via-black/45 to-black/20` and `bg-gradient-to-r from-black/70 via-black/25 to-transparent`) to ensure optimal legibility for text. Positioned project information (index, category, year, massive structural title, description, and "View Project" CTA button) at the bottom left (`max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20`). Added a subtle floating index badge at the top-right corner (`{project.index} / {totalCountFormatted}`). Refined the GSAP ScrollTrigger timeline to orchestrate a subtle background zoom and smooth upward text glide on entry, hold during scroll for reading/interaction, and depth-scale fade on exit.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `components/navbar.tsx`:
+    - Updated CTA button text styling (`bg-accent-primary text-white dark:text-black hover:bg-text-primary`) for high-contrast visibility across light and dark themes.
+  - `components/selected-works.tsx`:
+    - Converted slides to full-bleed background images with `<OptimizedImage fill sizes="100vw" ... />`.
+    - Added bottom-up and left-to-right gradient overlays protecting text legibility across diverse image brightness levels.
+    - Positioned project typography and "View Project" CTA button at the bottom left.
+    - Added top-right subtle index badge (`{project.index} / {totalCountFormatted}`).
+    - Styled typography in high-contrast crisp white (`text-white`) with italic serif accents (`text-white/75` eyebrow, `text-white/80` description).
+    - Styled "View Project" button as a glassmorphic pill (`border-white/30 bg-black/40 hover:bg-white hover:text-black text-white backdrop-blur-sm`).
+    - GSAP ScrollTrigger timeline smoothly animates background scale (1.06 to 1) and text glide (`y: 40` to `y: 0`), holds for interaction, and transitions out cleanly.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Next.js webpack production build (`pnpm exec next build --webpack`): compiled all 14 routes cleanly.
+  - Git & Push:
+    - Staged all changes (`components/selected-works.tsx`, `components/navbar.tsx`, `context/feature-specs/17-changing-selected-work-ui.md`, `context/progress-tracker.md`, `memory/memory.md`).
+    - Committed as `feat: update SelectedWorks UI with full-bleed background images and bottom-left text` and pushed to remote `origin/development-sanity-live`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Full-Bleed Image Presentation & Gradient Scrims:** Setting the image as the slide background creates an immersive full-screen cinematic visual impact. Because user-uploaded Sanity/Cloudinary thumbnails can vary greatly in luminance, a dual gradient scrim (vertical from bottom and horizontal from left) was applied, keeping the photographic subject visible while ensuring the bottom-left text and button have crisp readability.
+- **GSAP Scrub Coordination:** Initialized elements with deterministic states (`imgEl`: `scale: 1.06, opacity: 0`; `textEl`: `y: 40, opacity: 0`) and scrubbed entry over duration 1.2, followed by a 2.0s hold and 1.0s exit fade, ensuring smooth bidirectional scrubbing with Lenis.
+
+### Continuation Context
+
+- `<SelectedWorks />` now displays featured albums as full-bleed background images with bottom-left text.
+- Verified and documented in `context/progress-tracker.md` and `memory/memory.md`.
+
+## Session 2026-10-29 (Session Update: Album Title Sequence & Fallback Dark Theme Support & GitHub Push)
+
+### Progress & Completed Work
+
+- **Album Fallback & Welcome Sequence Dark Theme Support:**
+  - `app/album/[slug]/page.tsx`: Updated `AlbumFallback` container with `dark:bg-black` so loading transitions remain seamless in dark mode without bright white flash.
+  - `components/album/album-gallery.tsx`: Updated `introOverlayRef` with `dark:bg-black` and the `[ SKIP ]` button with `dark:bg-black/80 backdrop-blur-sm`, cleaning up conflicting classes.
+- **Verification:**
+  - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+  - ESLint (`pnpm lint`): passed with 0 errors.
+- **Git & Push:**
+  - Staged `app/album/[slug]/page.tsx`, `components/album/album-gallery.tsx`, and `memory/memory.md`.
+  - Committed as `fix(album): add dark mode background support to album fallback and welcome title sequence` and pushed to `origin/development-sanity-live`.
+
+### Decisions & Rationale
+
+- **Eliminating White Flash in Dark Mode on `/album/[slug]`:** Both the loading fallback and the initial full-screen title sequence previously hardcoded `bg-white`. When navigating with the dark theme enabled, this caused a jarring bright flash before content or photos loaded. Adding `dark:bg-black` aligns the intro screen with the dark theme while preserving the pure white canvas in light mode.
+
+### Continuation Context
+
+- Working tree clean and synced with remote `origin/development-sanity-live`.
+
+
+## Session 2026-10-29 — Works Page Feature 03: Showing YouTube Videos in Album
+
+### Session Summary
+
+Implemented `context/feature-specs/works-page/03-adding-youtube-videos.md` to display YouTube videos within single album pages (`/album/[slug]`). Inspected the user's updated `albumType` in Sanity Studio (`studio/schemaTypes/albumType.ts`), which introduced the `youtubeLinks` field (`array` of strings). Added `youtubeLinks` to GROQ queries (`ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, `PAGINATED_ALBUMS_QUERY`), regenerated Sanity type definitions in `bstudio/sanity.types.ts`, created a YouTube parsing and embedding utility (`lib/youtube.ts`), allowed YouTube domains in `next.config.ts`, updated server-side data fetching (`app/album/[slug]/page.tsx`), and enhanced `AlbumGallery` (`components/album/album-gallery.tsx`) with an interactive YouTube facade player card (`YouTubePlayerCard`) and full-screen theater Lightbox embedding.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `studio/schemaTypes/albumType.ts`:
+    - Confirmed `youtubeLinks` field defined as an array of strings.
+  - `bstudio/sanity/queries.ts` & `bstudio/sanity.types.ts`:
+    - Added `youtubeLinks` to `ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, and `PAGINATED_ALBUMS_QUERY`.
+    - Ran `pnpm run typegen` in `studio/`, updating `ALBUM_BY_SLUG_QUERY_RESULT` with `youtubeLinks: Array<string> | null`.
+  - `bstudio/lib/youtube.ts`:
+    - Implemented `getYouTubeVideoId(url)` handling all standard YouTube URL patterns (watch, short, embed, shorts, live, query strings, and raw 11-char IDs).
+    - Implemented `getYouTubeEmbedUrl(videoId, options)` generating privacy-enhanced `youtube-nocookie.com` embed URLs.
+    - Implemented `getYouTubeThumbnailUrl(videoId, quality)` generating HD thumbnail URLs with fallback.
+  - `bstudio/next.config.ts`:
+    - Added `img.youtube.com` and `i.ytimg.com` to `images.remotePatterns`.
+  - `bstudio/app/album/[slug]/page.tsx`:
+    - Parsed `album.youtubeLinks` into `MediaItem` models with `provider: "youtube"` and `youtubeId`.
+    - Combined parsed YouTube videos and Cloudinary videos into unified `videos` list passed to `<AlbumGallery />`.
+    - Enhanced `generateMetadata` with fallback OpenGraph image using the first YouTube video's HD thumbnail if `album.thumbnail` is absent.
+  - `bstudio/components/album/album-gallery.tsx`:
+    - Created `YouTubePlayerCard` implementing the high-performance facade pattern: renders HD video thumbnail (`maxresdefault.jpg` with `hqdefault.jpg` fallback), dark gradient scrim, centered tactile Play button, and badges (`Film 01`, `YouTube`).
+    - One-click inline playback: clicking the card or Play button instantly mounts the responsive embedded YouTube iframe player with `autoplay=1`.
+    - Lightbox Theater Mode: clicking the card's expand button opens the full-screen modal Lightbox rendering a theater-scale embedded YouTube player (`w-[92vw] max-w-5xl aspect-video`).
+    - Dedicated Video Grid Layout: When `activeFilter === "VIDEOS"`, single videos are centered in a cinematic container (`max-w-4xl mx-auto`), pairs in a 2-column grid (`max-w-5xl mx-auto`), and 3+ in a responsive grid (`max-w-7xl mx-auto`), preventing CSS masonry column distortions on widescreen videos.
+    - Refined empty state and asset counters for video mode.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+    - Sanity Studio TypeScript check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - Live dev server verification: tested `http://localhost:3000/album/ane-pancho-youtube-seen-eka-pakaya` (which has 2 YouTube links in Sanity: `b4nCfZ_YfS4` and `CMQSJrTWLMw`), verified HTTP 200, both video IDs rendered, and `[ PHOTOS ]` / `[ VIDEOS ]` toggle buttons active.
+  - Git Commit & Push:
+    - Staged all feature files (`app/album/[slug]/page.tsx`, `components/album/album-gallery.tsx`, `context/feature-specs/works-page/03-adding-youtube-videos.md`, `context/progress-tracker.md`, `lib/youtube.ts`, `memory/memory.md`, `next.config.ts`, `sanity.types.ts`, `sanity/queries.ts`).
+    - Committed as `feat(album): add YouTube video player embed and gallery support` (commit `c15ca5b`).
+    - Pushed cleanly to remote `origin/youtube-video-link`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **High-Performance Facade Pattern for Video Cards:** Loading multiple live YouTube iframes on page load downloads excessive third-party scripts, slows initial render, and causes scroll-trapping issues on mobile devices. Using the facade pattern renders crystal-clear HD thumbnails with zero layout shift; clicking play immediately mounts the iframe with `autoplay=1` for seamless inline viewing, while the expand button provides full-screen theater Lightbox viewing.
+- **Responsive Widescreen Grid for Videos vs. CSS Columns for Stills:** Photos have variable vertical/horizontal aspect ratios where CSS columns (`columns-1 sm:columns-2 ...`) work well. Videos have standardized 16:9 widescreen ratios. In CSS columns, a single video would be squished into a 25% narrow column on the left. Switching to a centered container for 1 video and a 2-3 column flex/grid for multiple videos keeps video presentation cinematic and balanced.
+
+### Continuation Context
+
+- Single album pages (`/album/[slug]`) now support displaying YouTube videos via Sanity `youtubeLinks`.
+- Branch `youtube-video-link` in `bstudio/` is pushed and fully synchronized with `origin/youtube-video-link`.
+- Progress tracker (`context/progress-tracker.md`) updated.
+- Memory saved and verified.

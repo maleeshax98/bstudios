@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 import { Suspense } from "react";
 import { AlbumGallery, MediaItem } from "@/components/album/album-gallery";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { ALBUM_BY_SLUG_QUERY } from "@/sanity/queries";
 import { getImages, getVideos, CloudinaryResource } from "@/lib/cd";
+import { getYouTubeVideoId, getYouTubeThumbnailUrl } from "@/lib/youtube";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -16,7 +16,11 @@ interface PageProps {
 
 async function getAlbumData(slug: string) {
   try {
-    const album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
+    const { data: album } = await sanityFetch({
+      query: ALBUM_BY_SLUG_QUERY,
+      params: { slug },
+      stega: false,
+    });
     return album;
   } catch (error) {
     console.warn(`Could not fetch album data for ${slug}:`, error);
@@ -52,7 +56,12 @@ export async function generateMetadata({
   const { slug } = await params;
   let album = null;
   try {
-    album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
+    const { data } = await sanityFetch({
+      query: ALBUM_BY_SLUG_QUERY,
+      params: { slug },
+      stega: false,
+    });
+    album = data;
   } catch (error) {
     console.warn(`Could not fetch metadata for album ${slug}:`, error);
   }
@@ -69,13 +78,22 @@ export async function generateMetadata({
     album.description ||
     `Explore ${album.title || "the archive"} by B studio — high-end editorial and cinematic storytelling.`;
 
+  // Determine OpenGraph image: thumbnail, or first YouTube video thumbnail
+  let ogImage = album.thumbnail;
+  if (!ogImage && Array.isArray(album.youtubeLinks) && album.youtubeLinks.length > 0) {
+    const firstYtId = getYouTubeVideoId(album.youtubeLinks[0]);
+    if (firstYtId) {
+      ogImage = getYouTubeThumbnailUrl(firstYtId, "maxres");
+    }
+  }
+
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: album.thumbnail ? [{ url: album.thumbnail }] : [],
+      images: ogImage ? [{ url: ogImage }] : [],
     },
   };
 }
@@ -102,7 +120,31 @@ async function AlbumContent({ slug }: { slug: string }) {
     videosCursor = videosRes.nextCursor;
   }
 
-  // Map to MediaItem
+  // Parse YouTube video links from Sanity
+  const youtubeVideos: MediaItem[] = [];
+  if (Array.isArray(album.youtubeLinks)) {
+    album.youtubeLinks.forEach((link, idx) => {
+      if (typeof link === "string" && link.trim()) {
+        const videoId = getYouTubeVideoId(link);
+        if (videoId) {
+          youtubeVideos.push({
+            id: `yt-${videoId}-${idx}`,
+            type: "video",
+            url: link.trim(),
+            previewUrl: getYouTubeThumbnailUrl(videoId, "hq"),
+            width: 1920,
+            height: 1080,
+            alt: `${album.title || "Album"} Film ${idx + 1}`,
+            format: "youtube",
+            provider: "youtube",
+            youtubeId: videoId,
+          });
+        }
+      }
+    });
+  }
+
+  // Map Cloudinary images to MediaItem
   const photos: MediaItem[] = rawImages.map((img) => ({
     id: img.asset_id || img.public_id,
     type: "image",
@@ -113,7 +155,8 @@ async function AlbumContent({ slug }: { slug: string }) {
     format: img.format,
   }));
 
-  const videos: MediaItem[] = rawVideos.map((vid) => ({
+  // Map Cloudinary videos to MediaItem
+  const cloudinaryVideos: MediaItem[] = rawVideos.map((vid) => ({
     id: vid.asset_id || vid.public_id,
     type: "video",
     url: vid.secure_url || vid.url,
@@ -122,9 +165,13 @@ async function AlbumContent({ slug }: { slug: string }) {
     duration: vid.duration,
     alt: `${album.title || "Album"} Film`,
     format: vid.format,
+    provider: "cloudinary",
   }));
 
-  // Fallback: If no photos or videos were loaded from Cloudinary folder but Sanity has thumbnail
+  // Combine YouTube videos and Cloudinary videos
+  const videos: MediaItem[] = [...youtubeVideos, ...cloudinaryVideos];
+
+  // Fallback: If no photos or videos were loaded from Cloudinary or YouTube but Sanity has thumbnail
   if (photos.length === 0 && videos.length === 0 && album.thumbnail) {
     photos.push({
       id: "thumbnail-preview",
@@ -156,6 +203,7 @@ async function AlbumContent({ slug }: { slug: string }) {
     cloudinaryFolder: album.cloudinaryFolder,
     mediaType: album.Media,
     thumbnail: album.thumbnail,
+    youtubeLinks: album.youtubeLinks,
   };
 
   return (
@@ -175,7 +223,7 @@ async function AlbumContent({ slug }: { slug: string }) {
  */
 function AlbumFallback() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-black select-none">
       <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
         loading...
       </p>

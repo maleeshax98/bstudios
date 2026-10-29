@@ -104,6 +104,7 @@ export type Album = {
   alt?: string;
   thumbnail?: string;
   cloudinaryFolder?: string;
+  youtubeLinks?: Array<string>;
   Media?: Media;
   count?: string;
   duration?: string;
@@ -259,7 +260,7 @@ export type AllSanitySchemaTypes =
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: ALBUMS_QUERY
-// Query: *[_type == "album"] | order(publishedAt desc, _createdAt desc) {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    Media,    count,    duration,    slug,    publishedAt  }
+// Query: *[_type == "album"] | order(publishedAt desc, _createdAt desc) {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    youtubeLinks,    Media,    count,    duration,    slug,    publishedAt  }
 export type ALBUMS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -272,6 +273,7 @@ export type ALBUMS_QUERY_RESULT = Array<{
   alt: string | null;
   thumbnail: string | null;
   cloudinaryFolder: string | null;
+  youtubeLinks: Array<string> | null;
   Media: Media | null;
   count: string | null;
   duration: string | null;
@@ -327,7 +329,7 @@ export type WEDDING_ALBUMS_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PAGINATED_ALBUMS_QUERY
-// Query: *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    Media,    count,    duration,    slug,    publishedAt  }
+// Query: *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    youtubeLinks,    Media,    count,    duration,    slug,    publishedAt  }
 export type PAGINATED_ALBUMS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -340,6 +342,7 @@ export type PAGINATED_ALBUMS_QUERY_RESULT = Array<{
   alt: string | null;
   thumbnail: string | null;
   cloudinaryFolder: string | null;
+  youtubeLinks: Array<string> | null;
   Media: Media | null;
   count: string | null;
   duration: string | null;
@@ -357,7 +360,7 @@ export type CATEGORIES_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: ALBUM_BY_SLUG_QUERY
-// Query: *[_type == "album" && slug.current == $slug][0] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    Media,    count,    duration,    slug,    publishedAt  }
+// Query: *[_type == "album" && slug.current == $slug][0] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    youtubeLinks,    Media,    count,    duration,    slug,    publishedAt  }
 export type ALBUM_BY_SLUG_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -370,6 +373,7 @@ export type ALBUM_BY_SLUG_QUERY_RESULT = {
   alt: string | null;
   thumbnail: string | null;
   cloudinaryFolder: string | null;
+  youtubeLinks: Array<string> | null;
   Media: Media | null;
   count: string | null;
   duration: string | null;
@@ -447,12 +451,12 @@ export type COLORGRADING_QUERY_RESULT = Array<{
 // Query TypeMap
 declare global {
   interface SanityQueries {
-    '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUMS_QUERY_RESULT;
+    '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUMS_QUERY_RESULT;
     '\n  *[_type == "album" && isFeatured == true] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    isFeatured,\n    publishedAt\n  }\n': FEATURED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    isFeatured,\n    publishedAt\n  }\n': WEDDING_ALBUMS_QUERY_RESULT;
-    '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': PAGINATED_ALBUMS_QUERY_RESULT;
+    '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': PAGINATED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "category"] | order(title asc) {\n    _id,\n    title\n  }\n': CATEGORIES_QUERY_RESULT;
-    '\n  *[_type == "album" && slug.current == $slug][0] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
+    '\n  *[_type == "album" && slug.current == $slug][0] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current)] {\n    "slug": slug.current\n  }\n': ALBUM_SLUGS_QUERY_RESULT;
     '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_QUERY_RESULT;
     '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;

@@ -8,17 +8,96 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Resolved runtime NotFoundError ("Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node") on navbar page navigation (`context/error/01-cant-reach-the-pages.md`). Ready for next user instruction.
+- Works Page Feature 03 completed and verified. Awaiting next user instruction.
 
 ## In Progress
 
-- None (Bugfix completed and verified. Awaiting next user instruction).
+- None (Works Page Feature 03 completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Works Page Feature 03: Showing YouTube Videos in Album (`context/feature-specs/works-page/03-adding-youtube-videos.md`):
+  - Sanity Schema & TypeGen Integration:
+    - Inspected `albumType` schema (`studio/schemaTypes/albumType.ts`) confirming the `youtubeLinks` array of strings field.
+    - Updated `bstudio/sanity/queries.ts` to include `youtubeLinks` in `ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, and `PAGINATED_ALBUMS_QUERY`.
+    - Ran `pnpm run typegen` in `studio/`, extracting schema and generating updated TypeScript types (`ALBUM_BY_SLUG_QUERY_RESULT` with `youtubeLinks: Array<string> | null`) in `bstudio/sanity.types.ts`.
+  - YouTube Link Parsing & Utilities (`bstudio/lib/youtube.ts`):
+    - Created `getYouTubeVideoId(url)` supporting all YouTube URL formats (standard watch URLs, short youtu.be, embed, shorts, live, mobile, with query params, or raw 11-char IDs).
+    - Created `getYouTubeEmbedUrl(videoId, options)` providing privacy-enhanced `youtube-nocookie.com` embed URLs with `rel=0` and `modestbranding=1`.
+    - Created `getYouTubeThumbnailUrl(videoId, quality)` returning `maxresdefault.jpg` with fallback support.
+    - Updated `next.config.ts` to allow `img.youtube.com` and `i.ytimg.com` in `images.remotePatterns`.
+  - Server-Side Data Fetching (`bstudio/app/album/[slug]/page.tsx`):
+    - Updated `AlbumContent` to parse `album.youtubeLinks` into `MediaItem` models with `provider: "youtube"`, `youtubeId`, and high-res previews.
+    - Combined parsed YouTube videos and Cloudinary videos into unified `videos` list.
+    - Updated `generateMetadata` with defensive OpenGraph image fallback to YouTube video thumbnail when album thumbnail is not specified.
+  - Interactive Editorial Gallery Component (`bstudio/components/album/album-gallery.tsx`):
+    - Created `YouTubePlayerCard` component using the high-performance facade pattern: renders crystal-clear YouTube HD thumbnail (`maxresdefault.jpg` with `hqdefault.jpg` error fallback), dark gradient scrim, centered tactile Play button, and editorial badges (`Film 01`, `YouTube`).
+    - One-click inline playback: clicking the card or play button instantly activates the embedded responsive YouTube video player with `autoplay=1` without reloading or page jumping.
+    - Full-Screen Lightbox Theater Mode: clicking the expand button or navigating to the video opens the full-screen modal Lightbox rendering a theater-scale embedded YouTube player (`w-[92vw] max-w-5xl aspect-video`) with clean unmount on exit.
+    - Widescreen Video Grid Layout: When switching to `[ VIDEOS ]`, single videos are presented in a centered cinematic hero container (`max-w-4xl mx-auto`), pairs in a balanced 2-column grid (`max-w-5xl mx-auto`), and 3+ in a responsive grid (`max-w-7xl mx-auto`), avoiding narrow CSS masonry column distortion.
+    - Empty state refined to inform users when an album has no videos linked yet.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+    - Studio TypeScript check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - Dev server runtime check: verified live on `http://localhost:3000/album/ane-pancho-youtube-seen-eka-pakaya` returning HTTP 200 with both YouTube video IDs (`b4nCfZ_YfS4` and `CMQSJrTWLMw`) and responsive video player components.
+
+- Feature 17: Changing Selected Work UI in Home Page (`context/feature-specs/17-changing-selected-work-ui.md`):
+  - Updated `<SelectedWorks />` component (`components/selected-works.tsx`):
+    - Converted project image presentation from a split side-by-side card to a full-bleed cinematic background image (`absolute inset-0 w-full h-full`) utilizing `<OptimizedImage fill sizes="100vw" ... />`.
+    - Added dual gradient scrims (bottom-up `bg-gradient-to-t from-black/90 via-black/45 to-black/20` and left-to-right `bg-gradient-to-r from-black/70 via-black/25 to-transparent`) ensuring strong text contrast and legibility over photos.
+    - Repositioned project text to the bottom left within the standard editorial grid (`max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20`).
+    - Styled typography for the background-image aesthetic:
+      - Category & Year Eyebrow: `font-serif italic text-white/75` with subtle dot indicator.
+      - Structural Title: `font-sans font-black text-white` uppercase display scaling up to `text-8xl`.
+      - Editorial Description: `font-serif italic sm:font-normal text-white/80 max-w-xl`.
+      - "View Project" CTA Button: pill button with stroke `ArrowUpRight`, styled in `border-white/30 bg-black/40 hover:bg-white hover:text-black text-white backdrop-blur-sm`.
+    - Added a subtle floating index badge at the top-right corner (`{project.index} / {totalCountFormatted}`).
+    - Updated GSAP ScrollTrigger timeline:
+      - Initial state: image scales at 1.06 with opacity 0; text translates at `y: 40` with opacity 0.
+      - Entry: image settles smoothly to `scale: 1` and `opacity: 1`, text glides up to `y: 0` and `opacity: 1`.
+      - Hold: still in viewport for user engagement and interaction.
+      - Exit: smooth scale and fade transition out before next slide arrives.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+
+- Sanity Live Content Integration Across Codebase (`context/error/02-adding-sanity-live.md`):
+  - Phase 1 & 2 Audit & Research:
+    - Confirmed Next.js 16.4.3 and `next-sanity` 13.4.0 with React 19.3.0.
+    - Verified that experimental `"use cache"` and `cacheComponents` are disabled, eliminating previous module-scoped deadlock issues.
+    - Verified Sanity Live architecture (`defineLive`, `sanityFetch`, `<SanityLive />`).
+  - Phase 3 Shared Live Infrastructure:
+    - Updated `sanity/client.ts` with `useCdn: true` and environment fallbacks (`brst44qi`, `production`).
+    - Configured `sanity/live.ts` with `defineLive`: server-only token support (`SANITY_API_READ_TOKEN` / `SANITY_API_TOKEN`), viewer-safe browser token (`NEXT_PUBLIC_SANITY_API_READ_TOKEN`), never exposing write credentials.
+    - Integrated `<SanityLive />` globally in `app/layout.tsx` within `ThemeProvider`.
+  - Phase 4 Data-Fetching Migration:
+    - Migrated all Sanity data-fetching to `sanityFetch`:
+      - `app/page.tsx`: `SERVICES_QUERY`, `COLORGRADING_QUERY`, `FEATURED_ALBUMS_QUERY`, `WEDDING_ALBUMS_QUERY`.
+      - `app/works/page.tsx`: `PAGINATED_ALBUMS_QUERY`, `CATEGORIES_QUERY`.
+      - `app/services/page.tsx`: `SERVICES_QUERY`.
+      - `app/packages/page.tsx`: `CATEGORIES_QUERY`, `PACKAGES_QUERY`.
+      - `app/album/[slug]/page.tsx`: `ALBUM_BY_SLUG_QUERY` across page content and `generateMetadata`.
+      - `lib/actions.ts`: `fetchMoreAlbums` server action with `PAGINATED_ALBUMS_QUERY`.
+    - Maintained strict write client separation in `app/api/contact/route.ts`.
+  - Phase 5 Caching Resolution:
+    - Removed brute-force `export const dynamic = "force-dynamic"` and `export const revalidate = 0` from routes, restoring Next.js tag-based ISR (`revalidate = 60`).
+    - Configured queries with `stega: false` to guarantee pure, clean TypeScript TypeGen types.
+  - Phase 6 & 7 Verification & Live Update Diagnostics:
+    - Created custom server action `sanity/action.ts` (`revalidateAndRefresh`) that revalidates tags (`revalidateTag(tag, "max")`), clears layout paths (`revalidatePath("/", "layout")`), and explicitly returns `"refresh"`. In `next-sanity` v13, default action returns `undefined` in dev, preventing `router.refresh()` from running.
+    - Wired `<SanityLive action={revalidateAndRefresh} />` in `app/layout.tsx`.
+    - Added prop synchronization `useEffect` hooks in `components/works/works-page.tsx` and `components/packages/packages-page.tsx` so server component re-renders properly update client component state.
+    - Added `http://127.0.0.1:3000` to Sanity project `brst44qi` CORS origins alongside `http://localhost:3000`.
+    - TypeScript compiler (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+
 
 - Bugfix: Runtime NotFoundError on Route Transitions (`context/error/01-cant-reach-the-pages.md`):
   - Root Cause Analysis:

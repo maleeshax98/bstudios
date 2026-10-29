@@ -32,6 +32,21 @@ export function PackagesPage({
   );
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
+  const [prevCategories, setPrevCategories] = React.useState(initialCategories);
+  if (initialCategories !== prevCategories) {
+    setPrevCategories(initialCategories);
+    setCategories(initialCategories);
+    if (!selectedCategoryId && initialCategories[0]?._id) {
+      setSelectedCategoryId(initialCategories[0]._id);
+    }
+  }
+
+  const [prevPackages, setPrevPackages] = React.useState(initialPackages);
+  if (initialPackages !== prevPackages) {
+    setPrevPackages(initialPackages);
+    setPackages(initialPackages);
+  }
+
   const containerRef = React.useRef<HTMLDivElement>(null);
   const cardsGridRef = React.useRef<HTMLDivElement>(null);
 

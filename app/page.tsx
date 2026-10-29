@@ -10,7 +10,7 @@ import { ClientSpaceTeaser } from "@/components/client-space-teaser";
 import { ColorGradeLookbook } from "@/components/color-grade-lookbook";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import {
   SERVICES_QUERY,
   COLORGRADING_QUERY,
@@ -19,30 +19,29 @@ import {
 } from "@/sanity/queries";
 import { getSampleImages } from "@/lib/cd";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 async function getHomeData() {
   try {
     const [
-      services,
-      colorgrading,
-      featuredWorks,
-      weddingAlbums,
+      servicesRes,
+      colorgradingRes,
+      featuredWorksRes,
+      weddingAlbumsRes,
       sampleImagesData,
     ] = await Promise.all([
-      client.fetch(SERVICES_QUERY),
-      client.fetch(COLORGRADING_QUERY),
-      client.fetch(FEATURED_ALBUMS_QUERY),
-      client.fetch(WEDDING_ALBUMS_QUERY),
+      sanityFetch({ query: SERVICES_QUERY, stega: false }),
+      sanityFetch({ query: COLORGRADING_QUERY, stega: false }),
+      sanityFetch({ query: FEATURED_ALBUMS_QUERY, stega: false }),
+      sanityFetch({ query: WEDDING_ALBUMS_QUERY, stega: false }),
       getSampleImages(),
     ]);
 
     return {
-      services: services || [],
-      colorgrading: colorgrading || [],
-      featuredWorks: featuredWorks || [],
-      weddingAlbums: weddingAlbums || [],
+      services: servicesRes.data || [],
+      colorgrading: colorgradingRes.data || [],
+      featuredWorks: featuredWorksRes.data || [],
+      weddingAlbums: weddingAlbumsRes.data || [],
       sampleImages: sampleImagesData?.resources || [],
     };
   } catch (error) {

@@ -5,12 +5,11 @@ import { ServicesLanding } from "@/components/services/services-landing";
 import { ServicesVertical } from "@/components/services/services-horizontal";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { SERVICES_QUERY } from "@/sanity/queries";
 import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Services — B studio | High-End Cinematic Photography & Videography",
@@ -20,7 +19,10 @@ export const metadata: Metadata = {
 
 async function getServicesData(): Promise<SERVICES_QUERY_RESULT> {
   try {
-    const services = await client.fetch(SERVICES_QUERY);
+    const { data: services } = await sanityFetch({
+      query: SERVICES_QUERY,
+      stega: false,
+    });
     return services || [];
   } catch (error) {
     console.warn("Could not fetch services from Sanity:", error);

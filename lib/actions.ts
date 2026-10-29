@@ -1,6 +1,6 @@
 "use server";
 
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { PAGINATED_ALBUMS_QUERY } from "@/sanity/queries";
 import type { WorksPageAlbum } from "@/components/works/works-page";
 
@@ -13,7 +13,11 @@ export async function fetchMoreAlbums(
 }> {
   try {
     const end = start + limit;
-    const albums = await client.fetch(PAGINATED_ALBUMS_QUERY, { start, end });
+    const { data: albums } = await sanityFetch({
+      query: PAGINATED_ALBUMS_QUERY,
+      params: { start, end },
+      stega: false,
+    });
 
     return {
       albums: (albums as WorksPageAlbum[]) || [],
