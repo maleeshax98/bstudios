@@ -183,7 +183,7 @@ async function AlbumContent({ slug }: { slug: string }) {
  */
 function AlbumFallback() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-black select-none">
       <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
         loading...
       </p>

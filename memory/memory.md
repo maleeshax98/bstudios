@@ -2266,3 +2266,25 @@ Implemented `context/feature-specs/17-changing-selected-work-ui.md` updating `<S
 
 - `<SelectedWorks />` now displays featured albums as full-bleed background images with bottom-left text.
 - Verified and documented in `context/progress-tracker.md` and `memory/memory.md`.
+
+## Session 2026-10-29 (Session Update: Album Title Sequence & Fallback Dark Theme Support & GitHub Push)
+
+### Progress & Completed Work
+
+- **Album Fallback & Welcome Sequence Dark Theme Support:**
+  - `app/album/[slug]/page.tsx`: Updated `AlbumFallback` container with `dark:bg-black` so loading transitions remain seamless in dark mode without bright white flash.
+  - `components/album/album-gallery.tsx`: Updated `introOverlayRef` with `dark:bg-black` and the `[ SKIP ]` button with `dark:bg-black/80 backdrop-blur-sm`, cleaning up conflicting classes.
+- **Verification:**
+  - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+  - ESLint (`pnpm lint`): passed with 0 errors.
+- **Git & Push:**
+  - Staged `app/album/[slug]/page.tsx`, `components/album/album-gallery.tsx`, and `memory/memory.md`.
+  - Committed as `fix(album): add dark mode background support to album fallback and welcome title sequence` and pushed to `origin/development-sanity-live`.
+
+### Decisions & Rationale
+
+- **Eliminating White Flash in Dark Mode on `/album/[slug]`:** Both the loading fallback and the initial full-screen title sequence previously hardcoded `bg-white`. When navigating with the dark theme enabled, this caused a jarring bright flash before content or photos loaded. Adding `dark:bg-black` aligns the intro screen with the dark theme while preserving the pure white canvas in light mode.
+
+### Continuation Context
+
+- Working tree clean and synced with remote `origin/development-sanity-live`.
