@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import "lenis/dist/lenis.css";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -15,18 +15,14 @@ export interface SmoothScrollProps {
 }
 
 export function SmoothScroll({ children }: SmoothScrollProps) {
+  const pathname = usePathname();
+  const lenisRef = React.useRef<Lenis | null>(null);
+
   React.useEffect(() => {
     // Initialize Lenis for cinematic smooth inertia scrolling
     const lenis = new Lenis();
-    // {
-    //       duration: 1.2,
-    //       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    //       orientation: "vertical",
-    //       gestureOrientation: "vertical",
-    //       smoothWheel: true,
-    //       wheelMultiplier: 1,
-    //       touchMultiplier: 1.5,
-    //     }
+    lenisRef.current = lenis;
+
     // Synchronize Lenis with GSAP ScrollTrigger updates
     lenis.on("scroll", ScrollTrigger.update);
 
@@ -41,8 +37,17 @@ export function SmoothScroll({ children }: SmoothScrollProps) {
     return () => {
       gsap.ticker.remove(updateTicker);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
+
+  // Instantly scroll to top on route change to prevent stale scroll offsets
+  React.useEffect(() => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+      ScrollTrigger.refresh();
+    }
+  }, [pathname]);
 
   return <>{children}</>;
 }

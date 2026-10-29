@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -37,82 +36,6 @@ export interface ServicePanel {
   galleryHref: string;
 }
 
-const SERVICES: ServicePanel[] = [
-  {
-    id: "preshoot",
-    number: "01.",
-    title: "Preshoot",
-    subtitle: "Intimate Prelude",
-    description:
-      "An intimate editorial prelude capturing raw chemistry and quiet anticipation before the grand celebration. We frame the tenderness of your romance in timeless, cinematic light.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "Intimate couple preshoot in soft editorial lighting",
-    galleryHref: "/#work",
-  },
-  {
-    id: "casual-shoot",
-    number: "02.",
-    title: "Casual Shoot",
-    subtitle: "Authentic & Editorial",
-    description:
-      "Authentic, unposed portraiture celebrating natural daylight and effortless contemporary presence. Every frame documents your personality with high-fashion ease and poise.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "Natural daylight casual editorial portrait",
-    galleryHref: "/#work",
-  },
-  {
-    id: "birthday-shoot",
-    number: "03.",
-    title: "Birthday Shoot",
-    subtitle: "Milestone Celebration",
-    description:
-      "Bespoke milestone celebrations immortalized with modern glamour and editorial distinction. We turn personal anniversaries into magazine-grade visual archives.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1530103862676-de389d80ba24?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "Elegant celebration and birthday glamour photography",
-    galleryHref: "/#work",
-  },
-  {
-    id: "engagement-shoot",
-    number: "04.",
-    title: "Engagement Shoot",
-    subtitle: "Timeless Romance",
-    description:
-      "Intimate promises and tender visual narratives chronicling the beginning of your forever. From sweeping golden hour landscapes to quiet embraces, each composition is pure poetry.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1518131558231-15a01bc1e345?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "Romantic engagement couple portrait outdoors",
-    galleryHref: "/#work",
-  },
-  {
-    id: "wedding-shoot",
-    number: "05.",
-    title: "Wedding Shoot",
-    subtitle: "Documentary Elegance",
-    description:
-      "Bespoke documentary and fine-art coverage preserving the grandeur, laughter, and sacred vows of your wedding day. We craft heirloom visual treasures destined to endure generations.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1600&q=85",
-    imageAlt: "High-end wedding couple ceremony and documentary coverage",
-    galleryHref: "/#work",
-  },
-  {
-    id: "promotion-video",
-    number: "06.",
-    title: "Promotion Video",
-    subtitle: "Cinematic Branding",
-    description:
-      "High-impact commercial narratives and bespoke brand showreels engineered to articulate your vision. Masterful 4K film color grading, immersive soundscapes, and visionary direction.",
-    imageSrc:
-      "https://images.unsplash.com/photo-1551817958-20204d6ab212?auto=format&fit=crop&w=1600&q=85",
-    imageAlt:
-      "Commercial videography and narrative video production camera setup",
-    galleryHref: "/#work",
-  },
-];
-
 export type ServicesVerticalProps = React.HTMLAttributes<HTMLElement> & {
   initialServices?: SERVICES_QUERY_RESULT;
 };
@@ -136,15 +59,13 @@ export function ServicesVertical({
           title: doc.title || "Untitled Service",
           subtitle: doc.subTitle || "Cinematic Offering",
           description: doc.description || "",
-          imageSrc:
-            cleaned ||
-            "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
+          imageSrc: cleaned || "",
           imageAlt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
           galleryHref: "/works",
         };
       });
     }
-    return SERVICES;
+    return [];
   }, [initialServices]);
 
   React.useEffect(() => {
@@ -153,7 +74,7 @@ export function ServicesVertical({
       (p): p is HTMLDivElement => p !== null,
     );
 
-    if (!section || !panels.length) return;
+    if (!section || !panels.length || services.length === 0) return;
 
     const ctx = gsap.context(() => {
       panels.forEach((panel) => {
@@ -191,6 +112,27 @@ export function ServicesVertical({
 
     return () => ctx.revert();
   }, [services]);
+
+  if (services.length === 0) {
+    return (
+      <section
+        id="services"
+        className={cn(
+          "relative w-full bg-bg-base overflow-hidden select-none py-24 sm:py-32",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="min-h-[35vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

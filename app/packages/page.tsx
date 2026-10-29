@@ -6,6 +6,9 @@ import { Footer } from "@/components/footer";
 import { client } from "@/sanity/client";
 import { CATEGORIES_QUERY, PACKAGES_QUERY } from "@/sanity/queries";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title:
     "Investment & Packages — B studio | High-End Cinematic Photography & Videography",
@@ -14,7 +17,6 @@ export const metadata: Metadata = {
 };
 
 async function getPackagesPageData() {
-  "use cache";
   try {
     const [categories, packages] = await Promise.all([
       client.fetch(CATEGORIES_QUERY),

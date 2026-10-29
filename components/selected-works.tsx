@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 import type { FEATURED_ALBUMS_QUERY_RESULT } from "@/sanity.types";
 import OptimizedImage from "./optimized-image";
 
@@ -55,69 +56,6 @@ export interface SelectedProject {
   link: string;
 }
 
-export const SELECTED_PROJECTS: SelectedProject[] = [
-  {
-    id: "noir-silhouette",
-    index: "01",
-    title: "Noir Silhouette",
-    category: "Fashion Editorial & 35mm Film",
-    year: "2025",
-    description:
-      "A monochrome study in contrast and fluid motion, sculpted through harsh shadows and authentic analog film grain.",
-    image:
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=75",
-    link: "#noir-silhouette",
-  },
-  {
-    id: "solitude-in-form",
-    index: "02",
-    title: "Solitude In Form",
-    category: "Brutalist Architecture & Direction",
-    year: "2025",
-    description:
-      "Geometric stillness and raw concrete textures captured under sharp midday sun, celebrating architectural serenity.",
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=75",
-    link: "#solitude-in-form",
-  },
-  {
-    id: "velvet-dusk",
-    index: "03",
-    title: "Velvet Dusk",
-    category: "Cinematography & Narrative Stills",
-    year: "2024",
-    description:
-      "Atmospheric twilight vignettes bathed in warm amber tones, capturing unscripted moments through anamorphic lenses.",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=75",
-    link: "#velvet-dusk",
-  },
-  {
-    id: "sculpted-horizon",
-    index: "04",
-    title: "Sculpted Horizon",
-    category: "Fine Art & Landscape Installation",
-    year: "2024",
-    description:
-      "An exploration of elemental coastal formations, drifting tides, and the sculptural power of shifting coastal light.",
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=75",
-    link: "#sculpted-horizon",
-  },
-  {
-    id: "chromatic-pulse",
-    index: "05",
-    title: "Chromatic Pulse",
-    category: "Avant-Garde Runway & Showreel",
-    year: "2026",
-    description:
-      "High-voltage haute couture illuminated by surgical beam lighting, blending dynamic choreography with editorial poise.",
-    image:
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=75",
-    link: "#chromatic-pulse",
-  },
-];
-
 export type SelectedWorksProps = React.HTMLAttributes<HTMLElement> & {
   initialWorks?: FEATURED_ALBUMS_QUERY_RESULT;
 };
@@ -132,6 +70,7 @@ export function SelectedWorks({
   const slideRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const isMountedRef = React.useRef(true);
 
   const projects = React.useMemo<SelectedProject[]>(() => {
     if (initialWorks && initialWorks.length > 0) {
@@ -147,17 +86,16 @@ export function SelectedWorks({
           category: doc.category?.title || "Editorial",
           year,
           description: doc.description || "",
-          image:
-            cleanedImage ||
-            "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=75",
+          image: cleanedImage || "",
           link: slug ? `/album/${slug}` : `#${doc._id}`,
         };
       });
     }
-    return SELECTED_PROJECTS;
+    return [];
   }, [initialWorks]);
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
+    isMountedRef.current = true;
     const container = containerRef.current;
     if (!container || projects.length === 0) return;
 
@@ -260,28 +198,58 @@ export function SelectedWorks({
     // Refresh ScrollTrigger calculations after web fonts are completely loaded
     if (typeof document !== "undefined" && document.fonts) {
       document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
+        if (isMountedRef.current) {
+          ScrollTrigger.refresh();
+        }
       });
     }
 
     return () => {
+      isMountedRef.current = false;
       ctx.revert();
     };
   }, [projects]);
 
+  if (projects.length === 0) {
+    return (
+      <section
+        id="work"
+        className={cn(
+          "relative w-full py-24 sm:py-32 bg-bg-base text-text-primary border-b border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <header className="border-b border-border-subtle pb-8 mb-12">
+            <h2 className="font-sans font-black uppercase text-4xl sm:text-6xl lg:text-7xl tracking-tighter text-text-primary">
+              SELECTED WORKS
+            </h2>
+          </header>
+          <div className="min-h-[35vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const totalCountFormatted = String(projects.length).padStart(2, "0");
 
   return (
-    <section
-      ref={containerRef}
-      id="selected-works"
-      aria-label="Selected Works"
-      className={cn(
-        "relative w-full h-[100dvh] min-h-[640px] overflow-hidden bg-bg-base select-none",
-        className,
-      )}
-      {...props}
-    >
+    <div className="relative w-full">
+      <section
+        ref={containerRef}
+        id="selected-works"
+        aria-label="Selected Works"
+        className={cn(
+          "relative w-full h-[100dvh] min-h-[640px] overflow-hidden bg-bg-base select-none",
+          className,
+        )}
+        {...props}
+      >
       {/* Creative Full-Screen Intro Title filling the screen */}
       <div
         ref={introTitleRef}
@@ -377,7 +345,7 @@ export function SelectedWorks({
                     className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                     priority={idx === 0}
                     onLoad={() => {
-                      if (typeof window !== "undefined") {
+                      if (typeof window !== "undefined" && isMountedRef.current) {
                         ScrollTrigger.refresh();
                       }
                     }}
@@ -398,6 +366,7 @@ export function SelectedWorks({
         })}
       </div>
     </section>
+  </div>
   );
 }
 

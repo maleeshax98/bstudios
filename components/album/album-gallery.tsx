@@ -515,7 +515,9 @@ export function AlbumGallery({
               )}
             </div>
             <h3 className="font-serif italic text-2xl text-text-primary">
-              No {activeFilter === "VIDEOS" ? "Videos" : "Photos"} Found
+              {!hasPhotos && !hasVideos
+                ? "No data to load"
+                : `No ${activeFilter === "VIDEOS" ? "Videos" : "Photos"} Found`}
             </h3>
             <p className="font-sans text-xs uppercase tracking-wider text-text-muted mt-2 max-w-sm">
               {album.cloudinaryFolder

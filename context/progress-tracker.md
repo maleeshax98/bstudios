@@ -8,17 +8,39 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Keep Scrolling Inactivity Indicator completed and verified. Ready for next user instruction.
+- Resolved runtime NotFoundError ("Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node") on navbar page navigation (`context/error/01-cant-reach-the-pages.md`). Ready for next user instruction.
 
 ## In Progress
 
-- None (Feature completed and verified. Awaiting next user instruction).
+- None (Bugfix completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Bugfix: Runtime NotFoundError on Route Transitions (`context/error/01-cant-reach-the-pages.md`):
+  - Root Cause Analysis:
+    - In React 19 / Next.js 16, client-side route transitions unmount the previous page's component tree.
+    - GSAP ScrollTrigger `pin: true` structurally wraps pinned elements in dynamically injected `<div class="pin-spacer">` wrappers.
+    - The pinned sections (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`) were returning `<section ref={...}>` as the top-level host node directly under `<main>`.
+    - Because components were relying on `React.useEffect` for teardown, passive effect cleanup runs *after* React's commit deletion phase (`commitDeletionEffects`).
+    - When React attempted to execute `main.removeChild(section)`, `<section>` was physically nested inside `.pin-spacer` rather than `<main>`, throwing `NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node at section`.
+  - Resolution Architecture:
+    - Created `useIsomorphicLayoutEffect` hook (`lib/hooks.ts`) using `React.useLayoutEffect` on client to guarantee synchronous teardown before React's DOM deletion phase.
+    - Updated all 6 pinned Home page components (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`) plus `PinnedScrollText2` and `AboutDirectorsCut`:
+      - Switched from `React.useEffect` to `useIsomorphicLayoutEffect` so `ctx.revert()` unwraps `.pin-spacer` before React touches the DOM.
+      - Wrapped the pinned `<section>` elements within a static `<div className="relative w-full">` wrapper so the top-level host node managed by React is never reparented by GSAP.
+      - Added `isMounted` cancellation guards to all `document.fonts.ready` promises and image `onLoad` handlers to prevent post-unmount `ScrollTrigger.refresh()` recalculations.
+    - Synchronized Lenis on Route Changes (`components/smooth-scroll.tsx`):
+      - Stored Lenis instance in `lenisRef` and attached a `pathname` listener.
+      - Teleports scroll position instantly to top (`lenis.scrollTo(0, { immediate: true })`) and triggers `ScrollTrigger.refresh()` on route transition.
+    - Resolved Turbopack Lenis CSS build issue by migrating `lenis.css` declarations into `app/globals.css`.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm run build`): compiled and prerendered all routes cleanly.
 
 - Keep Scrolling Inactivity Indicator (`context/feature-specs/scroll-hint/01-keep-scrolling-indicator.md`):
   - Created `KeepScrollingIndicator` client component (`components/keep-scrolling-indicator.tsx`):
@@ -638,4 +660,13 @@ Update this file whenever the current phase, active feature, or implementation s
 
 - Fetching Albums from Sanity for Works Page completed and verified. Analyzed `albumType`, `categoryType`, and `mediaType` schemas in `studio/schemaTypes/`. Created `ALBUMS_QUERY` and `CATEGORIES_QUERY` with `defineQuery`. Ran TypeGen in `studio/` to generate TypeScript types. Added `res.cloudinary.com` remote pattern to `next.config.ts`. Updated `components/works/works-page.tsx` with `mapSanityAlbum`, dynamic category tabs, mixed media support, and error retry logic. Integrated data fetching into `app/works/page.tsx` with `"use cache"` and `<Suspense>`. Verified with TypeScript strict checks (`tsc --noEmit`), ESLint (`pnpm lint`), production build (`pnpm build` in 1007ms, 10/10 routes passing), and runtime browser verification rendering the published Sanity album.
 - Redesigned Selected Works layout and animations (`components/selected-works.tsx`): refined pinned scroll animation timing and transitions, improved layout containment and responsive image container styling, cleaned up unused GSAP transform parameters and variables. Verified with `pnpm run build` and `pnpm run lint`. Ready for GitHub push.
+- Caching Removal & Dynamic Fetching Architecture:
+  - Removed all caching layers for Sanity CMS and Cloudinary data across the entire application.
+  - Set `useCdn: false` in `sanity/client.ts` to query Sanity Content Lake directly without edge cache lag.
+  - Set `cache: "no-store"` on Cloudinary search requests in `lib/cd.ts`.
+  - Configured `export const dynamic = "force-dynamic"` and `export const revalidate = 0` on all CMS-backed routes (`/`, `/works`, `/services`, `/packages`, `/album/[slug]`).
+  - Removed all experimental `"use cache"` directives from server functions and components, and removed `cacheComponents` from `next.config.ts`.
+  - Completely removed mock/sample fallback data (`SELECTED_PROJECTS`, `SERVICES`, `SAMPLE_IMAGES`, `SAMPLE_ALBUMS`, `COLOR_THEMES`, `ALBUM_PROJECTS`, dummy album slugs).
+  - Implemented clean, editorial empty states with the message "No data to load" when queries return no data.
+  - Verified with strict TypeScript checks (`tsc --noEmit`), ESLint (`pnpm lint`), and production build with dynamic route generation.
 

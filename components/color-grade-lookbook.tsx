@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 import type { COLORGRADING_QUERY_RESULT } from "@/sanity.types";
 import OptimizedImage from "./optimized-image";
 
@@ -36,69 +36,6 @@ export interface ColorGradeTheme {
   paletteDescription: string;
 }
 
-const COLOR_THEMES: ColorGradeTheme[] = [
-  {
-    id: "dreamy-glow",
-    title: "Dreamy Glow",
-    subtitle: "Golden Halation",
-    index: "01",
-    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=85",
-    alt: "Dreamy glow color grading aesthetic with ethereal golden sunlight",
-    paletteDescription:
-      "Warm radiant highlights, soft optical diffusion, and luminous golden skin tones.",
-  },
-  {
-    id: "off-green",
-    title: "Off Green",
-    subtitle: "Muted Earth & Sage",
-    index: "02",
-    src: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1600&q=85",
-    alt: "Off green color grading aesthetic with muted foliage tones",
-    paletteDescription:
-      "Desaturated olive foliage, organic earthen balance, and muted natural daylight tones.",
-  },
-  {
-    id: "moody",
-    title: "Moody",
-    subtitle: "Atmospheric Twilight",
-    index: "03",
-    src: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=85",
-    alt: "Moody color grading aesthetic with dramatic shadows",
-    paletteDescription:
-      "Deep sculpted contrast, evocative twilight ambiance, and subtle shadow separation.",
-  },
-  {
-    id: "dark-aesthetic",
-    title: "Dark Aesthetic",
-    subtitle: "Noir & Chiaroscuro",
-    index: "04",
-    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=85",
-    alt: "Dark aesthetic color grading with deep blacks and stark contrast",
-    paletteDescription:
-      "Inky rich blacks, deliberate silhouette framing, and high-density monochrome edge clarity.",
-  },
-  {
-    id: "vintage-film",
-    title: "Vintage Film",
-    subtitle: "35mm Analog Warmth",
-    index: "05",
-    src: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=85",
-    alt: "Vintage film color grading with organic grain and analog film response",
-    paletteDescription:
-      "Warm analog grain emulation, soft rolled-off highlights, and nostalgic film curves.",
-  },
-  {
-    id: "high-contrast",
-    title: "High Contrast",
-    subtitle: "Stark Modern Impact",
-    index: "06",
-    src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
-    alt: "High contrast color grading with bold dynamic range",
-    paletteDescription:
-      "Bold punchy dynamic range, razor-sharp architectural midtones, and striking tonal punch.",
-  },
-];
-
 export type ColorGradeLookbookProps = React.HTMLAttributes<HTMLElement> & {
   initialLookbook?: COLORGRADING_QUERY_RESULT;
 };
@@ -122,15 +59,13 @@ export function ColorGradeLookbook({
           title: doc.title || "Untitled Look",
           subtitle: doc.subTitle || "Color Curation",
           index: num,
-          src:
-            cleaned ||
-            "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=85",
+          src: cleaned || "",
           alt: `${doc.title || "Color Grade"} - ${doc.subTitle || "B studio"}`,
           paletteDescription: doc.description || "",
         };
       });
     }
-    return COLOR_THEMES;
+    return [];
   }, [initialLookbook]);
 
   const totalCountFormatted = String(themes.length).padStart(2, "0");
@@ -165,12 +100,14 @@ export function ColorGradeLookbook({
     });
   };
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
     const magneticBtn = magneticButtonRef.current;
 
-    if (!section || !track) return;
+    if (!section || !track || themes.length === 0) return;
+
+    let isMounted = true;
 
     const ctx = gsap.context(() => {
       const getScrollDistance = () => {
@@ -194,11 +131,14 @@ export function ColorGradeLookbook({
 
     if (typeof document !== "undefined" && document.fonts) {
       document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
+        if (isMounted) {
+          ScrollTrigger.refresh();
+        }
       });
     }
 
     return () => {
+      isMounted = false;
       ctx.revert();
       if (magneticBtn) {
         gsap.killTweensOf(magneticBtn);
@@ -206,17 +146,45 @@ export function ColorGradeLookbook({
     };
   }, [themes]);
 
+  if (themes.length === 0) {
+    return (
+      <section
+        id="color-grade"
+        aria-label="Color Grade Lookbook"
+        className={cn(
+          "relative w-full py-24 sm:py-32 bg-bg-base text-text-primary border-t border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <header className="border-b border-border-subtle pb-8 mb-12">
+            <h2 className="font-sans font-black uppercase text-4xl sm:text-6xl lg:text-7xl tracking-tighter text-text-primary">
+              COLOR GRADE
+            </h2>
+          </header>
+          <div className="min-h-[35vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section
-      ref={sectionRef}
-      id="color-grade"
-      aria-label="Color Grade Lookbook"
-      className={cn(
-        "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
-        className,
-      )}
-      {...props}
-    >
+    <div className="relative w-full">
+      <section
+        ref={sectionRef}
+        id="color-grade"
+        aria-label="Color Grade Lookbook"
+        className={cn(
+          "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
       {/* Horizontal Scrolling Track */}
       <div
         ref={trackRef}
@@ -248,7 +216,7 @@ export function ColorGradeLookbook({
         </div>
 
         {/* Oversized Gallery Cards (60-80% Viewport Width) */}
-        {themes.map((theme, index) => (
+        {themes.map((theme) => (
           <div
             key={theme.id}
             className="w-[78vw] sm:w-[72vw] lg:w-[68vw] max-w-[1100px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col relative"
@@ -340,5 +308,6 @@ export function ColorGradeLookbook({
         </div>
       </div>
     </section>
+  </div>
   );
 }

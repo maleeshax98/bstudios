@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Camera,
@@ -38,142 +37,6 @@ export interface AlbumProject {
   cloudinaryFolder?: string;
 }
 
-// Fallback curated projects in case CMS has not yet been populated
-export const ALBUM_PROJECTS: AlbumProject[] = [
-  {
-    id: "project-01",
-    title: "Malaysia's Birthday",
-    category: "BIRTHDAY",
-    media: "PHOTOS",
-    date: "Oct 24, 2026",
-    src: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85",
-    alt: "Celebration with sparklers and modern aesthetic",
-    count: "185 Photos",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-02",
-    title: "Lake Como Vows",
-    category: "WEDDING",
-    media: "PHOTOS",
-    date: "Sep 18, 2026",
-    src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85",
-    alt: "Intimate wedding vows beside Lake Como",
-    count: "340 Photos",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-03",
-    title: "The Brutalist Monograph",
-    category: "COMMERCIAL",
-    media: "VIDEOS",
-    date: "Aug 12, 2026",
-    src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=85",
-    alt: "Brutalist architectural brand showreel",
-    duration: "04:50 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-04",
-    title: "Amalfi Coastline Prelude",
-    category: "ENGAGEMENT",
-    media: "VIDEOS",
-    date: "Jun 14, 2026",
-    src: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=85",
-    alt: "Cinematic sunset engagement session on coastal cliffs",
-    duration: "04:10 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-05",
-    title: "Kyoto Daylight Stills",
-    category: "CASUAL",
-    media: "PHOTOS",
-    date: "Jul 29, 2026",
-    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85",
-    alt: "Editorial natural light lifestyle portraits in Kyoto",
-    count: "95 Stills",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-06",
-    title: "Noir Atelier Campaign",
-    category: "COMMERCIAL",
-    media: "PHOTOS",
-    date: "May 20, 2026",
-    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=85",
-    alt: "Avant-garde couture fashion campaign",
-    count: "120 Stills",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-07",
-    title: "Tuscan Villa Celebration",
-    category: "WEDDING",
-    media: "VIDEOS",
-    date: "Apr 08, 2026",
-    src: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=85",
-    alt: "Candlelit romantic evening reception in Tuscany",
-    duration: "05:30 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-08",
-    title: "Aurelia's 25th Gala",
-    category: "BIRTHDAY",
-    media: "VIDEOS",
-    date: "Mar 17, 2026",
-    src: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&q=85",
-    alt: "Glamour evening birthday celebration vignette",
-    duration: "03:15 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-09",
-    title: "Highland Mist Session",
-    category: "ENGAGEMENT",
-    media: "PHOTOS",
-    date: "Feb 22, 2026",
-    src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=85",
-    alt: "Atmospheric alpine engagement portraits",
-    count: "140 Photos",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-10",
-    title: "Midday Reverie",
-    category: "CASUAL",
-    media: "VIDEOS",
-    date: "Jan 15, 2026",
-    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=85",
-    alt: "Golden hour lifestyle cinematics",
-    duration: "03:20 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-11",
-    title: "L'Hiver Haute Joaillerie",
-    category: "COMMERCIAL",
-    media: "VIDEOS",
-    date: "Nov 04, 2025",
-    src: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=85",
-    alt: "High jewelry luxury brand showcase",
-    duration: "02:30 Film",
-    aspectRatio: "aspect-[4/5]",
-  },
-  {
-    id: "project-12",
-    title: "Sora & Kenji's Sacred Ceremony",
-    category: "WEDDING",
-    media: "PHOTOS",
-    date: "Oct 10, 2025",
-    src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85",
-    alt: "Floral arch and documentary wedding photography",
-    count: "310 Photos",
-    aspectRatio: "aspect-[4/5]",
-  },
-];
-
 export interface WorksPageAlbum {
   _id: string;
   title?: string | null;
@@ -204,8 +67,7 @@ export interface WorksPageCategory {
  * Maps a raw Sanity album query item to the standardized AlbumProject model.
  */
 function mapSanityAlbum(item: WorksPageAlbum): AlbumProject {
-  const fallbackSrc =
-    "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85";
+  const fallbackSrc = "";
 
   let formattedDate = item.date || "";
   if (!formattedDate && item.publishedAt) {
@@ -306,7 +168,7 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
   const rawSrc =
     project.src && project.src.trim().length > 0
       ? project.src
-      : "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85";
+      : "";
 
   const imageSrc =
     retryKey > 0
@@ -361,7 +223,7 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
           )}
         >
           {/* Error Fallback UI with Retry Button */}
-          {hasError ? (
+          {hasError || !rawSrc ? (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-[#EBEBE8]">
               <div className="w-12 h-12 rounded-full border border-border-subtle bg-bg-base flex items-center justify-center mb-3 text-text-muted shadow-sm">
                 <AlertCircle className="w-6 h-6 stroke-[1.5]" />
@@ -559,7 +421,7 @@ export function WorksPage({
     if (sanityAlbums && sanityAlbums.length > 0) {
       return sanityAlbums.map(mapSanityAlbum);
     }
-    return ALBUM_PROJECTS;
+    return [];
   }, [sanityAlbums]);
 
   // Dynamically compute Shoot Category tabs: only show categories fetched from Sanity
@@ -764,22 +626,28 @@ export function WorksPage({
               <div className="w-14 h-14 mx-auto rounded-full border border-border-subtle bg-bg-base flex items-center justify-center text-text-muted mb-4 shadow-sm">
                 <Layers className="w-6 h-6 stroke-[1.5]" />
               </div>
-              <h2 className="font-serif italic text-2xl text-text-primary">
-                No matching archives found
+              <h2 className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+                {allProjects.length === 0
+                  ? "No data to load"
+                  : "No matching archives found"}
               </h2>
-              <p className="font-sans text-xs uppercase tracking-widest text-text-muted mt-2 max-w-sm mx-auto">
-                No projects matched your active format and category filters.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveMedia("ALL");
-                  setActiveCategory("ALL");
-                }}
-                className="mt-6 px-6 py-2.5 rounded-full bg-text-primary text-bg-base font-sans text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors duration-200"
-              >
-                Reset Filters
-              </button>
+              {allProjects.length > 0 ? (
+                <>
+                  <p className="font-sans text-xs uppercase tracking-widest text-text-muted mt-2 max-w-sm mx-auto">
+                    No projects matched your active format and category filters.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMedia("ALL");
+                      setActiveCategory("ALL");
+                    }}
+                    className="mt-6 px-6 py-2.5 rounded-full bg-text-primary text-bg-base font-sans text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors duration-200"
+                  >
+                    Reset Filters
+                  </button>
+                </>
+              ) : null}
             </div>
           ) : (
             /* Actual Responsive Gallery Grid */

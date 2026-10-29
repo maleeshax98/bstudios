@@ -19,8 +19,10 @@ import {
 } from "@/sanity/queries";
 import { getSampleImages } from "@/lib/cd";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function getHomeData() {
-  "use cache";
   try {
     const [
       services,
@@ -45,7 +47,7 @@ async function getHomeData() {
     };
   } catch (error) {
     console.warn(
-      "Could not fetch home data, falling back to sample data.",
+      "Could not fetch home data from Sanity/Cloudinary:",
       error,
     );
     return {

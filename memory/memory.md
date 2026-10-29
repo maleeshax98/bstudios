@@ -2005,3 +2005,100 @@ Implemented a floating "Keep scrolling" indicator positioned at the bottom cente
 
 - The "Keep scrolling" cue is fully integrated and active on `/` and `/about`.
 - Ready for next instruction or milestone.
+
+---
+
+## 2026-10-29 — Task: Remove Sanity Caching & Enforce Fresh Dynamic Fetching with "No data to load" Empty States
+
+### Session Summary
+
+Refactored data-fetching across the entire codebase to eliminate all caching layers for Sanity CMS and Cloudinary assets, guaranteeing fresh data is fetched on every incoming request. Completely purged all mock/sample fallback arrays and test slugs, replacing them with clean editorial empty state messages displaying "No data to load".
+
+### Implementation State
+
+- **Completed & Verified:**
+  - **Sanity Client Configuration (`sanity/client.ts`):** Locked `useCdn: false` so requests query the Sanity Content Lake directly rather than cached CDN edge endpoints.
+  - **Dynamic Route Configuration (`dynamic = "force-dynamic"`, `revalidate = 0`):** Added to all CMS-driven routes:
+    - `app/page.tsx`
+    - `app/works/page.tsx`
+    - `app/services/page.tsx`
+    - `app/packages/page.tsx`
+    - `app/album/[slug]/page.tsx`
+  - **Removed `"use cache"` & Experimental Flags:** Completely purged `"use cache"` directives from server functions and components, and removed `cacheComponents` and `partialPrefetching` flags from `next.config.ts`.
+  - **Cloudinary Search (`lib/cd.ts`):** Added `cache: "no-store"` to `searchCloudinaryWithCache`.
+  - **Purged Mock / Sample Data & Added "No data to load" States:**
+    - `components/selected-works.tsx`: Removed `SELECTED_PROJECTS` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/services-exhibition.tsx`: Removed `SERVICES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/services/services-horizontal.tsx`: Removed `SERVICES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/sample-gallery.tsx`: Removed `SAMPLE_IMAGES` mock array; if empty, renders `"No data to load"`.
+    - `components/client-space-teaser.tsx`: Removed `SAMPLE_ALBUMS` mock array and fallback padding; added defensive guards for GSAP fan-out animation when card counts are between 1 and 4; if 0 albums, renders a clean section with `"No data to load"`.
+    - `components/color-grade-lookbook.tsx`: Removed `COLOR_THEMES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/works/works-page.tsx`: Removed `ALBUM_PROJECTS` mock array; if 0 albums are returned, displays `"No data to load"`.
+    - `components/packages/packages-page.tsx`: Displays `"No data to load"` when categories/packages are empty.
+    - `components/album/album-gallery.tsx`: Displays `"No data to load"` when an album has no photos or videos.
+    - `app/album/[slug]/page.tsx`: Removed dummy test slugs (`sakkili-miya-pakaya`, etc.) and `generateStaticParams` so album pages dynamically render on demand.
+  - **Verification:**
+    - TypeScript compiler check (`pnpm exec tsc --noEmit`): 0 errors.
+    - ESLint (`pnpm lint`): 0 errors.
+    - Next.js production build (`next build --webpack`): Built successfully with 5 dynamic server-rendered routes (`ƒ /`, `ƒ /album/[slug]`, `ƒ /packages`, `ƒ /services`, `ƒ /works`) and 0 static caching.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **`force-dynamic` & `revalidate = 0`:** In Next.js App Router, combining `useCdn: false` on the Sanity client with route segment configuration `export const dynamic = "force-dynamic"` and `export const revalidate = 0` guarantees the server evaluates GROQ queries on every user request, completely eliminating stale cache hits.
+- **Defensive GSAP Array Indexing:** In `client-space-teaser.tsx`, previously `cards[0]` through `cards[3]` were indexed directly assuming 4 cards were always present due to mock padding. With mock data removed, checking `if (cards[i])` prevents null-reference crashes when fewer than 4 wedding albums exist in Sanity.
+
+### Continuation Context
+
+- All pages now live-query Sanity on every request and show "No data to load" when no documents exist.
+- Ready for next instruction or milestone.
+
+---
+
+## 2026-10-29 — Bugfix: NotFoundError on Route Transitions from Home Page (`01-cant-reach-the-pages.md`)
+
+### Session Summary
+
+Diagnosed and resolved the runtime crash `NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node at section` that occurred when navigating from the Home page (`/`) via the navbar links to `/works`, `/packages`, `/about`, `/services`, or `/contact`. The crash was caused by GSAP ScrollTrigger's `pin: true` reparenting top-level `<section>` nodes into dynamically generated `.pin-spacer` wrappers, clashing with React 19's unmount deletion phase (`commitDeletionEffects`).
+
+### Implementation State
+
+- **Completed & Verified:**
+  - **Root Cause Identified:**
+    - React 19 / Next.js 16 unmounts the previous page component during client navigation.
+    - GSAP ScrollTrigger `pin: true` reparents the target DOM element inside a dynamically injected `<div class="pin-spacer">`.
+    - Pinned sections on the Home page (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`) were returning `<section ref={...}>` as the top-level host node directly under `<main>`.
+    - Because components were using standard `React.useEffect`, passive cleanup runs *after* React's commit deletion phase.
+    - When React called `main.removeChild(section)`, `<section>` was physically nested inside `.pin-spacer` rather than `<main>`, causing native DOM `removeChild` to throw `NotFoundError`.
+  - **Architectural Solution Implemented:**
+    1. **`useIsomorphicLayoutEffect` Hook (`lib/hooks.ts`):**
+       - Implemented hook returning `React.useLayoutEffect` on client and `React.useEffect` on server.
+       - Guarantees `ctx.revert()` runs synchronously during the unmount phase *before* React executes `commitDeletionEffects`, restoring the DOM tree and removing all `.pin-spacer` wrappers before React detaches nodes.
+    2. **DOM Hierarchy Isolation (Static Outer Wrapper):**
+       - Wrapped the pinned `<section>` elements within a static `<div className="relative w-full">` wrapper across all pinned components (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`, and `PinnedScrollText2`).
+       - React's unmount deletion target is the outer `<div>`, which is never reparented by GSAP, preventing any parent-child mismatch in React's reconciliation engine.
+    3. **Async Callback & Font Metric Cancellation Guards:**
+       - Added `isMounted` cancellation guards to all `document.fonts.ready` promises and image `onLoad` handlers in pinned components to prevent dead `ScrollTrigger.refresh()` recalculations after unmount.
+    4. **Lenis Scroll-to-Top Route Synchronization (`components/smooth-scroll.tsx`):**
+       - Tracked active Lenis instance in `lenisRef` and listened for `pathname` changes via `usePathname()`.
+       - On navigation, instantly resets scroll position to `0` via `lenisRef.current?.scrollTo(0, { immediate: true })` and refreshes `ScrollTrigger`.
+    5. **Turbopack Build Optimization (`app/globals.css`):**
+       - Integrated Lenis CSS styles into `app/globals.css` and removed direct node_module `.css` import from `smooth-scroll.tsx`, resolving Turbopack panic during builds.
+  - **Verification:**
+    - TypeScript compilation check (`pnpm exec tsc --noEmit`): 0 errors.
+    - ESLint (`pnpm lint`): 0 errors.
+    - Production build (`next build`): Compiled and prerendered all routes cleanly.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Combining `useIsomorphicLayoutEffect` with Outer Wrapper:** Using `useIsomorphicLayoutEffect` ensures synchronous `ctx.revert()` cleanup prior to node removal. Pairing this with a static outer wrapper provides a double layer of defense: React only deletes the outer wrapper that was never reparented, making child detachment errors impossible.
+- **Lenis Immediate Scroll Reset:** When navigating away from a pinned or scrolled section, Lenis previously held the virtual scroll position, causing subsequent pages to mount in the middle of their layout. Teleporting to `0` with `{ immediate: true }` ensures consistent top-of-page entry.
+
+### Continuation Context
+
+- Navigation from Home page to all other routes (`/works`, `/packages`, `/about`, `/services`, `/contact`) is clean and crash-free.
+- Pinned animations remain fully functional and tear down synchronously on unmount.
+- Ready for next instruction or milestone.

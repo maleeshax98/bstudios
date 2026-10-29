@@ -9,6 +9,9 @@ import { client } from "@/sanity/client";
 import { SERVICES_QUERY } from "@/sanity/queries";
 import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Services — B studio | High-End Cinematic Photography & Videography",
   description:
@@ -16,7 +19,6 @@ export const metadata: Metadata = {
 };
 
 async function getServicesData(): Promise<SERVICES_QUERY_RESULT> {
-  "use cache";
   try {
     const services = await client.fetch(SERVICES_QUERY);
     return services || [];

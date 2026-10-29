@@ -19,105 +19,6 @@ export interface SampleGalleryItem {
   category?: string;
 }
 
-const SAMPLE_IMAGES: SampleGalleryItem[] = [
-  {
-    id: "sample-1",
-    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85",
-    alt: "Cinematic portrait editorial",
-    aspectRatio: "aspect-[3/4]",
-    title: "Aura of Grace",
-    category: "Fashion Editorial",
-  },
-  {
-    id: "sample-2",
-    src: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=85",
-    alt: "Misty mountain cinematographic frame",
-    aspectRatio: "aspect-[16/10]",
-    title: "Echoes of Dawn",
-    category: "Cinematography",
-  },
-  {
-    id: "sample-3",
-    src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85",
-    alt: "Pre-wedding golden hour portrait",
-    aspectRatio: "aspect-[4/5]",
-    title: "Golden Vows",
-    category: "Wedding",
-  },
-  {
-    id: "sample-4",
-    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=85",
-    alt: "Monochrome editorial silhouette",
-    aspectRatio: "aspect-[2/3]",
-    title: "Shadow Contour",
-    category: "Fine Art",
-  },
-  {
-    id: "sample-5",
-    src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85",
-    alt: "Brutalist architecture light study",
-    aspectRatio: "aspect-[4/3]",
-    title: "Concrete Form",
-    category: "Architecture",
-  },
-  {
-    id: "sample-6",
-    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=85",
-    alt: "Milestone celebration portrait",
-    aspectRatio: "aspect-[1/1]",
-    title: "Velvet Light",
-    category: "Milestone",
-  },
-  {
-    id: "sample-7",
-    src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85",
-    alt: "Intimate couple portrait",
-    aspectRatio: "aspect-[3/4]",
-    title: "Quiet Devotion",
-    category: "Engagement",
-  },
-  {
-    id: "sample-8",
-    src: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=85",
-    alt: "Grand wedding celebration",
-    aspectRatio: "aspect-[16/9]",
-    title: "Heirloom Hall",
-    category: "Ceremony",
-  },
-  {
-    id: "sample-9",
-    src: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=85",
-    alt: "Bespoke styling detail",
-    aspectRatio: "aspect-[4/5]",
-    title: "Sartorial Texture",
-    category: "Editorial Detail",
-  },
-  {
-    id: "sample-10",
-    src: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=85",
-    alt: "Atmospheric street cinematography",
-    aspectRatio: "aspect-[3/2]",
-    title: "Nocturne Rain",
-    category: "Street / Noir",
-  },
-  {
-    id: "sample-11",
-    src: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=85",
-    alt: "Modern studio aesthetic portrait",
-    aspectRatio: "aspect-[3/4]",
-    title: "Luminous Stare",
-    category: "Studio Portrait",
-  },
-  {
-    id: "sample-12",
-    src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85",
-    alt: "Expansive twilight landscape",
-    aspectRatio: "aspect-[16/10]",
-    title: "Infinite Ridge",
-    category: "Landscape",
-  },
-];
-
 export interface SampleGalleryProps
   extends React.HTMLAttributes<HTMLElement> {
   initialImages?: CloudinaryResource[];
@@ -154,7 +55,7 @@ export function SampleGallery({
         aspectRatio: getAspectClass(img.width, img.height),
       }));
     }
-    return SAMPLE_IMAGES;
+    return [];
   }, [initialImages]);
 
   // Magnetic button cursor interaction
@@ -196,6 +97,26 @@ export function SampleGallery({
       }
     };
   }, []);
+
+  if (displayImages.length === 0) {
+    return (
+      <section
+        className={cn(
+          "relative w-full bg-bg-base overflow-hidden px-4 sm:px-6 md:px-10 lg:px-16 py-20 select-none",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="min-h-[30vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

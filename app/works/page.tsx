@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 async function getWorksData() {
-  "use cache";
+  // "use cache";
   try {
     const [albums, categories] = await Promise.all([
       client.fetch(PAGINATED_ALBUMS_QUERY, { start: 0, end: 6 }),
