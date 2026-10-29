@@ -5,6 +5,8 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FloatingThemeToggle } from "@/components/floating-theme-toggle";
 import { KeepScrollingIndicator } from "@/components/keep-scrolling-indicator";
+import { SanityLive } from "@/sanity/live";
+import { revalidateAndRefresh } from "@/sanity/action";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </SmoothScroll>
           <FloatingThemeToggle />
           <KeepScrollingIndicator />
+          <SanityLive action={revalidateAndRefresh} />
         </ThemeProvider>
       </body>
     </html>

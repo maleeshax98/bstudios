@@ -8,17 +8,48 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Resolved runtime NotFoundError ("Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node") on navbar page navigation (`context/error/01-cant-reach-the-pages.md`). Ready for next user instruction.
+- Sanity Live Content audit and implementation completed and verified across the codebase (`context/error/02-adding-sanity-live.md`). Awaiting next user instruction.
 
 ## In Progress
 
-- None (Bugfix completed and verified. Awaiting next user instruction).
+- None (Sanity Live Content implementation completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Sanity Live Content Integration Across Codebase (`context/error/02-adding-sanity-live.md`):
+  - Phase 1 & 2 Audit & Research:
+    - Confirmed Next.js 16.4.3 and `next-sanity` 13.4.0 with React 19.3.0.
+    - Verified that experimental `"use cache"` and `cacheComponents` are disabled, eliminating previous module-scoped deadlock issues.
+    - Verified Sanity Live architecture (`defineLive`, `sanityFetch`, `<SanityLive />`).
+  - Phase 3 Shared Live Infrastructure:
+    - Updated `sanity/client.ts` with `useCdn: true` and environment fallbacks (`brst44qi`, `production`).
+    - Configured `sanity/live.ts` with `defineLive`: server-only token support (`SANITY_API_READ_TOKEN` / `SANITY_API_TOKEN`), viewer-safe browser token (`NEXT_PUBLIC_SANITY_API_READ_TOKEN`), never exposing write credentials.
+    - Integrated `<SanityLive />` globally in `app/layout.tsx` within `ThemeProvider`.
+  - Phase 4 Data-Fetching Migration:
+    - Migrated all Sanity data-fetching to `sanityFetch`:
+      - `app/page.tsx`: `SERVICES_QUERY`, `COLORGRADING_QUERY`, `FEATURED_ALBUMS_QUERY`, `WEDDING_ALBUMS_QUERY`.
+      - `app/works/page.tsx`: `PAGINATED_ALBUMS_QUERY`, `CATEGORIES_QUERY`.
+      - `app/services/page.tsx`: `SERVICES_QUERY`.
+      - `app/packages/page.tsx`: `CATEGORIES_QUERY`, `PACKAGES_QUERY`.
+      - `app/album/[slug]/page.tsx`: `ALBUM_BY_SLUG_QUERY` across page content and `generateMetadata`.
+      - `lib/actions.ts`: `fetchMoreAlbums` server action with `PAGINATED_ALBUMS_QUERY`.
+    - Maintained strict write client separation in `app/api/contact/route.ts`.
+  - Phase 5 Caching Resolution:
+    - Removed brute-force `export const dynamic = "force-dynamic"` and `export const revalidate = 0` from routes, restoring Next.js tag-based ISR (`revalidate = 60`).
+    - Configured queries with `stega: false` to guarantee pure, clean TypeScript TypeGen types.
+  - Phase 6 & 7 Verification & Live Update Diagnostics:
+    - Created custom server action `sanity/action.ts` (`revalidateAndRefresh`) that revalidates tags (`revalidateTag(tag, "max")`), clears layout paths (`revalidatePath("/", "layout")`), and explicitly returns `"refresh"`. In `next-sanity` v13, default action returns `undefined` in dev, preventing `router.refresh()` from running.
+    - Wired `<SanityLive action={revalidateAndRefresh} />` in `app/layout.tsx`.
+    - Added prop synchronization `useEffect` hooks in `components/works/works-page.tsx` and `components/packages/packages-page.tsx` so server component re-renders properly update client component state.
+    - Added `http://127.0.0.1:3000` to Sanity project `brst44qi` CORS origins alongside `http://localhost:3000`.
+    - TypeScript compiler (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+
 
 - Bugfix: Runtime NotFoundError on Route Transitions (`context/error/01-cant-reach-the-pages.md`):
   - Root Cause Analysis:

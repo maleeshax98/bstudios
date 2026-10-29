@@ -374,6 +374,14 @@ export function WorksPage({
   const [hasMore, setHasMore] = React.useState(
     (initialAlbums?.length ?? 0) >= 6,
   );
+  const [prevInitialAlbums, setPrevInitialAlbums] =
+    React.useState(initialAlbums);
+  if (initialAlbums !== prevInitialAlbums) {
+    setPrevInitialAlbums(initialAlbums);
+    setSanityAlbums(initialAlbums || []);
+    setHasMore((initialAlbums?.length ?? 0) >= 6);
+  }
+
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
   const loadMoreAlbums = React.useCallback(async () => {

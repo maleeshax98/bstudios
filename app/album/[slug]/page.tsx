@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 import { Suspense } from "react";
 import { AlbumGallery, MediaItem } from "@/components/album/album-gallery";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { ALBUM_BY_SLUG_QUERY } from "@/sanity/queries";
 import { getImages, getVideos, CloudinaryResource } from "@/lib/cd";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -16,7 +15,11 @@ interface PageProps {
 
 async function getAlbumData(slug: string) {
   try {
-    const album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
+    const { data: album } = await sanityFetch({
+      query: ALBUM_BY_SLUG_QUERY,
+      params: { slug },
+      stega: false,
+    });
     return album;
   } catch (error) {
     console.warn(`Could not fetch album data for ${slug}:`, error);
@@ -52,7 +55,12 @@ export async function generateMetadata({
   const { slug } = await params;
   let album = null;
   try {
-    album = await client.fetch(ALBUM_BY_SLUG_QUERY, { slug });
+    const { data } = await sanityFetch({
+      query: ALBUM_BY_SLUG_QUERY,
+      params: { slug },
+      stega: false,
+    });
+    album = data;
   } catch (error) {
     console.warn(`Could not fetch metadata for album ${slug}:`, error);
   }

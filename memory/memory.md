@@ -2150,3 +2150,57 @@ Merged `v2` into `main` and ensured `main`'s tree is 100% identical to `v2`. Ext
 
 - `main` and `v2` are now completely identical in code tree.
 - `main` is up to date with `origin/main` at commit `b61d389`.
+
+---
+
+## 2026-10-29 — Sanity Live Content Implementation Across Next.js Codebase (`02-adding-sanity-live.md`)
+
+### Session Summary
+
+Audited and implemented official Sanity Live Content integration across the entire Next.js codebase per `context/error/02-adding-sanity-live.md`. Configured `defineLive`, `sanityFetch`, and `<SanityLive />` from `next-sanity/live` (v13.4.0) so changes published in Sanity Studio trigger on-demand cache revalidation and real-time UI updates across the website without requiring manual cache clearing or Vercel redeployments.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - **Audit:**
+    - Confirmed Next.js 16.4.3, React 19.3.0, and `next-sanity` 13.4.0.
+    - Verified experimental `"use cache"` and `cacheComponents` are disabled, eliminating previous module-scoped cache deadlock conflicts.
+    - Identified all Sanity data-fetching entry points across server components, metadata generators, and server actions.
+  - **Shared Live Content Infrastructure (`sanity/live.ts` & `sanity/client.ts`):**
+    - Configured `sanity/client.ts` with `useCdn: true` and environment fallbacks (`brst44qi`, `production`).
+    - Implemented `sanity/live.ts` with `defineLive`: wired `client`, `serverToken: process.env.SANITY_API_READ_TOKEN || process.env.SANITY_API_TOKEN || false`, and `browserToken: process.env.NEXT_PUBLIC_SANITY_API_READ_TOKEN || false`. Strict separation guarantees write tokens are never leaked to client bundles.
+    - Mounted `<SanityLive />` globally in `app/layout.tsx` inside `ThemeProvider`.
+  - **Data-Fetching Migration:**
+    - Migrated all read queries to `sanityFetch` with explicit `stega: false` to preserve pure TypeGen types:
+      - `app/page.tsx`: `SERVICES_QUERY`, `COLORGRADING_QUERY`, `FEATURED_ALBUMS_QUERY`, `WEDDING_ALBUMS_QUERY`.
+      - `app/works/page.tsx`: `PAGINATED_ALBUMS_QUERY`, `CATEGORIES_QUERY`.
+      - `app/services/page.tsx`: `SERVICES_QUERY`.
+      - `app/packages/page.tsx`: `CATEGORIES_QUERY`, `PACKAGES_QUERY`.
+      - `app/album/[slug]/page.tsx`: `ALBUM_BY_SLUG_QUERY` across `getAlbumData()` and `generateMetadata()`.
+      - `lib/actions.ts`: `fetchMoreAlbums()` server action with `PAGINATED_ALBUMS_QUERY`.
+    - Maintained write-client isolation in `app/api/contact/route.ts` using `getWriteClient()`.
+  - **Caching Layer Resolution:**
+    - Purged brute-force `export const dynamic = "force-dynamic"` and `export const revalidate = 0` from routes, enabling Next.js tag-based ISR (`revalidate = 60`) combined with `<SanityLive />`'s real-time Server Action invalidation (`revalidateSyncTagsAction`).
+  - **Verification:**
+    - TypeScript compiler (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Next.js production build (`pnpm exec next build --webpack`): compiled all 14 routes cleanly with ISR / dynamic rendering.
+  - **Git & Push:**
+    - Committed Sanity Live Content integration, custom `revalidateAndRefresh` action, client component prop synchronization, and `.gitignore` updates to `development-sanity-live`.
+    - Pushed to remote `origin/development-sanity-live`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Custom `revalidateAndRefresh` Action on `<SanityLive />`:** In `next-sanity` v13, the default `revalidateSyncTagsAction` returns `undefined` in development mode (`return;`), which prevents `SanityLive` from calling `router.refresh()` when live events arrive. In production, v13 defaults to stale-while-revalidate without immediate refresh. Created `sanity/action.ts` (`revalidateAndRefresh`) that executes `revalidateTag(tag, "max")`, clears layout paths via `revalidatePath("/", "layout")`, and explicitly returns `"refresh"`, guaranteeing `router.refresh()` executes across all environments.
+- **Client Component Prop Synchronization:** In `components/works/works-page.tsx` and `components/packages/packages-page.tsx`, `useState(initialAlbums)` and `useState(initialPackages)` failed to update when Server Components passed fresh props. Added `useEffect` hooks synchronizing internal state with incoming props.
+- **CORS Support for 127.0.0.1:** Added `http://127.0.0.1:3000` to Sanity project `brst44qi` CORS origins with credentials enabled to prevent browser SSE connection drops when testing locally via loopback IP.
+- **Literal `stega: false` on `sanityFetch`:** `next-sanity/live`'s `defineLive` returns a typed `sanityFetch` overload that brands all string fields as `StegaString<T>` unless `stega: false` is explicitly supplied. Passing `stega: false` ensures exact compatibility with generated TypeGen union types (e.g. `Media: "PHOTOS" | "VIDEOS" | "MIXED"`).
+- **Tag-Based Revalidation (`revalidate = 60`):** Replacing `force-dynamic` with `revalidate = 60` allows fast edge serving and caching while `<SanityLive />` provides instantaneous on-demand cache invalidation via SSE events and `router.refresh()`.
+
+### Continuation Context
+
+- Live updates are wired end-to-end with server action revalidation and client state synchronization.
+- Memory saved and verified.
+
