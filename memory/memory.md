@@ -2204,3 +2204,26 @@ Audited and implemented official Sanity Live Content integration across the enti
 - Live updates are wired end-to-end with server action revalidation and client state synchronization.
 - Memory saved and verified.
 
+## Session 2026-10-29 (Session Update: Sanity Client CDN Configuration & GitHub Push)
+
+### Progress & Completed Work
+
+- **Sanity Client Direct Lake Access (`sanity/client.ts`):**
+  - Updated `useCdn: false` in `sanity/client.ts` to ensure all read queries hit the Sanity Content Lake directly, eliminating CDN replication latency during live update tag revalidations.
+- **Verification:**
+  - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+  - ESLint (`pnpm lint`): passed with 0 errors (5 warnings in footer for unused imports).
+- **Git & Push:**
+  - Staged `sanity/client.ts` and `memory/memory.md`.
+  - Committed and pushed to `origin/development-sanity-live`.
+
+### Decisions & Rationale
+
+- **Bypassing Sanity API CDN (`useCdn: false`):**
+  - Although Sanity's API CDN is fast, live editing workflows can experience a brief propagation delay (several seconds) on CDN edge nodes. Setting `useCdn: false` guarantees that when `<SanityLive />` and Server Actions trigger a revalidation and refresh, the subsequent fetch queries get the freshest data directly from the live Content Lake.
+
+### Continuation Context
+
+- Working tree clean and synced with remote `origin/development-sanity-live`.
+
+
