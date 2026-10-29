@@ -114,11 +114,11 @@ export function SelectedWorks({
 
         gsap.set(slide, { autoAlpha: 0, pointerEvents: "none" });
         gsap.set(textEl, {
-          scale: 1,
+          y: 40,
           opacity: 0,
         });
         gsap.set(imgEl, {
-          scale: 1,
+          scale: 1.06,
           opacity: 0,
         });
       });
@@ -153,7 +153,7 @@ export function SelectedWorks({
           });
       }
 
-      // 4. Construct sequential alternating center-hold reveal for each project:
+      // 4. Construct sequential reveal for each project with background image and bottom-left text:
       projects.forEach((_, idx) => {
         const slide = slideRefs.current[idx];
         const textEl = textRefs.current[idx];
@@ -161,33 +161,51 @@ export function SelectedWorks({
 
         if (!slide || !textEl || !imgEl) return;
 
-        // Phase A: Entry - Image & text glide smoothly into center (xPercent: 0)
+        // Phase A: Entry - Background image fades in and gently settles, text glides up into bottom-left
         tl.set(slide, {
           autoAlpha: 1,
           pointerEvents: "auto",
         })
-          .to(textEl, {
-            opacity: 1,
-            duration: 1.2,
-            ease: "power1.out",
-          })
           .to(
             imgEl,
             {
               opacity: 1,
+              scale: 1,
               duration: 1.2,
-              ease: "power1.out",
+              ease: "power2.out",
+            },
+          )
+          .to(
+            textEl,
+            {
+              opacity: 1,
+              y: 0,
+              duration: 1.2,
+              ease: "power2.out",
+            },
+            "<0.1",
+          )
+          // Phase B: The Hold - Perfect stillness for reading & interaction
+          .to({}, { duration: 2.0 })
+          // Phase C: The Exit - Smoothly fade out into the distance
+          .to(
+            textEl,
+            {
+              opacity: 0,
+              y: -24,
+              duration: 1.0,
+              ease: "power2.in",
+            },
+          )
+          .to(
+            imgEl,
+            {
+              opacity: 0,
+              duration: 1.0,
+              ease: "power2.in",
             },
             "<",
           )
-          // Phase B: The Hold - Perfect stillness in center for reading & interaction
-          .to({}, { duration: 2.0 })
-          // Phase C: The Exit - Smoothly scale down and fade to 0
-          .to([textEl, imgEl], {
-            opacity: 0,
-            duration: 1.2,
-            ease: "power1.in",
-          })
           .set(slide, {
             autoAlpha: 0,
             pointerEvents: "none",
@@ -267,11 +285,9 @@ export function SelectedWorks({
         </h2>
       </div>
 
-      {/* Centered Gallery Stage for all Projects */}
-      <div className="relative w-full h-full ">
+      {/* Project Slides Layer with Full-Bleed Background Images */}
+      <div className="relative w-full h-full">
         {projects.map((project, idx) => {
-          const isEven = idx % 2 === 0;
-
           return (
             <div
               key={project.id}
@@ -279,86 +295,86 @@ export function SelectedWorks({
                 slideRefs.current[idx] = el;
               }}
               style={{ opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center  pointer-events-none will-change-transform "
+              className="absolute inset-0 w-full h-full flex flex-col justify-end items-start pointer-events-none will-change-transform overflow-hidden"
             >
-              <div className="w-full max-w-6xl mx-auto flex md:items-center md:justify-center flex-wrap gap-10 p-10">
-                {/* Text Block */}
-                <div
-                  ref={(el) => {
-                    textRefs.current[idx] = el;
+              {/* Full-bleed background image */}
+              <div
+                ref={(el) => {
+                  imageRefs.current[idx] = el;
+                }}
+                className="absolute inset-0 w-full h-full overflow-hidden will-change-transform transform-gpu"
+              >
+                <OptimizedImage
+                  src={project.image}
+                  alt={project.title}
+                  fill
+                  sizes="100vw"
+                  className="object-cover object-center"
+                  priority={idx === 0}
+                  onLoad={() => {
+                    if (typeof window !== "undefined" && isMountedRef.current) {
+                      ScrollTrigger.refresh();
+                    }
                   }}
-                  className={cn(
-                    "flex flex-col justify-center will-change-transform transform-gpu ",
-                    isEven ? "md:order-1" : "md:order-2",
-                  )}
-                >
-                  {/* Category / Subtitle Eyebrow */}
-                  <div className="flex items-center gap-3 mb-2 sm:mb-3">
-                    <span className="font-serif italic text-xs sm:text-sm md:text-base text-text-muted">
-                      {project.index} — {project.category} ({project.year})
-                    </span>
-                  </div>
+                />
 
-                  {/* Massive Bold Sans-Serif Title */}
-                  <h3 className="font-sans font-black text-3xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl uppercase tracking-tighter leading-[0.92] text-text-primary mb-3 sm:mb-5">
-                    {project.title}
-                  </h3>
+                {/* Dark cinematic gradients to ensure high legibility for bottom-left typography */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-transparent" />
 
-                  {/* Editorial Description */}
-                  <p className="font-serif italic sm:font-normal text-text-muted text-sm sm:text-base md:text-lg leading-relaxed max-w-lg mb-6 sm:mb-8">
-                    {project.description}
-                  </p>
+                {/* Subtle boundary border */}
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 pointer-events-none" />
+              </div>
 
-                  {/* View Button */}
-                  <div>
-                    <Link
-                      href={project.link}
-                      onClick={(e) => {
-                        // Smoothly prevent jump for demo hash link
-                        if (project.link.startsWith("#")) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="group inline-flex items-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full border border-text-primary/25 bg-transparent text-text-primary font-sans font-bold text-xs uppercase tracking-widest transition-all duration-300 hover:border-text-primary hover:bg-text-primary hover:text-bg-base cursor-pointer shadow-xs active:scale-95"
-                    >
-                      <span>View Project</span>
-                      <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </Link>
-                  </div>
+              {/* Minimal Index Corner Badge (Top-Right) */}
+              <div className="absolute top-6 sm:top-8 right-6 sm:right-10 lg:right-16 z-10 px-3.5 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
+                <span className="font-serif italic text-xs font-semibold text-white/90 tracking-widest">
+                  {project.index} / {totalCountFormatted}
+                </span>
+              </div>
+
+              {/* Text Block - Positioned Bottom Left */}
+              <div
+                ref={(el) => {
+                  textRefs.current[idx] = el;
+                }}
+                className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 lg:pb-20 flex flex-col justify-end items-start text-left will-change-transform transform-gpu"
+              >
+                {/* Category / Subtitle Eyebrow */}
+                <div className="flex items-center gap-2.5 mb-2.5 sm:mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/70 inline-block" />
+                  <span className="font-serif italic text-xs sm:text-sm md:text-base text-white/75 tracking-wider">
+                    {project.index} — {project.category} ({project.year})
+                  </span>
                 </div>
 
-                {/* Image Block */}
-                <div
-                  ref={(el) => {
-                    imageRefs.current[idx] = el;
-                  }}
-                  className={cn(
-                    "relative w-full max-w-[600px] h-[400px] overflow-hidden rounded-xs bg-bg-surface border border-black/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] group will-change-transform transform-gpu ",
-                    isEven ? "md:order-2" : "md:order-1",
-                  )}
-                >
-                  <OptimizedImage
-                    src={project.image}
-                    alt={project.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                    priority={idx === 0}
-                    onLoad={() => {
-                      if (typeof window !== "undefined" && isMountedRef.current) {
-                        ScrollTrigger.refresh();
+                {/* Massive Bold Sans-Serif Title */}
+                <h3 className="font-sans font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl uppercase tracking-tighter leading-[0.92] text-white mb-3 sm:mb-4 drop-shadow-sm max-w-4xl">
+                  {project.title}
+                </h3>
+
+                {/* Editorial Description */}
+                {project.description && (
+                  <p className="font-serif italic sm:font-normal text-white/80 text-sm sm:text-base md:text-lg leading-relaxed max-w-xl mb-6 sm:mb-8 line-clamp-3 sm:line-clamp-none">
+                    {project.description}
+                  </p>
+                )}
+
+                {/* View Project Button */}
+                <div>
+                  <Link
+                    href={project.link}
+                    onClick={(e) => {
+                      // Smoothly prevent jump for demo hash link
+                      if (project.link.startsWith("#")) {
+                        e.preventDefault();
                       }
                     }}
-                  />
-                  {/* Subtle edge vignette / border ring */}
-                  <div className="absolute inset-0 ring-1 ring-inset ring-black/5 pointer-events-none" />
-
-                  {/* Minimal Index Corner Badge */}
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-bg-base/90 backdrop-blur-xs rounded-xs border border-black/10">
-                    <span className="font-serif italic text-xs font-semibold text-text-primary">
-                      {project.index}
-                    </span>
-                  </div>
+                    className="group inline-flex items-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full border border-white/30 bg-black/40 hover:bg-white hover:text-black text-white font-sans font-bold text-xs uppercase tracking-widest backdrop-blur-sm transition-all duration-300 cursor-pointer shadow-lg active:scale-95"
+                  >
+                    <span>View Project</span>
+                    <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </Link>
                 </div>
               </div>
             </div>
