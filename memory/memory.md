@@ -2288,3 +2288,54 @@ Implemented `context/feature-specs/17-changing-selected-work-ui.md` updating `<S
 ### Continuation Context
 
 - Working tree clean and synced with remote `origin/development-sanity-live`.
+
+
+## Session 2026-10-29 — Works Page Feature 03: Showing YouTube Videos in Album
+
+### Session Summary
+
+Implemented `context/feature-specs/works-page/03-adding-youtube-videos.md` to display YouTube videos within single album pages (`/album/[slug]`). Inspected the user's updated `albumType` in Sanity Studio (`studio/schemaTypes/albumType.ts`), which introduced the `youtubeLinks` field (`array` of strings). Added `youtubeLinks` to GROQ queries (`ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, `PAGINATED_ALBUMS_QUERY`), regenerated Sanity type definitions in `bstudio/sanity.types.ts`, created a YouTube parsing and embedding utility (`lib/youtube.ts`), allowed YouTube domains in `next.config.ts`, updated server-side data fetching (`app/album/[slug]/page.tsx`), and enhanced `AlbumGallery` (`components/album/album-gallery.tsx`) with an interactive YouTube facade player card (`YouTubePlayerCard`) and full-screen theater Lightbox embedding.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - `studio/schemaTypes/albumType.ts`:
+    - Confirmed `youtubeLinks` field defined as an array of strings.
+  - `bstudio/sanity/queries.ts` & `bstudio/sanity.types.ts`:
+    - Added `youtubeLinks` to `ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, and `PAGINATED_ALBUMS_QUERY`.
+    - Ran `pnpm run typegen` in `studio/`, updating `ALBUM_BY_SLUG_QUERY_RESULT` with `youtubeLinks: Array<string> | null`.
+  - `bstudio/lib/youtube.ts`:
+    - Implemented `getYouTubeVideoId(url)` handling all standard YouTube URL patterns (watch, short, embed, shorts, live, query strings, and raw 11-char IDs).
+    - Implemented `getYouTubeEmbedUrl(videoId, options)` generating privacy-enhanced `youtube-nocookie.com` embed URLs.
+    - Implemented `getYouTubeThumbnailUrl(videoId, quality)` generating HD thumbnail URLs with fallback.
+  - `bstudio/next.config.ts`:
+    - Added `img.youtube.com` and `i.ytimg.com` to `images.remotePatterns`.
+  - `bstudio/app/album/[slug]/page.tsx`:
+    - Parsed `album.youtubeLinks` into `MediaItem` models with `provider: "youtube"` and `youtubeId`.
+    - Combined parsed YouTube videos and Cloudinary videos into unified `videos` list passed to `<AlbumGallery />`.
+    - Enhanced `generateMetadata` with fallback OpenGraph image using the first YouTube video's HD thumbnail if `album.thumbnail` is absent.
+  - `bstudio/components/album/album-gallery.tsx`:
+    - Created `YouTubePlayerCard` implementing the high-performance facade pattern: renders HD video thumbnail (`maxresdefault.jpg` with `hqdefault.jpg` fallback), dark gradient scrim, centered tactile Play button, and badges (`Film 01`, `YouTube`).
+    - One-click inline playback: clicking the card or Play button instantly mounts the responsive embedded YouTube iframe player with `autoplay=1`.
+    - Lightbox Theater Mode: clicking the card's expand button opens the full-screen modal Lightbox rendering a theater-scale embedded YouTube player (`w-[92vw] max-w-5xl aspect-video`).
+    - Dedicated Video Grid Layout: When `activeFilter === "VIDEOS"`, single videos are centered in a cinematic container (`max-w-4xl mx-auto`), pairs in a 2-column grid (`max-w-5xl mx-auto`), and 3+ in a responsive grid (`max-w-7xl mx-auto`), preventing CSS masonry column distortions on widescreen videos.
+    - Refined empty state and asset counters for video mode.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+    - Sanity Studio TypeScript check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - Live dev server verification: tested `http://localhost:3000/album/ane-pancho-youtube-seen-eka-pakaya` (which has 2 YouTube links in Sanity: `b4nCfZ_YfS4` and `CMQSJrTWLMw`), verified HTTP 200, both video IDs rendered, and `[ PHOTOS ]` / `[ VIDEOS ]` toggle buttons active.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **High-Performance Facade Pattern for Video Cards:** Loading multiple live YouTube iframes on page load downloads excessive third-party scripts, slows initial render, and causes scroll-trapping issues on mobile devices. Using the facade pattern renders crystal-clear HD thumbnails with zero layout shift; clicking play immediately mounts the iframe with `autoplay=1` for seamless inline viewing, while the expand button provides full-screen theater Lightbox viewing.
+- **Responsive Widescreen Grid for Videos vs. CSS Columns for Stills:** Photos have variable vertical/horizontal aspect ratios where CSS columns (`columns-1 sm:columns-2 ...`) work well. Videos have standardized 16:9 widescreen ratios. In CSS columns, a single video would be squished into a 25% narrow column on the left. Switching to a centered container for 1 video and a 2-3 column flex/grid for multiple videos keeps video presentation cinematic and balanced.
+
+### Continuation Context
+
+- Single album pages (`/album/[slug]`) now support displaying YouTube videos via Sanity `youtubeLinks`.
+- Progress tracker (`context/progress-tracker.md`) updated.
+- Memory saved and verified.

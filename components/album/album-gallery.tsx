@@ -29,6 +29,8 @@ export interface MediaItem {
   alt?: string;
   duration?: number | string;
   format?: string;
+  provider?: "cloudinary" | "youtube";
+  youtubeId?: string;
 }
 
 export interface AlbumData {
@@ -40,6 +42,7 @@ export interface AlbumData {
   cloudinaryFolder?: string | null;
   mediaType?: string | null;
   thumbnail?: string | null;
+  youtubeLinks?: string[] | null;
 }
 
 export interface AlbumGalleryProps {
@@ -109,6 +112,99 @@ function LazyGalleryImage({
           <Maximize2 className="w-5 h-5 stroke-[1.75]" />
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Interactive YouTube Video Player Card.
+ * Uses the facade pattern for instant loading and zero layout shifts.
+ * Clicking the card or central Play button activates the embedded responsive YouTube video player with autoplay.
+ * The top-right expand button allows opening the video in the full-screen theater Lightbox.
+ */
+function YouTubePlayerCard({
+  item,
+  index,
+  albumTitle,
+  onOpenLightbox,
+}: {
+  item: MediaItem;
+  index: number;
+  albumTitle: string;
+  onOpenLightbox: () => void;
+}) {
+  const [isPlayingInline, setIsPlayingInline] = React.useState(false);
+  const [thumbError, setThumbError] = React.useState(false);
+
+  const videoId = item.youtubeId;
+  if (!videoId) return null;
+
+  // Primary: maxresdefault (1280x720 HD), Fallback on error: hqdefault (480x360)
+  const thumbUrl = thumbError
+    ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+    : `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+  return (
+    <div className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-border-subtle shadow-md transition-all duration-300 hover:shadow-2xl hover:border-black/30 dark:hover:border-white/30">
+      {isPlayingInline ? (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`}
+          title={item.alt || `${albumTitle} Film ${index + 1}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="w-full h-full border-0"
+        />
+      ) : (
+        <div
+          onClick={() => setIsPlayingInline(true)}
+          className="relative w-full h-full cursor-pointer select-none"
+        >
+          {/* YouTube Video Thumbnail */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={thumbUrl}
+            alt={item.alt || `${albumTitle} Film ${index + 1}`}
+            onError={() => setThumbError(true)}
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
+
+          {/* Cinematic dark ßscrim */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-black/30 transition-opacity duration-300 group-hover:opacity-80" />
+
+          {/* Centered Play Button */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/95 text-text-primary flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110">
+              <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-text-primary stroke-none ml-1 dark:fill-black" />
+            </div>
+          </div>
+
+          {/* Top-Right Expand to Theater Lightbox button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenLightbox();
+            }}
+            aria-label="Open in Theater Lightbox"
+            title="Open in Theater Lightbox"
+            className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all duration-200 transform scale-90 group-hover:scale-100"
+          >
+            <Maximize2 className="w-4 h-4 stroke-[1.75]" />
+          </button>
+
+          {/* Bottom-Left Film Index / Title Badge */}
+          <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white/90 font-serif italic text-xs">
+            Film {String(index + 1).padStart(2, "0")}
+          </div>
+
+          {/* Bottom-Right YouTube Badge */}
+          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white font-sans text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Film className="w-3 h-3 stroke-[2]" />
+            <span>YouTube</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -520,9 +616,11 @@ export function AlbumGallery({
                 : `No ${activeFilter === "VIDEOS" ? "Videos" : "Photos"} Found`}
             </h3>
             <p className="font-sans text-xs uppercase tracking-wider text-text-muted mt-2 max-w-sm">
-              {album.cloudinaryFolder
-                ? `Folder "${album.cloudinaryFolder}" currently has no ${activeFilter.toLowerCase()} uploaded in Cloudinary.`
-                : "No media folder is associated with this album yet."}
+              {activeFilter === "VIDEOS"
+                ? "No videos have been added to this album yet."
+                : album.cloudinaryFolder
+                  ? `Folder "${album.cloudinaryFolder}" currently has no photos uploaded.`
+                  : "No media folder is associated with this album yet."}
             </p>
             {hasPhotos && activeFilter === "VIDEOS" && (
               <button
@@ -545,53 +643,112 @@ export function AlbumGallery({
           </div>
         ) : (
           <>
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6">
-              {currentMediaList.map((item, index) => (
-                <div
-                  key={item.id}
-                  onClick={() => openLightbox(index)}
-                  className="break-inside-avoid mb-4 sm:mb-6 group relative cursor-pointer overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-all duration-300 hover:shadow-xl hover:border-black/30"
-                >
-                  {item.type === "image" ? (
+            {activeFilter === "VIDEOS" ? (
+              <div
+                className={cn(
+                  "w-full mb-12",
+                  currentMediaList.length === 1
+                    ? "max-w-4xl mx-auto"
+                    : currentMediaList.length === 2
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto"
+                      : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-7xl mx-auto",
+                )}
+              >
+                {currentMediaList.map((item, index) =>
+                  item.provider === "youtube" || item.youtubeId ? (
+                    <YouTubePlayerCard
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      albumTitle={album.title}
+                      onOpenLightbox={() => openLightbox(index)}
+                    />
+                  ) : (
+                    <div
+                      key={item.id}
+                      onClick={() => openLightbox(index)}
+                      className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-2xl bg-black border border-border-subtle shadow-md transition-all duration-300 hover:shadow-2xl hover:border-black/30 dark:hover:border-white/30"
+                    >
+                      <video
+                        src={item.url}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
+                      />
+
+                      {/* Centered Play Pill */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-14 h-14 rounded-full bg-white/95 text-text-primary flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                          <Play className="w-6 h-6 fill-text-primary stroke-none ml-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Top-Right Expand to Theater Lightbox button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLightbox(index);
+                        }}
+                        aria-label="Open in Theater Lightbox"
+                        title="Open in Theater Lightbox"
+                        className="absolute top-3 right-3 z-20 p-2.5 rounded-full bg-black/65 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all duration-200 transform scale-90 group-hover:scale-100"
+                      >
+                        <Maximize2 className="w-4 h-4 stroke-[1.75]" />
+                      </button>
+
+                      {/* Video Duration / Film Badge */}
+                      <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-sm border border-white/20 text-white font-sans text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <Film className="w-3 h-3 stroke-[2]" />
+                        <span>{item.duration ? `${item.duration}s` : "Film"}</span>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+            ) : (
+              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6">
+                {currentMediaList.map((item, index) => (
+                  <div
+                    key={item.id}
+                    onClick={() => openLightbox(index)}
+                    className="break-inside-avoid mb-4 sm:mb-6 group relative cursor-pointer overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-all duration-300 hover:shadow-xl hover:border-black/30"
+                  >
                     <LazyGalleryImage
                       item={item}
                       albumTitle={album.title}
                       index={index}
                     />
-                  ) : (
-                    <div className="relative aspect-video w-full overflow-hidden bg-black flex items-center justify-center">
-                      <video
-                        src={item.url}
-                        preload="none"
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300"
-                      />
-
-                      {/* Centered Play Pill */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-12 h-12 rounded-full bg-white/95 text-text-primary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                          <Play className="w-5 h-5 fill-text-primary stroke-none ml-0.5" />
-                        </div>
-                      </div>
-
-                      {/* Video Duration / Film Badge */}
-                      <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-sm border border-white/20 text-white font-sans text-[10px] font-bold uppercase tracking-wider">
-                        {item.duration ? `${item.duration}s` : "Film"}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Scroll Sentinel & Loading Indicator */}
             {isLoadingMore && (
-              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6 mt-4 w-full">
-                <SkeletonCard aspectRatio="aspect-[3/4]" />
-                <SkeletonCard aspectRatio="aspect-[4/5]" />
-                <SkeletonCard aspectRatio="aspect-[16/10]" />
-                <SkeletonCard aspectRatio="aspect-[3/4]" />
+              <div
+                className={cn(
+                  "w-full mt-4",
+                  activeFilter === "VIDEOS"
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                    : "columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6",
+                )}
+              >
+                {activeFilter === "VIDEOS" ? (
+                  <>
+                    <SkeletonCard aspectRatio="aspect-video" />
+                    <SkeletonCard aspectRatio="aspect-video" />
+                    <SkeletonCard aspectRatio="aspect-video" />
+                  </>
+                ) : (
+                  <>
+                    <SkeletonCard aspectRatio="aspect-[3/4]" />
+                    <SkeletonCard aspectRatio="aspect-[4/5]" />
+                    <SkeletonCard aspectRatio="aspect-[16/10]" />
+                    <SkeletonCard aspectRatio="aspect-[3/4]" />
+                  </>
+                )}
               </div>
             )}
 
@@ -730,6 +887,16 @@ export function AlbumGallery({
                   className="max-w-[92vw] max-h-[86vh] w-auto h-auto object-contain rounded-sm select-none shadow-2xl"
                 />
               )
+            ) : currentMedia.provider === "youtube" || currentMedia.youtubeId ? (
+              <div className="relative w-[92vw] max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/10">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${currentMedia.youtubeId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`}
+                  title={currentMedia.alt || album.title || "YouTube video player"}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              </div>
             ) : (
               <video
                 src={currentMedia.url}
