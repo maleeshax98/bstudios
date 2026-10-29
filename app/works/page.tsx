@@ -4,8 +4,10 @@ import { Suspense } from "react";
 import { WorksPage, SkeletonCard } from "@/components/works/works-page";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { PAGINATED_ALBUMS_QUERY, CATEGORIES_QUERY } from "@/sanity/queries";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Works — B studio | High-End Cinematic Photography & Videography",
@@ -14,15 +16,21 @@ export const metadata: Metadata = {
 };
 
 async function getWorksData() {
-  // "use cache";
   try {
-    const [albums, categories] = await Promise.all([
-      client.fetch(PAGINATED_ALBUMS_QUERY, { start: 0, end: 6 }),
-      client.fetch(CATEGORIES_QUERY),
+    const [albumsRes, categoriesRes] = await Promise.all([
+      sanityFetch({
+        query: PAGINATED_ALBUMS_QUERY,
+        params: { start: 0, end: 6 },
+        stega: false,
+      }),
+      sanityFetch({
+        query: CATEGORIES_QUERY,
+        stega: false,
+      }),
     ]);
     return {
-      albums: albums || [],
-      categories: categories || [],
+      albums: albumsRes.data || [],
+      categories: categoriesRes.data || [],
     };
   } catch (error) {
     console.warn("Could not fetch works data from Sanity:", error);

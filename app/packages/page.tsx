@@ -3,11 +3,10 @@ import * as React from "react";
 import { PackagesPage } from "@/components/packages/packages-page";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/live";
 import { CATEGORIES_QUERY, PACKAGES_QUERY } from "@/sanity/queries";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title:
@@ -18,13 +17,13 @@ export const metadata: Metadata = {
 
 async function getPackagesPageData() {
   try {
-    const [categories, packages] = await Promise.all([
-      client.fetch(CATEGORIES_QUERY),
-      client.fetch(PACKAGES_QUERY),
+    const [categoriesRes, packagesRes] = await Promise.all([
+      sanityFetch({ query: CATEGORIES_QUERY, stega: false }),
+      sanityFetch({ query: PACKAGES_QUERY, stega: false }),
     ]);
     return {
-      categories: categories || [],
-      packages: packages || [],
+      categories: categoriesRes.data || [],
+      packages: packagesRes.data || [],
     };
   } catch (error) {
     console.warn(
