@@ -259,7 +259,7 @@ export function PackagesPage({
                   COLLECTION STATUS // 0 TIERS
                 </span>
                 <h3 className="font-serif italic text-2xl sm:text-3xl lg:text-4xl text-text-primary mb-3">
-                  No packages available for this category yet.
+                  No data to load
                 </h3>
                 <p className="font-sans text-xs uppercase tracking-widest text-text-muted mb-8 max-w-md mx-auto leading-relaxed">
                   Every story deserves dedicated art direction. Inquire directly

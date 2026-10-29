@@ -2008,82 +2008,97 @@ Implemented a floating "Keep scrolling" indicator positioned at the bottom cente
 
 ---
 
-## 2026-10-29 — Auth Setup: Clerk Authentication Initiation (`context/feature-specs/auth/setup-clerk.md`)
+## 2026-10-29 — Task: Remove Sanity Caching & Enforce Fresh Dynamic Fetching with "No data to load" Empty States
 
 ### Session Summary
 
-Reviewed feature specification `context/feature-specs/auth/setup-clerk.md` targeting dashboard-selected Clerk application `app_3LKpUrbLFXLKMguMX2LPmdvn0qt`. Updated `context/progress-tracker.md` to mark Clerk Authentication Setup as in progress. Inspected dependencies, routes, and middleware, verifying no existing auth provider or conflicting configurations exist. Verified environment compatibility (Node.js v25.8.1, Next.js 16.4.3). Identified that targeted application `app_3LKpUrbLFXLKMguMX2LPmdvn0qt` requires host terminal authentication via `npx -y clerk@latest auth login` prior to running `clerk init`, and presented the mandatory checklist to the user per the specification's "Before you start" protocol.
+Refactored data-fetching across the entire codebase to eliminate all caching layers for Sanity CMS and Cloudinary assets, guaranteeing fresh data is fetched on every incoming request. Completely purged all mock/sample fallback arrays and test slugs, replacing them with clean editorial empty state messages displaying "No data to load".
 
 ### Implementation State
 
 - **Completed & Verified:**
-  - Marked Clerk Authentication Setup as in progress in `context/progress-tracker.md`.
-  - Inspected repository for existing auth: confirmed zero existing auth providers, zero middleware files, and clean greenfield integration state.
-  - Verified Node.js v25.8.1 and pnpm v10.30.2 compatibility.
-  - Verified dashboard application ID: `app_3LKpUrbLFXLKMguMX2LPmdvn0qt`.
-  - Confirmed CLI authentication requirement and stopped before making destructive or unverified modifications.
+  - **Sanity Client Configuration (`sanity/client.ts`):** Locked `useCdn: false` so requests query the Sanity Content Lake directly rather than cached CDN edge endpoints.
+  - **Dynamic Route Configuration (`dynamic = "force-dynamic"`, `revalidate = 0`):** Added to all CMS-driven routes:
+    - `app/page.tsx`
+    - `app/works/page.tsx`
+    - `app/services/page.tsx`
+    - `app/packages/page.tsx`
+    - `app/album/[slug]/page.tsx`
+  - **Removed `"use cache"` & Experimental Flags:** Completely purged `"use cache"` directives from server functions and components, and removed `cacheComponents` and `partialPrefetching` flags from `next.config.ts`.
+  - **Cloudinary Search (`lib/cd.ts`):** Added `cache: "no-store"` to `searchCloudinaryWithCache`.
+  - **Purged Mock / Sample Data & Added "No data to load" States:**
+    - `components/selected-works.tsx`: Removed `SELECTED_PROJECTS` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/services-exhibition.tsx`: Removed `SERVICES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/services/services-horizontal.tsx`: Removed `SERVICES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/sample-gallery.tsx`: Removed `SAMPLE_IMAGES` mock array; if empty, renders `"No data to load"`.
+    - `components/client-space-teaser.tsx`: Removed `SAMPLE_ALBUMS` mock array and fallback padding; added defensive guards for GSAP fan-out animation when card counts are between 1 and 4; if 0 albums, renders a clean section with `"No data to load"`.
+    - `components/color-grade-lookbook.tsx`: Removed `COLOR_THEMES` mock array; if empty, renders a clean section with `"No data to load"`.
+    - `components/works/works-page.tsx`: Removed `ALBUM_PROJECTS` mock array; if 0 albums are returned, displays `"No data to load"`.
+    - `components/packages/packages-page.tsx`: Displays `"No data to load"` when categories/packages are empty.
+    - `components/album/album-gallery.tsx`: Displays `"No data to load"` when an album has no photos or videos.
+    - `app/album/[slug]/page.tsx`: Removed dummy test slugs (`sakkili-miya-pakaya`, etc.) and `generateStaticParams` so album pages dynamically render on demand.
+  - **Verification:**
+    - TypeScript compiler check (`pnpm exec tsc --noEmit`): 0 errors.
+    - ESLint (`pnpm lint`): 0 errors.
+    - Next.js production build (`next build --webpack`): Built successfully with 5 dynamic server-rendered routes (`ƒ /`, `ƒ /album/[slug]`, `ƒ /packages`, `ƒ /services`, `ƒ /works`) and 0 static caching.
 - **Incomplete / Next:**
-  - User confirmation of the checklist and host terminal login (`npx -y clerk@latest auth login`).
-  - Running `npx -y clerk@latest init --app app_3LKpUrbLFXLKMguMX2LPmdvn0qt --no-skills` (or manual SDK installation/configuration if preferred).
-  - Configuring `ClerkProvider` in `app/layout.tsx` inside `<body>`.
-  - Adding `middleware.ts` with `clerkMiddleware()`.
-  - Adding auth controls (`<SignedIn>`, `<SignedOut>`, `<SignInButton>`, `<SignUpButton>`, `<UserButton>`) into `components/navbar.tsx`.
-  - Creating sign-in and sign-up catch-all routes wrapped in `<Suspense>` per Next.js 16 requirements.
-  - Running `npx -y clerk@latest doctor`, TypeScript, ESLint, and build verification.
+  - Awaiting next user instruction.
 
 ### Decisions & Rationale
 
-- **Mandatory "Before You Start" Checklist Gate:** The specification explicitly commands displaying the checklist and waiting for user confirmation before modifying application code.
-- **Host Terminal Authentication Gate:** `setup-clerk.md` states: *"Dashboard sign-in does not authenticate the Clerk CLI; if a CLI command needs access to this application, have the user run `npx -y clerk@latest auth login` in their host terminal first."* Attempting to run `clerk init` in an automated background subshell halts waiting for interactive browser OAuth redirection. Prompting the user to run the login command in their host terminal is the sanctioned, documented path.
-- **Zero Environment File Inspection:** Adhered strictly to the specification rule: *"inspect auth dependencies, routes, middleware, sessions, and user records — never environment files. Do not read or print existing environment variable files."*
-
-### Lessons Learned
-
-- **Clerk CLI OAuth Interaction in IDE:** The Clerk CLI triggers an interactive local HTTP listener and browser OAuth authorization flow (`http://127.0.0.1:<port>/callback`) when unauthenticated. When targeting an existing private application from an IDE agent, having the developer log in from their host terminal first is required before running CLI commands that pull keys or link apps.
-
-### Open Questions
-
-- Confirm user has run `npx -y clerk@latest auth login` in their host terminal and approved proceeding with setup.
+- **`force-dynamic` & `revalidate = 0`:** In Next.js App Router, combining `useCdn: false` on the Sanity client with route segment configuration `export const dynamic = "force-dynamic"` and `export const revalidate = 0` guarantees the server evaluates GROQ queries on every user request, completely eliminating stale cache hits.
+- **Defensive GSAP Array Indexing:** In `client-space-teaser.tsx`, previously `cards[0]` through `cards[3]` were indexed directly assuming 4 cards were always present due to mock padding. With mock data removed, checking `if (cards[i])` prevents null-reference crashes when fewer than 4 wedding albums exist in Sanity.
 
 ### Continuation Context
 
-- `context/progress-tracker.md` is currently marked as In Progress.
-- Clerk dependencies and UI components (`ClerkProvider` in `app/layout.tsx`, auth buttons in `components/navbar.tsx`, `next.config.ts` dev origins, and Prisma/pg dependencies) wired up.
-- Code committed to `development` branch and pushed to GitHub remote `origin/development`.
-- Cleaned up unused database dependencies (`prisma`, `pg`, `dotenv`, `tsx`) from `package.json` and `pnpm-lock.yaml`.
+- All pages now live-query Sanity on every request and show "No data to load" when no documents exist.
+- Ready for next instruction or milestone.
 
 ---
 
-## 2026-10-29 — Build Fix: Next.js 16 Partial Prerendering Streaming Fix Without Cache
+## 2026-10-29 — Bugfix: NotFoundError on Route Transitions from Home Page (`01-cant-reach-the-pages.md`)
 
 ### Session Summary
 
-Executed `rm -rf .next && pnpm run build` without build cache per the user's explicit directive. Analyzed prerender build failure: Next.js 16 Cache Components / Partial Prerendering halted at `/services` (`Error: Route "/services": Next.js encountered uncached or runtime data during prerendering`) because dynamic Sanity HTTP fetches occurred directly inside the page root component outside a `<Suspense>` boundary. Following the instruction to avoid the cache directive (`"use cache"`), refactored `/services`, `/packages`, and `/` (`app/page.tsx`) to isolate dynamic fetching into child server components wrapped in `<Suspense fallback={...}>`. Verified the production build passes cleanly across all 31 routes without cache.
+Diagnosed and resolved the runtime crash `NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node at section` that occurred when navigating from the Home page (`/`) via the navbar links to `/works`, `/packages`, `/about`, `/services`, or `/contact`. The crash was caused by GSAP ScrollTrigger's `pin: true` reparenting top-level `<section>` nodes into dynamically generated `.pin-spacer` wrappers, clashing with React 19's unmount deletion phase (`commitDeletionEffects`).
 
 ### Implementation State
 
 - **Completed & Verified:**
-  - `bstudio/app/services/page.tsx`: Isolated `ServicesContent` inside `<Suspense fallback={<ServicesVertical initialServices={[]} />}>`.
-  - `bstudio/app/packages/page.tsx`: Isolated `PackagesContent` inside `<Suspense fallback={<PackagesPage initialCategories={[]} initialPackages={[]} />}>`.
-  - `bstudio/app/page.tsx`: Isolated `DynamicHomeSections` inside `<Suspense fallback={<HomeSectionsFallback />}>`.
-  - `bstudio/app/album/[slug]/page.tsx`: Removed `"use cache"` directive from `getAlbumData()` to align with no-cache dynamic streaming architecture.
-  - Zero `"use cache"` or cache directives added.
-  - Production build (`rm -rf .next && pnpm run build`) succeeded with exit code 0; all 31 routes generated cleanly.
-  - TypeScript strict checks (`pnpm exec tsc --noEmit`) passed with 0 errors.
-  - ESLint (`pnpm lint`) passed with 0 errors.
+  - **Root Cause Identified:**
+    - React 19 / Next.js 16 unmounts the previous page component during client navigation.
+    - GSAP ScrollTrigger `pin: true` reparents the target DOM element inside a dynamically injected `<div class="pin-spacer">`.
+    - Pinned sections on the Home page (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`) were returning `<section ref={...}>` as the top-level host node directly under `<main>`.
+    - Because components were using standard `React.useEffect`, passive cleanup runs *after* React's commit deletion phase.
+    - When React called `main.removeChild(section)`, `<section>` was physically nested inside `.pin-spacer` rather than `<main>`, causing native DOM `removeChild` to throw `NotFoundError`.
+  - **Architectural Solution Implemented:**
+    1. **`useIsomorphicLayoutEffect` Hook (`lib/hooks.ts`):**
+       - Implemented hook returning `React.useLayoutEffect` on client and `React.useEffect` on server.
+       - Guarantees `ctx.revert()` runs synchronously during the unmount phase *before* React executes `commitDeletionEffects`, restoring the DOM tree and removing all `.pin-spacer` wrappers before React detaches nodes.
+    2. **DOM Hierarchy Isolation (Static Outer Wrapper):**
+       - Wrapped the pinned `<section>` elements within a static `<div className="relative w-full">` wrapper across all pinned components (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`, and `PinnedScrollText2`).
+       - React's unmount deletion target is the outer `<div>`, which is never reparented by GSAP, preventing any parent-child mismatch in React's reconciliation engine.
+    3. **Async Callback & Font Metric Cancellation Guards:**
+       - Added `isMounted` cancellation guards to all `document.fonts.ready` promises and image `onLoad` handlers in pinned components to prevent dead `ScrollTrigger.refresh()` recalculations after unmount.
+    4. **Lenis Scroll-to-Top Route Synchronization (`components/smooth-scroll.tsx`):**
+       - Tracked active Lenis instance in `lenisRef` and listened for `pathname` changes via `usePathname()`.
+       - On navigation, instantly resets scroll position to `0` via `lenisRef.current?.scrollTo(0, { immediate: true })` and refreshes `ScrollTrigger`.
+    5. **Turbopack Build Optimization (`app/globals.css`):**
+       - Integrated Lenis CSS styles into `app/globals.css` and removed direct node_module `.css` import from `smooth-scroll.tsx`, resolving Turbopack panic during builds.
+  - **Verification:**
+    - TypeScript compilation check (`pnpm exec tsc --noEmit`): 0 errors.
+    - ESLint (`pnpm lint`): 0 errors.
+    - Production build (`next build`): Compiled and prerendered all routes cleanly.
 - **Incomplete / Next:**
-  - Awaiting next user instruction (or continuing Clerk authentication setup).
+  - Awaiting next user instruction.
 
 ### Decisions & Rationale
 
-- **Suspense-Based Streaming vs. `"use cache"`:** Next.js 16 with Partial Prerendering allows either caching runtime data (`"use cache"`) or wrapping dynamic data accesses in `<Suspense>`. Per the user's explicit instruction not to use the cache mechanism, and following the pattern already established in `app/works/page.tsx` and `app/album/[slug]/page.tsx`, `<Suspense>` boundaries were placed around dynamic fetching segments. This enables Next.js to prerender the static shell (hero, landing, footers, loaders) and defer dynamic CMS data fetching to runtime streaming without build errors.
-- **Graceful Fallbacks:** Utilized existing built-in static default arrays (`initialServices={[]}`, `initialCategories={[]}`, `initialPackages={[]}`, and `HomeSectionsFallback`) as Suspense fallbacks so the static prerender shell renders polished fallback UI without blank flashes.
+- **Combining `useIsomorphicLayoutEffect` with Outer Wrapper:** Using `useIsomorphicLayoutEffect` ensures synchronous `ctx.revert()` cleanup prior to node removal. Pairing this with a static outer wrapper provides a double layer of defense: React only deletes the outer wrapper that was never reparented, making child detachment errors impossible.
+- **Lenis Immediate Scroll Reset:** When navigating away from a pinned or scrolled section, Lenis previously held the virtual scroll position, causing subsequent pages to mount in the middle of their layout. Teleporting to `0` with `{ immediate: true }` ensures consistent top-of-page entry.
 
 ### Continuation Context
 
-- Production build is 100% operational and verified.
-- Disables `cacheComponents` and `partialPrefetching` flags in `next.config.ts`, disables `useCdn` in `sanity/client.ts`, and removes legacy fetch caching from `lib/cd.ts`.
-- Ready for next instruction or task.
-
-
-
+- Navigation from Home page to all other routes (`/works`, `/packages`, `/about`, `/services`, `/contact`) is clean and crash-free.
+- Pinned animations remain fully functional and tear down synchronously on unmount.
+- Ready for next instruction or milestone.

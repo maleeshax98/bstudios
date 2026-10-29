@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 import type { WEDDING_ALBUMS_QUERY_RESULT } from "@/sanity.types";
 import { OptimizedImage } from "@/components/optimized-image";
 
@@ -41,49 +42,6 @@ interface PersonalAlbum {
   link?: string;
 }
 
-const SAMPLE_ALBUMS: PersonalAlbum[] = [
-  {
-    id: "album-01",
-    galleryId: "GALLERY #01",
-    client: "Elena & Marc",
-    shootType: "Lake Como Ceremony",
-    assetCount: "340 Assets // 4K Master",
-    src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=85",
-    alt: "Client wedding album preview",
-    link: "/works",
-  },
-  {
-    id: "album-02",
-    galleryId: "GALLERY #02",
-    client: "Sora & Kenji",
-    shootType: "Kyoto Editorial Preshoot",
-    assetCount: "215 Assets // 35mm Analog",
-    src: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=85",
-    alt: "Client editorial preshoot album preview",
-    link: "/works",
-  },
-  {
-    id: "album-03",
-    galleryId: "GALLERY #03",
-    client: "Aurelia & Cassian",
-    shootType: "Brutalist Villa Reception",
-    assetCount: "420 Assets // HDR Masters",
-    src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85",
-    alt: "Client luxury reception album preview",
-    link: "/works",
-  },
-  {
-    id: "album-04",
-    galleryId: "GALLERY #04",
-    client: "Amara & Julian",
-    shootType: "Sunset Coastal Monograph",
-    assetCount: "190 Assets // Ultra-Res",
-    src: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=1000&q=85",
-    alt: "Client monograph album preview",
-    link: "/works",
-  },
-];
-
 export function ClientSpaceTeaser({
   initialAlbums,
   className,
@@ -95,58 +53,42 @@ export function ClientSpaceTeaser({
 
   const albums = React.useMemo<PersonalAlbum[]>(() => {
     if (!initialAlbums || initialAlbums.length === 0) {
-      return SAMPLE_ALBUMS;
+      return [];
     }
 
-    const sanityMapped: PersonalAlbum[] = initialAlbums
-      .slice(0, 4)
-      .map((album, idx) => {
-        const galleryNum = String(idx + 1).padStart(2, "0");
-        const countText = album.count
-          ? `${album.count} Assets // 4K Master`
-          : album.duration
-            ? `${album.duration} Film // 4K Master`
-            : "300+ Assets // 4K Master";
+    return initialAlbums.slice(0, 4).map((album, idx) => {
+      const galleryNum = String(idx + 1).padStart(2, "0");
+      const countText = album.count
+        ? `${album.count} Assets // 4K Master`
+        : album.duration
+          ? `${album.duration} Film // 4K Master`
+          : "300+ Assets // 4K Master";
 
-        const shootType = album.description
-          ? album.description.length > 36
-            ? `${album.description.slice(0, 36).trim()}...`
-            : album.description
-          : album.date || "Wedding Collection";
+      const shootType = album.description
+        ? album.description.length > 36
+          ? `${album.description.slice(0, 36).trim()}...`
+          : album.description
+        : album.date || "Wedding Collection";
 
-        const slug = album.slug?.current;
-        const link = slug ? `/album/${slug}` : "/works";
+      const slug = album.slug?.current;
+      const link = slug ? `/album/${slug}` : "/works";
 
-        return {
-          id: album._id,
-          galleryId: `GALLERY #${galleryNum}`,
-          client: album.title || `Wedding Story #${galleryNum}`,
-          shootType,
-          assetCount: countText,
-          src:
-            cleanImageUrl(album.thumbnail) ||
-            SAMPLE_ALBUMS[idx % SAMPLE_ALBUMS.length].src,
-          alt: album.alt || album.title || "Client wedding album preview",
-          slug,
-          link,
-        };
-      });
-
-    if (sanityMapped.length < 4) {
-      const remaining = SAMPLE_ALBUMS.slice(sanityMapped.length, 4).map(
-        (fallback, i) => ({
-          ...fallback,
-          galleryId: `GALLERY #${String(sanityMapped.length + i + 1).padStart(2, "0")}`,
-        }),
-      );
-      return [...sanityMapped, ...remaining];
-    }
-
-    return sanityMapped;
+      return {
+        id: album._id,
+        galleryId: `GALLERY #${galleryNum}`,
+        client: album.title || `Wedding Story #${galleryNum}`,
+        shootType,
+        assetCount: countText,
+        src: cleanImageUrl(album.thumbnail) || "",
+        alt: album.alt || album.title || "Client wedding album preview",
+        slug,
+        link,
+      };
+    });
   }, [initialAlbums]);
 
   // GSAP ScrollTrigger album fan out / spread animation
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current;
     const cards = cardsRef.current.filter(
       (c): c is HTMLDivElement => c !== null,
@@ -154,40 +96,50 @@ export function ClientSpaceTeaser({
 
     if (!section || cards.length === 0) return;
 
+    let isMounted = true;
+
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
       // Desktop layout (>= 1024px)
       mm.add("(min-width: 1024px)", () => {
         // Initial stacked deck positioning
-        gsap.set(cards[0], {
-          xPercent: -5,
-          yPercent: 4,
-          rotation: -4,
-          scale: 0.94,
-          zIndex: 1,
-        });
-        gsap.set(cards[1], {
-          xPercent: 3,
-          yPercent: -2,
-          rotation: 3,
-          scale: 0.96,
-          zIndex: 2,
-        });
-        gsap.set(cards[2], {
-          xPercent: -2,
-          yPercent: 2,
-          rotation: -1.5,
-          scale: 0.98,
-          zIndex: 3,
-        });
-        gsap.set(cards[3], {
-          xPercent: 0,
-          yPercent: 0,
-          rotation: 0,
-          scale: 1.0,
-          zIndex: 4,
-        });
+        if (cards[0]) {
+          gsap.set(cards[0], {
+            xPercent: -5,
+            yPercent: 4,
+            rotation: -4,
+            scale: 0.94,
+            zIndex: 1,
+          });
+        }
+        if (cards[1]) {
+          gsap.set(cards[1], {
+            xPercent: 3,
+            yPercent: -2,
+            rotation: 3,
+            scale: 0.96,
+            zIndex: 2,
+          });
+        }
+        if (cards[2]) {
+          gsap.set(cards[2], {
+            xPercent: -2,
+            yPercent: 2,
+            rotation: -1.5,
+            scale: 0.98,
+            zIndex: 3,
+          });
+        }
+        if (cards[3]) {
+          gsap.set(cards[3], {
+            xPercent: 0,
+            yPercent: 0,
+            rotation: 0,
+            scale: 1.0,
+            zIndex: 4,
+          });
+        }
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -202,18 +154,21 @@ export function ClientSpaceTeaser({
         });
 
         // Fan out albums into an overlapping cascading spread
-        tl.to(
-          cards[0],
-          {
-            xPercent: -88,
-            yPercent: 12,
-            rotation: -14,
-            scale: 0.92,
-            ease: "power2.out",
-          },
-          0,
-        )
-          .to(
+        if (cards[0]) {
+          tl.to(
+            cards[0],
+            {
+              xPercent: -88,
+              yPercent: 12,
+              rotation: -14,
+              scale: 0.92,
+              ease: "power2.out",
+            },
+            0,
+          );
+        }
+        if (cards[1]) {
+          tl.to(
             cards[1],
             {
               xPercent: -28,
@@ -223,8 +178,10 @@ export function ClientSpaceTeaser({
               ease: "power2.out",
             },
             0,
-          )
-          .to(
+          );
+        }
+        if (cards[2]) {
+          tl.to(
             cards[2],
             {
               xPercent: 28,
@@ -234,8 +191,10 @@ export function ClientSpaceTeaser({
               ease: "power2.out",
             },
             0,
-          )
-          .to(
+          );
+        }
+        if (cards[3]) {
+          tl.to(
             cards[3],
             {
               xPercent: 88,
@@ -246,39 +205,48 @@ export function ClientSpaceTeaser({
             },
             0,
           );
+        }
       });
 
       // Mobile & Tablet layout (< 1024px)
       mm.add("(max-width: 1023px)", () => {
         // Subtle stack setup fitting narrower viewport
-        gsap.set(cards[0], {
-          xPercent: -3,
-          yPercent: 3,
-          rotation: -3,
-          scale: 0.92,
-          zIndex: 1,
-        });
-        gsap.set(cards[1], {
-          xPercent: 2,
-          yPercent: -2,
-          rotation: 2,
-          scale: 0.95,
-          zIndex: 2,
-        });
-        gsap.set(cards[2], {
-          xPercent: -1,
-          yPercent: 1,
-          rotation: -1,
-          scale: 0.98,
-          zIndex: 3,
-        });
-        gsap.set(cards[3], {
-          xPercent: 0,
-          yPercent: 0,
-          rotation: 0,
-          scale: 1.0,
-          zIndex: 4,
-        });
+        if (cards[0]) {
+          gsap.set(cards[0], {
+            xPercent: -3,
+            yPercent: 3,
+            rotation: -3,
+            scale: 0.92,
+            zIndex: 1,
+          });
+        }
+        if (cards[1]) {
+          gsap.set(cards[1], {
+            xPercent: 2,
+            yPercent: -2,
+            rotation: 2,
+            scale: 0.95,
+            zIndex: 2,
+          });
+        }
+        if (cards[2]) {
+          gsap.set(cards[2], {
+            xPercent: -1,
+            yPercent: 1,
+            rotation: -1,
+            scale: 0.98,
+            zIndex: 3,
+          });
+        }
+        if (cards[3]) {
+          gsap.set(cards[3], {
+            xPercent: 0,
+            yPercent: 0,
+            rotation: 0,
+            scale: 1.0,
+            zIndex: 4,
+          });
+        }
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -292,18 +260,21 @@ export function ClientSpaceTeaser({
           },
         });
 
-        tl.to(
-          cards[0],
-          {
-            xPercent: -42,
-            yPercent: -10,
-            rotation: -10,
-            scale: 0.88,
-            ease: "power2.out",
-          },
-          0,
-        )
-          .to(
+        if (cards[0]) {
+          tl.to(
+            cards[0],
+            {
+              xPercent: -42,
+              yPercent: -10,
+              rotation: -10,
+              scale: 0.88,
+              ease: "power2.out",
+            },
+            0,
+          );
+        }
+        if (cards[1]) {
+          tl.to(
             cards[1],
             {
               xPercent: -14,
@@ -313,8 +284,10 @@ export function ClientSpaceTeaser({
               ease: "power2.out",
             },
             0,
-          )
-          .to(
+          );
+        }
+        if (cards[2]) {
+          tl.to(
             cards[2],
             {
               xPercent: 14,
@@ -324,8 +297,10 @@ export function ClientSpaceTeaser({
               ease: "power2.out",
             },
             0,
-          )
-          .to(
+          );
+        }
+        if (cards[3]) {
+          tl.to(
             cards[3],
             {
               xPercent: 42,
@@ -336,15 +311,19 @@ export function ClientSpaceTeaser({
             },
             0,
           );
+        }
       });
     }, section);
 
     // Refresh calculations once custom web fonts are rendered
     document.fonts?.ready?.then(() => {
-      ScrollTrigger.refresh();
+      if (isMounted) {
+        ScrollTrigger.refresh();
+      }
     });
 
     return () => {
+      isMounted = false;
       ctx.revert();
     };
   }, [albums]);
@@ -388,18 +367,47 @@ export function ClientSpaceTeaser({
     };
   }, []);
 
+  if (albums.length === 0) {
+    return (
+      <section
+        id="client-space"
+        role="region"
+        aria-label="Dedicated Client Space"
+        className={cn(
+          "relative w-full py-24 sm:py-32 bg-bg-base text-text-primary border-t border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
+          <header className="border-b border-border-subtle pb-8 mb-12">
+            <h2 className="font-sans font-black uppercase text-4xl sm:text-6xl lg:text-7xl tracking-tighter text-text-primary">
+              CLIENT SPACE
+            </h2>
+          </header>
+          <div className="min-h-[35vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section
-      ref={sectionRef}
-      id="client-space"
-      role="region"
-      aria-label="Dedicated Client Space"
-      className={cn(
-        "relative w-full h-[100dvh] min-h-[680px] bg-bg-base text-text-primary overflow-hidden flex items-center select-none",
-        className,
-      )}
-      {...props}
-    >
+    <div className="relative w-full">
+      <section
+        ref={sectionRef}
+        id="client-space"
+        role="region"
+        aria-label="Dedicated Client Space"
+        className={cn(
+          "relative w-full h-[100dvh] min-h-[680px] bg-bg-base text-text-primary overflow-hidden flex items-center select-none",
+          className,
+        )}
+        {...props}
+      >
       {/* Background architectural watermark */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] overflow-hidden">
         <span className="font-sans font-black text-[28vw] uppercase leading-none whitespace-nowrap tracking-tighter">
@@ -462,7 +470,7 @@ export function ClientSpaceTeaser({
                 onMouseLeave={handleMagneticLeave}
                 className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-text-primary text-bg-base font-sans text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300  hover:shadow-xl active:scale-95 will-change-transform"
               >
-                <span>VIEW SAMPLE ALBUM</span>
+                <span>VIEW ALBUM</span>
                 <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
 
@@ -533,6 +541,7 @@ export function ClientSpaceTeaser({
         </div>
       </div>
     </section>
+  </div>
   );
 }
 

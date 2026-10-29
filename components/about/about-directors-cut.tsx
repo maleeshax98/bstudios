@@ -5,6 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -74,10 +75,12 @@ export function AboutDirectorsCut({
   const rightColRef = React.useRef<HTMLDivElement>(null);
   const imageWrappersRef = React.useRef<(HTMLDivElement | null)[]>([]);
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current;
     const rightCol = rightColRef.current;
     if (!section || !rightCol) return;
+
+    let isMounted = true;
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
@@ -146,11 +149,16 @@ export function AboutDirectorsCut({
     // Refresh triggers after fonts and remote images load
     if (typeof document !== "undefined" && "fonts" in document) {
       document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
+        if (isMounted) {
+          ScrollTrigger.refresh();
+        }
       });
     }
 
-    return () => ctx.revert();
+    return () => {
+      isMounted = false;
+      ctx.revert();
+    };
   }, []);
 
   return (

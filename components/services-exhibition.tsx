@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
 import OptimizedImage from "./optimized-image";
 
@@ -36,69 +36,6 @@ export interface ServiceItem {
   description: string;
 }
 
-const SERVICES: ServiceItem[] = [
-  {
-    id: "preshoot",
-    title: "Preshoot",
-    subtitle: "Intimate Prelude",
-    index: "01",
-    src: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
-    alt: "Cinematic preshoot photography",
-    description:
-      "Intimate prelude sessions capturing raw, unscripted chemistry and anticipation before the main event.",
-  },
-  {
-    id: "casual-shoot",
-    title: "Casual Shoot",
-    subtitle: "Authentic & Editorial",
-    index: "02",
-    src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1600&q=85",
-    alt: "Laid back casual portrait photography",
-    description:
-      "Authentic, laid-back moments frozen in time with a natural, high-fashion editorial lens.",
-  },
-  {
-    id: "birthday-shoot",
-    title: "Birthday Shoot",
-    subtitle: "Milestone Celebration",
-    index: "03",
-    src: "https://images.unsplash.com/photo-1530103862676-de389d80ba24?auto=format&fit=crop&w=1600&q=85",
-    alt: "Elegant birthday celebration photography",
-    description:
-      "Cinematic celebrations framing your personal milestones with bespoke elegance and style.",
-  },
-  {
-    id: "engagement-shoot",
-    title: "Engagement Shoot",
-    subtitle: "Timeless Romance",
-    index: "04",
-    src: "https://images.unsplash.com/photo-1518131558231-15a01bc1e345?auto=format&fit=crop&w=1600&q=85",
-    alt: "Romantic engagement photography",
-    description:
-      "Timeless visual narratives beautifully documenting the beginning of your forever.",
-  },
-  {
-    id: "wedding-shoot",
-    title: "Wedding Shoot",
-    subtitle: "Documentary Elegance",
-    index: "05",
-    src: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1600&q=85",
-    alt: "High-end wedding photography",
-    description:
-      "Bespoke documentary and editorial coverage of your most unforgettable day.",
-  },
-  {
-    id: "promotion-video",
-    title: "Promotion Video",
-    subtitle: "Cinematic Branding",
-    index: "06",
-    src: "https://images.unsplash.com/photo-1551817958-20204d6ab212?auto=format&fit=crop&w=1600&q=85",
-    alt: "Professional promotional videography production",
-    description:
-      "High-impact, cinematic brand storytelling engineered to elevate your commercial vision.",
-  },
-];
-
 export type ServicesExhibitionProps = React.HTMLAttributes<HTMLElement> & {
   initialServices?: SERVICES_QUERY_RESULT;
 };
@@ -122,15 +59,13 @@ export function ServicesExhibition({
           title: doc.title || "Untitled Service",
           subtitle: doc.subTitle || "Cinematic Offering",
           index: num,
-          src:
-            cleaned ||
-            "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1600&q=85",
+          src: cleaned || "",
           alt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
           description: doc.description || "",
         };
       });
     }
-    return SERVICES;
+    return [];
   }, [initialServices]);
 
   const totalCountFormatted = String(services.length).padStart(2, "0");
@@ -165,12 +100,14 @@ export function ServicesExhibition({
     });
   };
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
     const magneticBtn = magneticButtonRef.current;
 
-    if (!section || !track) return;
+    if (!section || !track || services.length === 0) return;
+
+    let isMounted = true;
 
     const ctx = gsap.context(() => {
       const getScrollDistance = () => {
@@ -194,11 +131,14 @@ export function ServicesExhibition({
 
     if (typeof document !== "undefined" && document.fonts) {
       document.fonts.ready.then(() => {
-        ScrollTrigger.refresh();
+        if (isMounted) {
+          ScrollTrigger.refresh();
+        }
       });
     }
 
     return () => {
+      isMounted = false;
       ctx.revert();
       if (magneticBtn) {
         gsap.killTweensOf(magneticBtn);
@@ -206,17 +146,44 @@ export function ServicesExhibition({
     };
   }, [services]);
 
+  if (services.length === 0) {
+    return (
+      <section
+        id="services-exhibition"
+        className={cn(
+          "relative w-full py-24 sm:py-32 bg-bg-base text-text-primary border-t border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <header className="border-b border-border-subtle pb-8 mb-12">
+            <h2 className="font-sans font-black uppercase text-4xl sm:text-6xl lg:text-7xl tracking-tighter text-text-primary">
+              SERVICES
+            </h2>
+          </header>
+          <div className="min-h-[35vh] flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-subtle rounded-3xl bg-bg-surface/30">
+            <p className="font-serif italic text-2xl sm:text-3xl text-text-primary">
+              No data to load
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section
-      ref={sectionRef}
-      id="services-exhibition"
-      aria-label="Core Services Exhibition"
-      className={cn(
-        "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
-        className,
-      )}
-      {...props}
-    >
+    <div className="relative w-full">
+      <section
+        ref={sectionRef}
+        id="services-exhibition"
+        aria-label="Core Services Exhibition"
+        className={cn(
+          "relative w-full h-[100dvh] overflow-hidden bg-bg-base select-none border-t border-border-subtle",
+          className,
+        )}
+        {...props}
+      >
       {/* Horizontal Scrolling Track */}
       <div
         ref={trackRef}
@@ -248,7 +215,7 @@ export function ServicesExhibition({
         </div>
 
         {/* Oversized Gallery Cards (60-80% Viewport Width) */}
-        {services.map((service, index) => (
+        {services.map((service) => (
           <div
             key={service.id}
             className="w-[78vw] sm:w-[72vw] lg:w-[68vw] max-w-[1100px] shrink-0 h-[68vh] sm:h-[72vh] md:h-[76vh] flex flex-col relative"
@@ -340,5 +307,6 @@ export function ServicesExhibition({
         </div>
       </div>
     </section>
+  </div>
   );
 }

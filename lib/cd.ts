@@ -80,6 +80,7 @@ async function searchCloudinaryWithCache(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(bodyPayload),
+      cache: "no-store",
     },
   );
 

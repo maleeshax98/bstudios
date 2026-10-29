@@ -4,8 +4,11 @@ import * as React from "react";
 import { Suspense } from "react";
 import { AlbumGallery, MediaItem } from "@/components/album/album-gallery";
 import { client } from "@/sanity/client";
-import { ALBUM_BY_SLUG_QUERY, ALBUM_SLUGS_QUERY } from "@/sanity/queries";
+import { ALBUM_BY_SLUG_QUERY } from "@/sanity/queries";
 import { getImages, getVideos, CloudinaryResource } from "@/lib/cd";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -43,38 +46,6 @@ async function getCachedAlbumMedia(folderName: string) {
   ]);
 
   return { imagesRes, videosRes };
-}
-
-async function getAllAlbumSlugs() {
-  try {
-    const slugs = await client.fetch(ALBUM_SLUGS_QUERY);
-    return slugs || [];
-  } catch (error) {
-    console.warn("Could not fetch album slugs for static generation:", error);
-    return [];
-  }
-}
-
-export async function generateStaticParams() {
-  const slugs = await getAllAlbumSlugs();
-  const validSlugs = (slugs || [])
-    .filter(
-      (item): item is { slug: string } =>
-        typeof item === "object" &&
-        item !== null &&
-        typeof item.slug === "string",
-    )
-    .map((item) => ({ slug: item.slug }));
-
-  if (validSlugs.length === 0) {
-    return [
-      { slug: "sakkili-miya-pakaya" },
-      { slug: "uma-north-vlog-01-2026-04-07" },
-      { slug: "vlog-2-vlog2" },
-    ];
-  }
-
-  return validSlugs;
 }
 
 export async function generateMetadata({
