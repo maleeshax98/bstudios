@@ -8,17 +8,44 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Feature 17 completed and verified. Awaiting next user instruction.
+- Works Page Feature 03 completed and verified. Awaiting next user instruction.
 
 ## In Progress
 
-- None (Feature 17 completed and verified. Awaiting next user instruction).
+- None (Works Page Feature 03 completed and verified. Awaiting next user instruction).
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Works Page Feature 03: Showing YouTube Videos in Album (`context/feature-specs/works-page/03-adding-youtube-videos.md`):
+  - Sanity Schema & TypeGen Integration:
+    - Inspected `albumType` schema (`studio/schemaTypes/albumType.ts`) confirming the `youtubeLinks` array of strings field.
+    - Updated `bstudio/sanity/queries.ts` to include `youtubeLinks` in `ALBUM_BY_SLUG_QUERY`, `ALBUMS_QUERY`, and `PAGINATED_ALBUMS_QUERY`.
+    - Ran `pnpm run typegen` in `studio/`, extracting schema and generating updated TypeScript types (`ALBUM_BY_SLUG_QUERY_RESULT` with `youtubeLinks: Array<string> | null`) in `bstudio/sanity.types.ts`.
+  - YouTube Link Parsing & Utilities (`bstudio/lib/youtube.ts`):
+    - Created `getYouTubeVideoId(url)` supporting all YouTube URL formats (standard watch URLs, short youtu.be, embed, shorts, live, mobile, with query params, or raw 11-char IDs).
+    - Created `getYouTubeEmbedUrl(videoId, options)` providing privacy-enhanced `youtube-nocookie.com` embed URLs with `rel=0` and `modestbranding=1`.
+    - Created `getYouTubeThumbnailUrl(videoId, quality)` returning `maxresdefault.jpg` with fallback support.
+    - Updated `next.config.ts` to allow `img.youtube.com` and `i.ytimg.com` in `images.remotePatterns`.
+  - Server-Side Data Fetching (`bstudio/app/album/[slug]/page.tsx`):
+    - Updated `AlbumContent` to parse `album.youtubeLinks` into `MediaItem` models with `provider: "youtube"`, `youtubeId`, and high-res previews.
+    - Combined parsed YouTube videos and Cloudinary videos into unified `videos` list.
+    - Updated `generateMetadata` with defensive OpenGraph image fallback to YouTube video thumbnail when album thumbnail is not specified.
+  - Interactive Editorial Gallery Component (`bstudio/components/album/album-gallery.tsx`):
+    - Created `YouTubePlayerCard` component using the high-performance facade pattern: renders crystal-clear YouTube HD thumbnail (`maxresdefault.jpg` with `hqdefault.jpg` error fallback), dark gradient scrim, centered tactile Play button, and editorial badges (`Film 01`, `YouTube`).
+    - One-click inline playback: clicking the card or play button instantly activates the embedded responsive YouTube video player with `autoplay=1` without reloading or page jumping.
+    - Full-Screen Lightbox Theater Mode: clicking the expand button or navigating to the video opens the full-screen modal Lightbox rendering a theater-scale embedded YouTube player (`w-[92vw] max-w-5xl aspect-video`) with clean unmount on exit.
+    - Widescreen Video Grid Layout: When switching to `[ VIDEOS ]`, single videos are presented in a centered cinematic hero container (`max-w-4xl mx-auto`), pairs in a balanced 2-column grid (`max-w-5xl mx-auto`), and 3+ in a responsive grid (`max-w-7xl mx-auto`), avoiding narrow CSS masonry column distortion.
+    - Empty state refined to inform users when an album has no videos linked yet.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
+    - Studio TypeScript check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - Dev server runtime check: verified live on `http://localhost:3000/album/ane-pancho-youtube-seen-eka-pakaya` returning HTTP 200 with both YouTube video IDs (`b4nCfZ_YfS4` and `CMQSJrTWLMw`) and responsive video player components.
 
 - Feature 17: Changing Selected Work UI in Home Page (`context/feature-specs/17-changing-selected-work-ui.md`):
   - Updated `<SelectedWorks />` component (`components/selected-works.tsx`):
