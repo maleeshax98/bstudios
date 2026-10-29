@@ -44,6 +44,10 @@ next-env.d.ts
 public/hero2.mp4
 
 # IDE / agent skills and generated output
+# prisma
+/generated/prisma
+
+# agent skills
 .agents/
 .claude/
 .windsurf/
