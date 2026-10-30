@@ -47,7 +47,7 @@ export const FEATURED_ALBUMS_QUERY = defineQuery(`
 export const FEATURED_WORKS_QUERY = FEATURED_ALBUMS_QUERY;
 
 export const WEDDING_ALBUMS_QUERY = defineQuery(`
-  *[_type == "album" && (lower(category->title) == "wedding" || category->title match "*wedding*")] | order(publishedAt desc, _createdAt desc)[0...4] {
+  *[_type == "album"] | order(publishedAt desc, _createdAt desc)[0...4] {
     _id,
     title,
     description,
