@@ -2344,3 +2344,32 @@ Implemented `context/feature-specs/works-page/03-adding-youtube-videos.md` to di
 - Branch `youtube-video-link` in `bstudio/` is pushed and fully synchronized with `origin/youtube-video-link`.
 - Progress tracker (`context/progress-tracker.md`) updated.
 - Memory saved and verified.
+
+
+## 2026-10-30 — Feature UI Polish & GitHub Push Sync
+
+### Session Summary
+
+Cleaned up branch `youtube-video-link` per user direction to ensure Prisma and Clerk remain strictly isolated to the `v2` / `development-v2` branches and are NEVER merged or added into `youtube-video-link`. Reset `youtube-video-link` back to `2baa3fb` (directly following the YouTube video implementation `c15ca5b`), cherry-picked and committed UI improvements to Contact and Footer pages (`"Other Service"` selection and dark mode hover styles), and ensured `app/api/webhooks/**/test.md` remains gitignored.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Branch History Cleanse:
+    - Excluded merge commit `bbe377d` (and ancestor commits `25b1a77` and `8d9c14d`).
+    - Verified `package.json`, `prisma/`, `lib/prisma.ts`, `proxy.ts`, `app/layout.tsx`, and `components/navbar.tsx` contain zero references to Prisma or Clerk.
+  - Security Hygiene:
+    - Kept `app/api/webhooks/**/test.md` in `.gitignore` to prevent sensitive webhook payloads from being committed.
+  - Contact Page & Footer Polish:
+    - Added `"Other Service"` to `CORE_SERVICES` in `components/contact/contact-page.tsx`.
+    - Added `dark:hover:text-white` contrast styles for email, phone, and WhatsApp contact links in `components/contact/contact-page.tsx` and `components/footer.tsx`.
+    - Updated input placeholder to `"Email/Phone"`.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+- **Incomplete / Next:**
+  - Force-push clean `youtube-video-link` to `origin/youtube-video-link`.
+
+### Continuation Context
+
+- `youtube-video-link` is purely dedicated to YouTube gallery video support and Contact/Footer UI polish. No auth or database ORM libraries are present.

@@ -90,7 +90,7 @@ export function Footer({ className, ...props }: FooterProps) {
               start: "top 85%",
               once: true,
             },
-          }
+          },
         );
       }
 
@@ -113,7 +113,7 @@ export function Footer({ className, ...props }: FooterProps) {
             start: "top 92%",
             once: true,
           },
-        }
+        },
       );
 
       // Sub-footer fade in
@@ -132,7 +132,7 @@ export function Footer({ className, ...props }: FooterProps) {
               start: "top 90%",
               once: true,
             },
-          }
+          },
         );
       }
     }, footerRef);
@@ -154,7 +154,7 @@ export function Footer({ className, ...props }: FooterProps) {
       aria-label="Site Footer"
       className={cn(
         "relative w-full bg-bg-base text-text-primary border-t border-text-primary/10 overflow-hidden select-none",
-        className
+        className,
       )}
       {...props}
     >
@@ -212,7 +212,9 @@ export function Footer({ className, ...props }: FooterProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Chat on WhatsApp +94 70 402 8206"
-            className="group inline-flex items-center gap-1 font-sans font-semibold tracking-wider text-text-primary hover:text-black transition-colors duration-200"
+            className="group inline-flex items-center gap-1 font-sans font-semibold tracking-wider text-text-primary hover:text-black 
+            dark:hover:text-white
+            transition-colors duration-200"
           >
             <span>+94 70 402 8206</span>
             <ArrowUpRight className="w-3.5 h-3.5 opacity-60 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-black" />
@@ -227,7 +229,9 @@ export function Footer({ className, ...props }: FooterProps) {
               href={social.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-1 font-sans text-xs sm:text-sm uppercase tracking-wider font-medium text-text-muted hover:text-black transition-colors duration-200"
+              className="group inline-flex items-center gap-1 font-sans text-xs sm:text-sm uppercase tracking-wider font-medium text-text-muted hover:text-black 
+              dark:hover:text-white
+              transition-colors duration-200"
             >
               <span>{social.label}</span>
               <ArrowUpRight className="w-3.5 h-3.5 opacity-60 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-black" />
