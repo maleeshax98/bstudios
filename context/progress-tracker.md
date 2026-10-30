@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Contact Us Feature 03: Adding Google Map to Contact Page completed and verified.
+- Feature 18: Rebranding to B'STUDIO completed and verified.
 
 ## In Progress
 
@@ -19,6 +19,37 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Feature 18: Rebranding to B'STUDIO (`context/feature-specs/18-rebranding.md`):
+  - Renamed "B STUDIO" / "B Studio" to "B'STUDIO" across the entire user-facing Next.js application:
+    - Root and Page Metadata:
+      - `app/layout.tsx`: Updated root title to `"B'STUDIO — High-End Photography & Videography"` and description to reference `B'STUDIO`.
+      - `app/contact/page.tsx`: Updated page title to `"Contact — B'STUDIO | High-End ..."` and meta description.
+      - `app/about/page.tsx`: Updated page title to `"About — B'STUDIO | High-End ..."` and meta description.
+      - `app/works/page.tsx`: Updated page title to `"Works — B'STUDIO | High-End ..."` and meta description.
+      - `app/packages/page.tsx`: Updated page title to `"Investment & Packages — B'STUDIO | High-End ..."` and meta description.
+      - `app/services/page.tsx`: Updated page title to `"Services — B'STUDIO | High-End ..."` and meta description.
+      - `app/album/[slug]/page.tsx`: Updated dynamic metadata title and fallback title to `"Album Not Found — B'STUDIO"` and `"... by B'STUDIO"`.
+    - Components & Branding Typography:
+      - `components/navbar.tsx`: Updated brutalist header typography logo and mobile overlay logo to `B'STUDIO` (`B&apos;STUDIO`).
+      - `components/hero.tsx`: Updated default hero title to `"B'STUDIO."`.
+      - `components/home-loader.tsx`: Updated aria-label and sequence typography to `B'STUDIO` (`B&apos;STUDIO`).
+      - `components/footer.tsx`: Updated massive screen-wide brutalist typography headline and sub-footer copyright to `B'STUDIO` (`B&apos;STUDIO`).
+      - `components/contact-form.tsx`: Updated conversational Mad-Libs greeting to `"Hi B'STUDIO, my name is"`.
+      - `components/contact/contact-page.tsx`: Updated conversational Mad-Libs greeting to `"Hi B'STUDIO, my name is"` and confirmation sign-off to `— B'STUDIO EDITORIAL TEAM`.
+      - `components/packages/packages-page.tsx`: Updated pre-filled WhatsApp inquiry and bespoke quote template messages to begin with `"Hi B'STUDIO, ..."`.
+      - `components/about/about-directors-cut.tsx`: Updated editorial body story to reference `B'STUDIO`.
+      - `components/sample-gallery.tsx`: Updated image alt fallback to `"B'STUDIO Cinematic Editorial"`.
+      - `components/services-exhibition.tsx`, `components/services/services-horizontal.tsx`, `components/color-grade-lookbook.tsx`: Updated image alt fallbacks to `B'STUDIO`.
+      - `components/contact/contact-map.tsx`: Updated iframe title to `"B'STUDIO Location on Google Maps"`.
+      - `components/philosophy.tsx`: Updated commented stamp to `B'STUDIO`.
+  - Sanity Studio Isolation:
+    - Maintained strict isolation for Sanity Studio (`studio/`), leaving all Sanity Studio configurations, titles, schemas, and descriptors untouched per specification.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully.
+    - Sanity Studio check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
 
 - Contact Us Feature 03: Adding Google Map to Contact Page (`context/feature-specs/contact-us/03-adding-map.md`):
   - Created `ContactMap` component (`components/contact/contact-map.tsx`) with export alias (`components/contact-map.tsx`).
@@ -117,13 +148,12 @@ Update this file whenever the current phase, active feature, or implementation s
     - ESLint (`pnpm lint`): passed with 0 errors.
     - Production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully.
 
-
 - Bugfix: Runtime NotFoundError on Route Transitions (`context/error/01-cant-reach-the-pages.md`):
   - Root Cause Analysis:
     - In React 19 / Next.js 16, client-side route transitions unmount the previous page's component tree.
     - GSAP ScrollTrigger `pin: true` structurally wraps pinned elements in dynamically injected `<div class="pin-spacer">` wrappers.
     - The pinned sections (`PinnedScrollText`, `SelectedWorks`, `Philosophy`, `ServicesExhibition`, `ClientSpaceTeaser`, `ColorGradeLookbook`) were returning `<section ref={...}>` as the top-level host node directly under `<main>`.
-    - Because components were relying on `React.useEffect` for teardown, passive effect cleanup runs *after* React's commit deletion phase (`commitDeletionEffects`).
+    - Because components were relying on `React.useEffect` for teardown, passive effect cleanup runs _after_ React's commit deletion phase (`commitDeletionEffects`).
     - When React attempted to execute `main.removeChild(section)`, `<section>` was physically nested inside `.pin-spacer` rather than `<main>`, throwing `NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node at section`.
   - Resolution Architecture:
     - Created `useIsomorphicLayoutEffect` hook (`lib/hooks.ts`) using `React.useLayoutEffect` on client to guarantee synchronous teardown before React's DOM deletion phase.
@@ -153,7 +183,6 @@ Update this file whenever the current phase, active feature, or implementation s
   - Verification:
     - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
     - ESLint check (`pnpm lint`): passed with 0 errors.
-
 
 - Theme Toggle Feature: Dynamic Theme Switching & Floating Toggle Button (`context/feature-specs/toggel-theme/01-toggle-theme.md`):
   - Installed `next-themes` and implemented `ThemeProvider` wrapper (`components/theme-provider.tsx`) with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.
@@ -779,4 +808,3 @@ Update this file whenever the current phase, active feature, or implementation s
   - Completely removed mock/sample fallback data (`SELECTED_PROJECTS`, `SERVICES`, `SAMPLE_IMAGES`, `SAMPLE_ALBUMS`, `COLOR_THEMES`, `ALBUM_PROJECTS`, dummy album slugs).
   - Implemented clean, editorial empty states with the message "No data to load" when queries return no data.
   - Verified with strict TypeScript checks (`tsc --noEmit`), ESLint (`pnpm lint`), and production build with dynamic route generation.
-

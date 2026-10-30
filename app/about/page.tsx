@@ -8,9 +8,9 @@ import { Footer } from "@/components/footer";
 import { WhisperLoader } from "@/components/about/whisper-loader";
 
 export const metadata: Metadata = {
-  title: "About — B studio | High-End Cinematic Photography & Videography",
+  title: "About — B'STUDIO | High-End Cinematic Photography & Videography",
   description:
-    "Discover B studio's vision, behind-the-scenes craft, and core creative pillars dedicated to framing authentic moments with editorial elegance.",
+    "Discover B'STUDIO's vision, behind-the-scenes craft, and core creative pillars dedicated to framing authentic moments with editorial elegance.",
 };
 
 export default function AboutPage() {

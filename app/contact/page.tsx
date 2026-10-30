@@ -5,9 +5,9 @@ import { ContactMap } from "@/components/contact/contact-map";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Contact — B studio | High-End Cinematic Photography & Videography",
+  title: "Contact — B'STUDIO | High-End Cinematic Photography & Videography",
   description:
-    "Get in touch with B studio to discuss your upcoming wedding, editorial shoot, birthday celebration, or cinematic commercial project.",
+    "Get in touch with B'STUDIO to discuss your upcoming wedding, editorial shoot, birthday celebration, or cinematic commercial project.",
 };
 
 export default function Page() {

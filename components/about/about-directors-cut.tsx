@@ -252,7 +252,7 @@ export function AboutDirectorsCut({
             <div className="space-y-6 max-w-xl">
               <p className="font-serif italic text-lg sm:text-xl lg:text-[1.35rem] leading-relaxed text-text-primary/90">
                 Founded on the belief that visual storytelling transcends simple
-                documentation, B studio operates as a boutique creative atelier
+                documentation, B&apos;STUDIO operates as a boutique creative atelier
                 at the intersection of cinema and fine art.
               </p>
 

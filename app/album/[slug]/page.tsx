@@ -68,15 +68,15 @@ export async function generateMetadata({
 
   if (!album) {
     return {
-      title: "Album Not Found — B studio",
+      title: "Album Not Found — B'STUDIO",
       description: "The requested archive album could not be found.",
     };
   }
 
-  const title = `${album.title || "Archive"} — B studio | High-End Cinematic Gallery`;
+  const title = `${album.title || "Archive"} — B'STUDIO | High-End Cinematic Gallery`;
   const description =
     album.description ||
-    `Explore ${album.title || "the archive"} by B studio — high-end editorial and cinematic storytelling.`;
+    `Explore ${album.title || "the archive"} by B'STUDIO — high-end editorial and cinematic storytelling.`;
 
   // Determine OpenGraph image: thumbnail, or first YouTube video thumbnail
   let ogImage = album.thumbnail;

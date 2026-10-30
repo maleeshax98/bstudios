@@ -240,7 +240,7 @@ export function Navbar({
           aria-label="Main Navigation"
           className="max-w-7xl mx-auto h-20 px-6 sm:px-8 lg:px-12 flex items-center justify-between"
         >
-          {/* Left: The "B STUDIO" Logo */}
+          {/* Left: The "B'STUDIO" Logo */}
           <div className="flex items-center">
             <Link
               href="/"
@@ -254,7 +254,7 @@ export function Navbar({
                     : "text-text-primary group-hover:text-accent-primary",
                 )}
               >
-                B STUDIO
+                B&apos;STUDIO
               </span>
               <span
                 className={cn(
@@ -354,7 +354,7 @@ export function Navbar({
               onClick={closeMenu}
               className="font-sans font-extrabold uppercase tracking-tighter text-xl sm:text-2xl text-text-primary"
             >
-              B STUDIO
+              B&apos;STUDIO
             </Link>
 
             <button

@@ -40,7 +40,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
         },
       });
 
-      // 1. Text Animation: "WELCOME TO" fades in, followed smoothly by "B STUDIO" in the middle
+      // 1. Text Animation: "WELCOME TO" fades in, followed smoothly by "B'STUDIO" in the middle
       tl.fromTo(
         welcomeRef.current,
         { opacity: 0, y: 0 },
@@ -105,7 +105,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
     <div
       ref={overlayRef}
       role="status"
-      aria-label="Loading B Studio experience"
+      aria-label="Loading B'STUDIO experience"
       aria-live="polite"
       className={cn(
         "fixed inset-0 z-50 flex items-center justify-center bg-bg-base select-none pointer-events-auto",
@@ -129,7 +129,7 @@ export function HomeLoader({ onLoaded, className, ...props }: HomeLoaderProps) {
             ref={studioRef}
             className="font-sans font-black text-2xl sm:text-4xl md:text-5xl lg:text-6xl uppercase tracking-tighter text-text-primary"
           >
-            B STUDIO
+            B&apos;STUDIO
           </h1>
         </div>
 

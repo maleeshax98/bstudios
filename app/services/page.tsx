@@ -12,9 +12,9 @@ import type { SERVICES_QUERY_RESULT } from "@/sanity.types";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Services — B studio | High-End Cinematic Photography & Videography",
+  title: "Services — B'STUDIO | High-End Cinematic Photography & Videography",
   description:
-    "Explore B studio's dedicated core services: Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, and Promotion Video in a bespoke horizontal exhibition.",
+    "Explore B'STUDIO's dedicated core services: Preshoot, Casual Shoot, Birthday Shoot, Engagement Shoot, Wedding Shoot, and Promotion Video in a bespoke horizontal exhibition.",
 };
 
 async function getServicesData(): Promise<SERVICES_QUERY_RESULT> {

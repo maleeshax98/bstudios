@@ -13,7 +13,7 @@ export interface HeroProps extends React.HTMLAttributes<HTMLElement> {
 
 export function Hero({
   videoSrc = "https://res.cloudinary.com/icsnggsn/video/upload/v1793037533/grxq0wwkdyb5icxjxu6v.mp4",
-  title = "B STUDIO.",
+  title = "B'STUDIO.",
   subtitle = "Cinematic Photography & Videography",
   className,
   ...props

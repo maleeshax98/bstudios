@@ -183,7 +183,7 @@ export function Footer({ className, ...props }: FooterProps) {
           ref={headlineRef}
           className="font-sans font-black uppercase tracking-tighter leading-[0.8] text-text-primary text-[18vw] sm:text-[18.6vw] md:text-[19vw] lg:text-[19.2vw] select-none text-center whitespace-nowrap will-change-transform pointer-events-none px-2"
         >
-          B STUDIO
+          B&apos;STUDIO
         </h2>
       </div>
 
@@ -195,7 +195,7 @@ export function Footer({ className, ...props }: FooterProps) {
         {/* Copyright & Serif Accents */}
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs sm:text-sm text-text-muted">
           <span className="font-sans tracking-wide">
-            © {COPYRIGHT_YEAR} B STUDIO.
+            © {COPYRIGHT_YEAR} B&apos;STUDIO.
           </span>
           <span className="hidden sm:inline text-text-muted/40">•</span>
           <span className="font-serif italic text-text-muted">

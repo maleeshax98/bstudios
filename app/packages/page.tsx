@@ -10,9 +10,9 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title:
-    "Investment & Packages — B studio | High-End Cinematic Photography & Videography",
+    "Investment & Packages — B'STUDIO | High-End Cinematic Photography & Videography",
   description:
-    "Explore B studio's curated investment collections and pricing for wedding cinematography, editorial preshoots, birthday galas, and commercial campaigns.",
+    "Explore B'STUDIO's curated investment collections and pricing for wedding cinematography, editorial preshoots, birthday galas, and commercial campaigns.",
 };
 
 async function getPackagesPageData() {

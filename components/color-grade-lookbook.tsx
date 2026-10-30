@@ -60,7 +60,7 @@ export function ColorGradeLookbook({
           subtitle: doc.subTitle || "Color Curation",
           index: num,
           src: cleaned || "",
-          alt: `${doc.title || "Color Grade"} - ${doc.subTitle || "B studio"}`,
+          alt: `${doc.title || "Color Grade"} - ${doc.subTitle || "B'STUDIO"}`,
           paletteDescription: doc.description || "",
         };
       });
