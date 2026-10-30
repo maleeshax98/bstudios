@@ -54,6 +54,7 @@ export type Package = {
   deliverables?: Array<string>;
   price?: string;
   badge?: string;
+  isHighlited?: boolean;
   order?: number;
 };
 
@@ -390,7 +391,7 @@ export type ALBUM_SLUGS_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PACKAGES_QUERY
-// Query: *[_type == "package"] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order  }
+// Query: *[_type == "package"] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order,    isHighlited  }
 export type PACKAGES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -403,11 +404,12 @@ export type PACKAGES_QUERY_RESULT = Array<{
   price: string | null;
   badge: string | null;
   order: number | null;
+  isHighlited: boolean | null;
 }>;
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PACKAGES_BY_CATEGORY_QUERY
-// Query: *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order  }
+// Query: *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order,    isHighlited  }
 export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -420,6 +422,7 @@ export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
   price: string | null;
   badge: string | null;
   order: number | null;
+  isHighlited: boolean | null;
 }>;
 
 // Source: ../bstudio/sanity/queries.ts
@@ -458,8 +461,8 @@ declare global {
     '\n  *[_type == "category"] | order(title asc) {\n    _id,\n    title\n  }\n': CATEGORIES_QUERY_RESULT;
     '\n  *[_type == "album" && slug.current == $slug][0] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current)] {\n    "slug": slug.current\n  }\n': ALBUM_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_QUERY_RESULT;
-    '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
+    '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PACKAGES_QUERY_RESULT;
+    '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
     '\n  *[_type == "services"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': SERVICES_QUERY_RESULT;
     '\n  *[_type == "colorgrading"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': COLORGRADING_QUERY_RESULT;
   }

@@ -217,7 +217,7 @@ export function PackagesPage({
       {/* 2. The Service Selection (Categories Navigation - wrapped, no horizontal scroll) */}
       <nav
         aria-label="Package Categories"
-        className="sticky top-16 sm:top-20 z-30 w-full bg-bg-base/95 backdrop-blur-md border-y border-border-subtle py-4 px-6 sm:px-8 lg:px-12 transition-colors duration-200"
+        className=" top-16 sm:top-20 z-30 w-full bg-bg-base/95 backdrop-blur-md border-y border-border-subtle py-4 px-6 sm:px-8 lg:px-12 transition-colors duration-200"
       >
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5">
           {categories.map((cat) => {
@@ -302,11 +302,10 @@ export function PackagesPage({
                 {activePackages.map((pkg, idx) => {
                   const tierIndex = String(idx + 1).padStart(2, "0");
                   const hasBadge = Boolean(pkg.badge);
-
                   return (
                     <article
                       key={pkg._id || `pkg-${idx}`}
-                      className="package-card w-full sm:w-[calc(50%-1.25rem)] lg:w-[calc(33.333%-2rem)] max-w-md relative border border-border-subtle bg-bg-surface/20 hover:bg-bg-surface/40 p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-text-primary/50 group"
+                      className={`package-card w-full sm:w-[calc(50%-1.25rem)] lg:w-[calc(33.333%-2rem)] max-w-md relative border border-border-subtle bg-bg-surface/20 hover:bg-bg-surface/40 p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-text-primary/50 group ${pkg.isHighlited && "border-2 border-text-primary/50 "}`}
                     >
                       {/* Top Section */}
                       <div>

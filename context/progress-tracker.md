@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Contact Page and Footer UI enhancements completed on clean `youtube-video-link` branch without Prisma or Clerk, test webhook payload gitignored, and pushed to GitHub.
+- Contact Us Feature 03: Adding Google Map to Contact Page completed and verified.
 
 ## In Progress
 
@@ -19,6 +19,18 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Contact Us Feature 03: Adding Google Map to Contact Page (`context/feature-specs/contact-us/03-adding-map.md`):
+  - Created `ContactMap` component (`components/contact/contact-map.tsx`) with export alias (`components/contact-map.tsx`).
+  - Integrated Google Maps iframe embed using the exact embed URL and attributes provided (`src="https://www.google.com/maps/embed?pb=..."`, `loading="lazy"`, `referrerPolicy="strict-origin-when-cross-origin"`, `style={{ border: 0 }}`).
+  - Structured within an editorial container (`max-w-[1720px] mx-auto px-6 sm:px-10 md:px-14 lg:px-16 xl:px-24`) matching the Contact Page grid margins.
+  - Added editorial section header ("STUDIO LOCATION // VISIT US", "OUR STUDIO") with interactive "Open in Google Maps" deep link pointing to B'sTudio on Google Maps.
+  - Added dark theme filter support (`dark:contrast-[1.1] dark:invert-[0.9] dark:hue-rotate-180`) preventing bright white canvas flash in dark mode while preserving natural colors in light mode.
+  - Placed `<ContactMap />` in `app/contact/page.tsx` directly above `<Footer />`.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack`): compiled all 14 routes successfully with static prerendering on `/contact`.
 
 - Contact Page and Footer UI Enhancements & Security Hygiene:
   - Added `"Other Service"` option to `CORE_SERVICES` in `components/contact/contact-page.tsx`.
@@ -723,6 +735,12 @@ Update this file whenever the current phase, active feature, or implementation s
 - Dedicated Contact Page Architecture: Split-screen editorial magazine layout in `components/contact/contact-page.tsx` (`min-h-[100dvh]`). Left column features brutalist Sans-Serif headline ("LET'S CREATE"), italicized Serif statement, and studio contact details (small bold Sans-Serif headers, Serif values). Right column features interactive Mad-Libs conversational form with auto-expanding CSS Grid underlines transitioning from `#888888` to `#000000` on focus, floating service dropdown for 6 core services, magnetic "SEND INQUIRY" button, and smooth GSAP dissolution into an elegant Serif confirmation message (_"Your story is safe with us. We will be in touch soon."_).
 - Route Structure: Dedicated route `app/works/page.tsx` rendering `WorksGallery` with Suspense streaming, composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`.
 
+- Sanity TypeGen & Query Synchronization:
+  - Added `isHighlited` field to `packageType` schema in `studio/` and updated `PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY` in `bstudio/sanity/queries.ts`.
+  - Re-ran Sanity TypeGen (`sanity schemas extract --force && sanity typegen generate` in `studio/`) to sync `bstudio/sanity.types.ts`.
+  - Resolved TypeScript type inference error where unmatched query strings fell back to type `{}` instead of `PACKAGES_QUERY_RESULT` array in `app/packages/page.tsx`.
+  - Verified with strict TypeScript checks (`tsc --noEmit`).
+
 ## Session Notes
 
 - Fetching Albums from Sanity for Works Page completed and verified. Analyzed `albumType`, `categoryType`, and `mediaType` schemas in `studio/schemaTypes/`. Created `ALBUMS_QUERY` and `CATEGORIES_QUERY` with `defineQuery`. Ran TypeGen in `studio/` to generate TypeScript types. Added `res.cloudinary.com` remote pattern to `next.config.ts`. Updated `components/works/works-page.tsx` with `mapSanityAlbum`, dynamic category tabs, mixed media support, and error retry logic. Integrated data fetching into `app/works/page.tsx` with `"use cache"` and `<Suspense>`. Verified with TypeScript strict checks (`tsc --noEmit`), ESLint (`pnpm lint`), production build (`pnpm build` in 1007ms, 10/10 routes passing), and runtime browser verification rendering the published Sanity album. Ready for next user instruction.
@@ -741,6 +759,12 @@ Update this file whenever the current phase, active feature, or implementation s
 - Sanity Works Integration: GROQ queries in `sanity/queries.ts` (`ALBUMS_QUERY`, `CATEGORIES_QUERY`). Next.js 16 Partial Prerendering architecture with `getWorksData()` cached via `"use cache"` and `<Suspense fallback={<WorksFallback />}>` in `app/works/page.tsx`.
 - Dedicated Contact Page Architecture: Split-screen editorial magazine layout in `components/contact/contact-page.tsx` (`min-h-[100dvh]`). Left column features brutalist Sans-Serif headline ("LET'S CREATE"), italicized Serif statement, and studio contact details (small bold Sans-Serif headers, Serif values). Right column features interactive Mad-Libs conversational form with auto-expanding CSS Grid underlines transitioning from `#888888` to `#000000` on focus, floating service dropdown for 6 core services, magnetic "SEND INQUIRY" button, and smooth GSAP dissolution into an elegant Serif confirmation message (_"Your story is safe with us. We will be in touch soon."_).
 - Route Structure: Dedicated route `app/works/page.tsx` rendering `WorksGallery` with Suspense streaming, composed with `<ContactForm prompt="READY TO SHOOT?" />` and `<Footer />`.
+
+- Sanity TypeGen & Query Synchronization:
+  - Added `isHighlited` field to `packageType` schema in `studio/` and updated `PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY` in `bstudio/sanity/queries.ts`.
+  - Re-ran Sanity TypeGen (`sanity schemas extract --force && sanity typegen generate` in `studio/`) to sync `bstudio/sanity.types.ts`.
+  - Resolved TypeScript type inference error where unmatched query strings fell back to type `{}` instead of `PACKAGES_QUERY_RESULT` array in `app/packages/page.tsx`.
+  - Verified with strict TypeScript checks (`tsc --noEmit`).
 
 ## Session Notes
 

@@ -139,7 +139,8 @@ export const PACKAGES_QUERY = defineQuery(`
     deliverables,
     price,
     badge,
-    order
+    order,
+    isHighlited
   }
 `);
 
@@ -155,7 +156,8 @@ export const PACKAGES_BY_CATEGORY_QUERY = defineQuery(`
     deliverables,
     price,
     badge,
-    order
+    order,
+    isHighlited
   }
 `);
 

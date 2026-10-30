@@ -323,7 +323,7 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
                   aria-hidden="true"
                   className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-white/90 text-text-primary backdrop-blur-md flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110"
                 >
-                  <Play className="w-4 h-4 fill-text-primary stroke-none ml-0.5" />
+                  <Play className="w-4 h-4 fill-text-primary stroke-none ml-0.5 dark:fill-black" />
                 </div>
               )}
             </>

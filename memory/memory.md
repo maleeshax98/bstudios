@@ -2373,3 +2373,55 @@ Cleaned up branch `youtube-video-link` per user direction to ensure Prisma and C
 ### Continuation Context
 
 - `youtube-video-link` is purely dedicated to YouTube gallery video support and Contact/Footer UI polish. No auth or database ORM libraries are present.
+
+
+## 2026-10-30 — Sanity TypeGen & Package Query Type Fix
+
+### Session Summary
+Diagnosed and resolved TypeScript error where `packages` in `app/packages/page.tsx` was inferred as `{}` instead of `PACKAGES_QUERY_RESULT` (array), causing prop mismatch on `<PackagesPage initialPackages={packages} />`.
+
+### Root Cause
+`PACKAGES_QUERY` and `PACKAGES_BY_CATEGORY_QUERY` in `bstudio/sanity/queries.ts` had `isHighlited` added to their projection. Next-Sanity's `defineQuery` uses exact query string matching against `Sanity.AllSanitySchemaQueries`. Because `sanity.types.ts` was not regenerated after modifying the query string, TypeScript couldn't match the query and defaulted `sanityFetch` return data to `{}`.
+
+### Fix & Verification
+- Ran `pnpm run typegen` in `studio/` to re-extract schemas and generate updated `bstudio/sanity.types.ts`.
+- Verified type check passes cleanly with `npx tsc --noEmit` (0 errors).
+- Verified ESLint passes with `pnpm lint`.
+
+
+## 2026-10-30 — Contact Us Feature 03: Adding Google Map to Contact Page
+
+### Session Summary
+
+Implemented Contact Us Feature 03 according to `context/feature-specs/contact-us/03-adding-map.md`. Added the Google Maps iframe embed for B'sTudio directly above the site footer on the dedicated `/contact` page. Encapsulated the map inside a responsive, themed `ContactMap` component matching the magazine-grade editorial design language of the project.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Created `components/contact/contact-map.tsx` and re-export alias `components/contact-map.tsx`:
+    - Renders the exact Google Maps embed iframe (`src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.243053100509!2d80.0539469!3d7.3265749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2e149490d7d61%3A0x930526345c0bdcb3!2sB'sTudio!5e0!3m2!1sen!2ssg!4v1793351008402!5m2!1sen!2ssg"`, `loading="lazy"`, `referrerPolicy="strict-origin-when-cross-origin"`, `style={{ border: 0 }}`).
+    - Configured responsive container sizing (`h-[380px] sm:h-[450px] lg:h-[520px]`) with `rounded-2xl`, subtle hairline border (`border-text-primary/10`), and background fallback (`bg-bg-surface`).
+    - Added editorial section header (`STUDIO LOCATION // VISIT US`, `OUR STUDIO`) and interactive deep link to Google Maps (`Open in Google Maps` with `ArrowUpRight` icon).
+    - Added dark theme filter (`dark:contrast-[1.1] dark:invert-[0.9] dark:hue-rotate-180`) preventing bright white canvas flashing in dark mode while keeping standard map colors in light mode.
+  - Updated `app/contact/page.tsx`:
+    - Mounted `<ContactMap />` directly between `<ContactPage />` and `<Footer />`.
+  - Progress Tracker:
+    - Updated `context/progress-tracker.md` marking the feature as completed.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check (`pnpm lint`): passed with 0 errors.
+    - Webpack build (`pnpm exec next build --webpack`): compiled all 14 routes successfully, static prerender verified on `/contact`.
+    - Prerendered HTML inspection: verified the map iframe embed with attributes in `.next/server/app/contact.html`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Component Isolation:** Created `ContactMap` as a reusable component in `components/contact/contact-map.tsx` (re-exported via `components/contact-map.tsx`) rather than inlining an unstyled iframe directly in `app/contact/page.tsx` or bloating `ContactPage`.
+- **Dark Mode Filter:** Standard Google Maps embeds have an opaque white background that clashes with dark mode. Adding CSS invert and hue-rotate filters ensures seamless dark mode adaptation without needing external map APIs or API keys.
+
+### Continuation Context
+
+- Contact page (`/contact`) now features the interactive B'sTudio Google Map situated cleanly above the footer.
+- The project remains clean and verified across all routes.
+

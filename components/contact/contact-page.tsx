@@ -290,10 +290,10 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   EMAIL
                 </h2>
                 <a
-                  href="mailto:inquiries@bstudio.com"
+                  href="mailto:rpbinuwara@gmail.com"
                   className="font-serif text-base sm:text-lg text-text-primary hover:text-black  dark:hover:text-white transition-colors block underline decoration-text-primary/30 hover:decoration-black"
                 >
-                  inquiries@bstudio.com
+                  rpbinuwara@gmail.com
                 </a>
               </div>
 
@@ -303,10 +303,10 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   PHONE
                 </h2>
                 <a
-                  href="tel:+94772038822"
+                  href="tel:+94704028206"
                   className="font-serif text-base sm:text-lg text-text-primary hover:text-black dark:hover:text-white  transition-colors block"
                 >
-                  +94 (77) 203-8822
+                  +94 70 402 8206
                 </a>
               </div>
 
@@ -331,7 +331,6 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   STUDIO LOCATION
                 </h2>
                 <p className="font-serif text-base sm:text-lg text-text-primary leading-snug">
-                  74 Horton Place, Colombo 07
                   <br />
                   <span className="font-serif italic text-text-muted text-sm">
                     Sri Lanka & Worldwide
@@ -346,30 +345,32 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                 </h2>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 font-serif text-base sm:text-lg text-text-primary">
                   <a
-                    href="https://instagram.com"
+                    href="https://www.instagram.com/binuwara_photography"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-black hover:underline transition-colors dark:hover:text-white"
                   >
                     Instagram
                   </a>
+
                   <span className="text-text-muted">/</span>
                   <a
-                    href="https://vimeo.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-black hover:underline transition-colors dark:hover:text-white"
-                  >
-                    Vimeo
-                  </a>
-                  <span className="text-text-muted">/</span>
-                  <a
-                    href="https://youtube.com"
+                    href="https://www.youtube.com/@BinuwaraSP"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-black hover:underline transition-colors dark:hover:text-white"
                   >
                     YouTube
+                  </a>
+
+                  <span className="text-text-muted">/</span>
+                  <a
+                    href="https://www.facebook.com/BinuwaraSP"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-black hover:underline transition-colors dark:hover:text-white"
+                  >
+                    FaceBook
                   </a>
                 </div>
               </div>
@@ -393,7 +394,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
             >
               {/* Validation Warning Notice */}
               {validationError && (
-                <div className="mb-6 px-4 py-2.5 rounded-xl bg-[#EBEBE8] border border-text-primary/20 text-xs font-sans font-bold uppercase tracking-wider text-text-primary inline-flex items-center gap-2 max-w-fit">
+                <div className="mb-6 px-4 py-2.5 rounded-xl bg-[#EBEBE8] border border-text-primary/20 text-xs font-sans font-bold uppercase tracking-wider text-text-primary inline-flex items-center gap-2 max-w-fit dark:text-black">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />
                   {validationError}
                 </div>
@@ -587,7 +588,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   ref={magneticButtonRef}
                   type="submit"
                   disabled={isSubmitting}
-                  className="group relative inline-flex items-center justify-center gap-4 px-10 sm:px-14 md:px-16 py-5 sm:py-6 rounded-full bg-text-primary text-bg-base font-sans font-black uppercase tracking-wider text-sm sm:text-base cursor-pointer shadow-lg hover:bg-black transition-colors duration-300 disabled:opacity-50"
+                  className="group relative inline-flex items-center justify-center gap-4 px-10 sm:px-14 md:px-16 py-5 sm:py-6 rounded-full bg-text-primary text-bg-base font-sans font-black uppercase tracking-wider text-sm sm:text-base cursor-pointer shadow-lg hover:bg-black dark:hover:bg-white transition-colors duration-300 disabled:opacity-50"
                 >
                   <span>
                     {isSubmitting ? "TRANSMITTING..." : "SEND INQUIRY"}

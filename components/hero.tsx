@@ -12,7 +12,7 @@ export interface HeroProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export function Hero({
-  videoSrc = "/hero.mp4",
+  videoSrc = "https://res.cloudinary.com/icsnggsn/video/upload/v1793037533/grxq0wwkdyb5icxjxu6v.mp4",
   title = "B STUDIO.",
   subtitle = "Cinematic Photography & Videography",
   className,
@@ -58,7 +58,7 @@ export function Hero({
           stagger: 0.15,
           ease: "power3.out",
           delay: 0.2,
-        }
+        },
       );
     }, containerRef);
 
@@ -109,7 +109,7 @@ export function Hero({
       aria-label="Hero Showreel"
       className={cn(
         "relative w-full h-[100dvh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black select-none md:cursor-none",
-        className
+        className,
       )}
       {...props}
     >
@@ -161,13 +161,15 @@ export function Hero({
         className={cn(
           "fixed top-0 left-0 pointer-events-none z-30 hidden md:flex items-center justify-center rounded-full border border-white/30 bg-black/60 shadow-lg backdrop-blur-sm text-white -translate-x-1/2 -translate-y-1/2 transition-[width,height,opacity,background-color] duration-300 ease-out",
           isVisible ? "opacity-100" : "opacity-0",
-          isExpanded ? "w-20 h-20" : "w-3 h-3 bg-white border-none"
+          isExpanded ? "w-20 h-20" : "w-3 h-3 bg-white border-none",
         )}
       >
         <div
           className={cn(
             "flex flex-col items-center justify-center transition-opacity duration-200",
-            isExpanded ? "opacity-100 delay-100" : "opacity-0 pointer-events-none"
+            isExpanded
+              ? "opacity-100 delay-100"
+              : "opacity-0 pointer-events-none",
           )}
         >
           <span className="font-sans text-[9px] uppercase tracking-widest font-semibold text-white">
