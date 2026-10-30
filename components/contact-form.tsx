@@ -206,7 +206,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
         <form onSubmit={handleSubmit} noValidate>
           {/* Mad-Libs Conversational Sentence */}
           <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-[1.65] sm:leading-[1.7] md:leading-[1.8] font-serif italic text-text-primary tracking-tight">
-            <span>Hi B studio, my name is</span> {/* [ Your Name ] Input */}
+            <span>Hi B&apos;STUDIO, my name is</span> {/* [ Your Name ] Input */}
             <span className="inline-grid items-baseline relative mx-1.5 sm:mx-2.5 align-baseline">
               <span
                 aria-hidden="true"

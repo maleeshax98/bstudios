@@ -286,7 +286,7 @@ export function PackagesPage({
                 </p>
                 <a
                   href={`https://wa.me/94704028206?text=${encodeURIComponent(
-                    `Hi B studio, I would like to inquire about bespoke packages for ${selectedCategoryTitle}.`,
+                    `Hi B'STUDIO, I would like to inquire about bespoke packages for ${selectedCategoryTitle}.`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -378,7 +378,7 @@ export function PackagesPage({
                       <div className="mt-8 sm:mt-10 pt-6 border-t border-border-subtle">
                         <a
                           href={`https://wa.me/94704028206?text=${encodeURIComponent(
-                            `Hi B studio, I would like to inquire about the "${pkg.title || "Package"}" package (${selectedCategoryTitle}${pkg.price ? ` - ${pkg.price}` : ""}).`,
+                            `Hi B'STUDIO, I would like to inquire about the "${pkg.title || "Package"}" package (${selectedCategoryTitle}${pkg.price ? ` - ${pkg.price}` : ""}).`,
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"

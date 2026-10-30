@@ -49,7 +49,7 @@ export function SampleGallery({
         alt:
           (typeof img.display_name === "string" && img.display_name) ||
           (typeof img.filename === "string" && img.filename) ||
-          `B Studio Cinematic Editorial ${idx + 1}`,
+          `B'STUDIO Cinematic Editorial ${idx + 1}`,
         width: img.width,
         height: img.height,
         aspectRatio: getAspectClass(img.width, img.height),

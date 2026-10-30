@@ -49,7 +49,7 @@ export function ContactMap({ className, ...props }: ContactMapProps) {
             allowFullScreen
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            title="B'sTudio Location on Google Maps"
+            title="B'STUDIO Location on Google Maps"
             className="w-full h-full transition-[filter] duration-300 dark:contrast-[1.1] dark:invert-[0.9] dark:hue-rotate-180"
           />
         </div>

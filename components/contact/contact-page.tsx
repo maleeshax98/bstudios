@@ -402,7 +402,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
 
               {/* Mad-Libs Conversational Sentence */}
               <div className="font-serif italic text-text-primary text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.9rem] leading-[1.65] sm:leading-[1.75] md:leading-[1.8] tracking-tight">
-                Hi B studio, my name is {/* 1. NAME INPUT */}
+                Hi B&apos;STUDIO, my name is {/* 1. NAME INPUT */}
                 <span className="inline-grid grid-cols-1 items-baseline mx-1 align-baseline relative">
                   <span
                     aria-hidden="true"
@@ -612,7 +612,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                 </h2>
 
                 <p className="font-sans font-bold uppercase tracking-[0.2em] text-xs sm:text-sm text-text-muted">
-                  — B STUDIO EDITORIAL TEAM
+                  — B&apos;STUDIO EDITORIAL TEAM
                 </p>
 
                 <div className="pt-6">

@@ -121,7 +121,7 @@ export function Philosophy({ className, ...props }: PhilosophyProps) {
           {/* Editorial Chapter Stamp */}
           {/* <div className="mt-8 sm:mt-12 md:mt-14 flex items-center justify-between w-full max-w-2xl pt-6 border-t border-white/10 text-[10px] sm:text-xs font-sans tracking-[0.2em] uppercase text-white/30">
             <span>Cinema & Stillness</span>
-            <span>B Studio</span>
+            <span>B&apos;STUDIO</span>
           </div> */}
         </div>
       </section>

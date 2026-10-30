@@ -26,8 +26,8 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "B studio — High-End Photography & Videography",
-  description: "B studio is a premium, cinematic visual studio framing photography and videography in an off-light editorial experience.",
+  title: "B'STUDIO — High-End Photography & Videography",
+  description: "B'STUDIO is a premium, cinematic visual studio framing photography and videography in an off-light editorial experience.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

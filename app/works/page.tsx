@@ -10,9 +10,9 @@ import { PAGINATED_ALBUMS_QUERY, CATEGORIES_QUERY } from "@/sanity/queries";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Works — B studio | High-End Cinematic Photography & Videography",
+  title: "Works — B'STUDIO | High-End Cinematic Photography & Videography",
   description:
-    "Explore B studio's complete portfolio archive of editorial wedding photography, cinematic showreels, birthday galas, and commercial campaigns.",
+    "Explore B'STUDIO's complete portfolio archive of editorial wedding photography, cinematic showreels, birthday galas, and commercial campaigns.",
 };
 
 async function getWorksData() {

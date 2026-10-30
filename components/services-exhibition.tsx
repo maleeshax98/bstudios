@@ -60,7 +60,7 @@ export function ServicesExhibition({
           subtitle: doc.subTitle || "Cinematic Offering",
           index: num,
           src: cleaned || "",
-          alt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
+          alt: `${doc.title || "Service"} - ${doc.subTitle || "B'STUDIO"}`,
           description: doc.description || "",
         };
       });

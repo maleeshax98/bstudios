@@ -60,7 +60,7 @@ export function ServicesVertical({
           subtitle: doc.subTitle || "Cinematic Offering",
           description: doc.description || "",
           imageSrc: cleaned || "",
-          imageAlt: `${doc.title || "Service"} - ${doc.subTitle || "B studio"}`,
+          imageAlt: `${doc.title || "Service"} - ${doc.subTitle || "B'STUDIO"}`,
           galleryHref: "/works",
         };
       });
