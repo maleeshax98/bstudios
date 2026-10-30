@@ -61,7 +61,7 @@ export function PinnedScrollText({
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
-        }
+        },
       );
     }, containerRef);
 
@@ -87,14 +87,14 @@ export function PinnedScrollText({
         aria-label="Cinematic Statement"
         className={cn(
           "relative w-full h-[100dvh] min-h-[500px] overflow-hidden bg-bg-base flex items-center select-none",
-          className
+          className,
         )}
         {...props}
       >
         <div
           ref={textRef}
           style={{ transform: "translate3d(100vw, 0, 0)" }}
-          className="w-max inline-block whitespace-nowrap font-sans font-black uppercase tracking-tight sm:tracking-tighter leading-none text-text-primary text-[50vh] will-change-transform pr-16 sm:pr-24 md:pr-32"
+          className="w-max inline-block whitespace-nowrap font-sans font-black uppercase tracking-tight sm:tracking-tighter leading-none text-text-primary text-[10vh] md:text-[50vh] will-change-transform pr-16 sm:pr-24 md:pr-32"
         >
           CINEMATIC ART AND DIRECTING
         </div>
