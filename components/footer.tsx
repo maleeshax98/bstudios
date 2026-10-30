@@ -22,11 +22,12 @@ const NAV_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "Vimeo", href: "https://vimeo.com" },
-  { label: "YouTube", href: "https://youtube.com" },
-  { label: "Behance", href: "https://behance.net" },
-  { label: "LinkedIn", href: "https://linkedin.com" },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/binuwara_photography",
+  },
+  { label: "YouTube", href: "https://www.youtube.com/@BinuwaraSP" },
+  { label: "FaceBook", href: "https://www.facebook.com/BinuwaraSP" },
 ];
 
 const COPYRIGHT_YEAR = 2026;
@@ -220,7 +221,8 @@ export function Footer({ className, ...props }: FooterProps) {
             <ArrowUpRight className="w-3.5 h-3.5 opacity-60 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-black" />
           </a>
         </div>
-
+      </div>
+      <div className="mb-10">
         {/* Social Links */}
         <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-7">
           {SOCIAL_LINKS.map((social) => (
@@ -238,6 +240,17 @@ export function Footer({ className, ...props }: FooterProps) {
             </a>
           ))}
         </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-7 mb-10">
+        <a
+          href={"https://www.instagram.com/maleeshax1/"}
+          target="_blank"
+          className="group inline-flex items-center gap-1 font-sans text-xs sm:text-sm  tracking-wider font-medium text-text-muted hover:text-black 
+              dark:hover:text-white
+              transition-colors duration-200"
+        >
+          CREATED BY MaleeZha{" "}
+        </a>
       </div>
     </footer>
   );
