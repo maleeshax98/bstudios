@@ -456,7 +456,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                 </span>
               ) : (
                 <span>
-                  Direct inquiries: info@bstudio.com{" // "}WhatsApp:{" "}
+                  Direct inquiries: rpbinuwara@gmail.com{" // "}WhatsApp:{" "}
                   <a
                     href="https://wa.me/94704028206"
                     target="_blank"
@@ -465,7 +465,7 @@ export function ContactForm({ className, prompt, ...props }: ContactFormProps) {
                   >
                     +94 70 402 8206
                   </a>{" "}
-                  {"// "}Colombo, Sri Lanka
+                  {"// "}Sri Lanka
                 </span>
               )}
             </div>
