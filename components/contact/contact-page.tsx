@@ -12,6 +12,7 @@ const CORE_SERVICES = [
   "Engagement Shoot",
   "Wedding Shoot",
   "Promotion Video",
+  "Other Service",
 ] as const;
 
 export type ContactPageProps = React.HTMLAttributes<HTMLElement>;
@@ -28,7 +29,9 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null,
+  );
 
   // Element refs
   const sectionRef = React.useRef<HTMLElement>(null);
@@ -181,7 +184,9 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
       const result = await response.json().catch(() => ({}));
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || "Failed to submit inquiry. Please try again.");
+        throw new Error(
+          result.error || "Failed to submit inquiry. Please try again.",
+        );
       }
 
       // Smoothly dissolve the form container via GSAP
@@ -201,7 +206,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                 gsap.fromTo(
                   successContainerRef.current,
                   { opacity: 0, y: 24 },
-                  { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }
+                  { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" },
                 );
               }
             });
@@ -213,7 +218,8 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
       }
     } catch (err: unknown) {
       setIsSubmitting(false);
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      const msg =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
       setValidationError(msg);
     }
   };
@@ -232,7 +238,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
         gsap.fromTo(
           formContainerRef.current,
           { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
         );
       }
     });
@@ -243,13 +249,12 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
       ref={sectionRef}
       className={cn(
         "relative w-full min-h-[100dvh] bg-bg-base text-text-primary px-6 sm:px-10 md:px-14 lg:px-16 xl:px-24 pt-28 sm:pt-32 lg:pt-36 pb-16 sm:pb-20 select-none flex flex-col justify-between",
-        className
+        className,
       )}
       {...props}
     >
       {/* Split-Screen Magazine Layout Container */}
       <div className="max-w-[1720px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 sm:gap-16 lg:gap-16 xl:gap-24 items-start flex-1">
-        
         {/* ========================================================= */}
         {/* LEFT COLUMN: The Details                                  */}
         {/* ========================================================= */}
@@ -286,7 +291,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                 </h2>
                 <a
                   href="mailto:inquiries@bstudio.com"
-                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black transition-colors block underline decoration-text-primary/30 hover:decoration-black"
+                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black  dark:hover:text-white transition-colors block underline decoration-text-primary/30 hover:decoration-black"
                 >
                   inquiries@bstudio.com
                 </a>
@@ -299,7 +304,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                 </h2>
                 <a
                   href="tel:+94772038822"
-                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black transition-colors block"
+                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black dark:hover:text-white  transition-colors block"
                 >
                   +94 (77) 203-8822
                 </a>
@@ -314,7 +319,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   href="https://wa.me/94704028206"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black transition-colors block underline decoration-text-primary/30 hover:decoration-black"
+                  className="font-serif text-base sm:text-lg text-text-primary hover:text-black dark:hover:text-white  transition-colors block underline decoration-text-primary/30 hover:decoration-black"
                 >
                   +94 70 402 8206
                 </a>
@@ -344,7 +349,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     href="https://instagram.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-black hover:underline transition-colors"
+                    className="hover:text-black hover:underline transition-colors dark:hover:text-white"
                   >
                     Instagram
                   </a>
@@ -353,7 +358,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     href="https://vimeo.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-black hover:underline transition-colors"
+                    className="hover:text-black hover:underline transition-colors dark:hover:text-white"
                   >
                     Vimeo
                   </a>
@@ -362,7 +367,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     href="https://youtube.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-black hover:underline transition-colors"
+                    className="hover:text-black hover:underline transition-colors dark:hover:text-white"
                   >
                     YouTube
                   </a>
@@ -396,8 +401,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
 
               {/* Mad-Libs Conversational Sentence */}
               <div className="font-serif italic text-text-primary text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.9rem] leading-[1.65] sm:leading-[1.75] md:leading-[1.8] tracking-tight">
-                Hi B studio, my name is{" "}
-                {/* 1. NAME INPUT */}
+                Hi B studio, my name is {/* 1. NAME INPUT */}
                 <span className="inline-grid grid-cols-1 items-baseline mx-1 align-baseline relative">
                   <span
                     aria-hidden="true"
@@ -421,7 +425,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                       "border-b transition-colors duration-300 focus:outline-none placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-text-muted/60",
                       focusedInput === "name" || name
                         ? "border-black border-b-2"
-                        : "border-[#888888]"
+                        : "border-[#888888]",
                     )}
                     required
                   />
@@ -440,14 +444,17 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     aria-expanded={isDropdownOpen}
                     className={cn(
                       "inline-flex items-center gap-1.5 sm:gap-2 font-sans font-bold not-italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.9rem] text-text-primary px-1 border-b transition-colors duration-300 focus:outline-none cursor-pointer",
-                      isDropdownOpen || focusedInput === "service" || selectedService
+                      isDropdownOpen ||
+                        focusedInput === "service" ||
+                        selectedService
                         ? "border-black border-b-2"
-                        : "border-[#888888]"
+                        : "border-[#888888]",
                     )}
                   >
                     <span
                       className={cn(
-                        !selectedService && "font-serif italic font-normal text-text-muted/80"
+                        !selectedService &&
+                          "font-serif italic font-normal text-text-muted/80",
                       )}
                     >
                       {selectedService || "Select Service"}
@@ -455,7 +462,7 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     <ChevronDown
                       className={cn(
                         "w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 transition-transform duration-300 stroke-[2.25] text-text-primary",
-                        isDropdownOpen && "rotate-180"
+                        isDropdownOpen && "rotate-180",
                       )}
                     />
                   </button>
@@ -483,30 +490,33 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                                 "w-full text-left px-3 py-2.5 rounded-xl font-sans text-sm sm:text-base flex items-center justify-between transition-colors duration-200 cursor-pointer",
                                 isSelected
                                   ? "bg-text-primary text-bg-base font-bold"
-                                  : "text-text-primary hover:bg-bg-surface font-medium"
+                                  : "text-text-primary hover:bg-bg-surface font-medium",
                               )}
                             >
                               <div className="flex items-center gap-3">
                                 <span
                                   className={cn(
                                     "font-mono text-xs",
-                                    isSelected ? "text-bg-base/70" : "text-text-muted"
+                                    isSelected
+                                      ? "text-bg-base/70"
+                                      : "text-text-muted",
                                   )}
                                 >
                                   0{index + 1}.
                                 </span>
                                 <span>{service}</span>
                               </div>
-                              {isSelected && <Check className="w-4 h-4 stroke-[2.5]" />}
+                              {isSelected && (
+                                <Check className="w-4 h-4 stroke-[2.5]" />
+                              )}
                             </button>
                           );
                         })}
                       </div>
                     </div>
                   )}
-                </span>
-                {" "}for my upcoming event around{" "}
-                {/* 3. DATE INPUT */}
+                </span>{" "}
+                for my upcoming event around {/* 3. DATE INPUT */}
                 <span className="inline-grid grid-cols-1 items-baseline mx-1 align-baseline relative">
                   <span
                     aria-hidden="true"
@@ -530,19 +540,18 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                       "border-b transition-colors duration-300 focus:outline-none placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-text-muted/60",
                       focusedInput === "date" || date
                         ? "border-black border-b-2"
-                        : "border-[#888888]"
+                        : "border-[#888888]",
                     )}
                     required
                   />
                 </span>
-                . You can reach me at{" "}
-                {/* 4. EMAIL INPUT */}
+                . You can reach me at {/* 4. EMAIL INPUT */}
                 <span className="inline-grid grid-cols-1 items-baseline mx-1 align-baseline relative">
                   <span
                     aria-hidden="true"
                     className="col-start-1 row-start-1 font-sans font-bold not-italic text-transparent select-none whitespace-pre pointer-events-none px-1 text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.9rem]"
                   >
-                    {email || "Email Address"}
+                    {email || "Email/PHONE"}
                   </span>
                   <input
                     id="contact-email"
@@ -554,18 +563,18 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                     }}
                     onFocus={() => setFocusedInput("email")}
                     onBlur={() => setFocusedInput(null)}
-                    placeholder="Email Address"
+                    placeholder="Email/Phone"
                     className={cn(
                       "col-start-1 row-start-1 w-full bg-transparent font-sans font-bold not-italic text-text-primary px-1 text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.9rem]",
                       "border-b transition-colors duration-300 focus:outline-none placeholder:font-serif placeholder:italic placeholder:font-normal placeholder:text-text-muted/60",
                       focusedInput === "email" || email
                         ? "border-black border-b-2"
-                        : "border-[#888888]"
+                        : "border-[#888888]",
                     )}
                     required
                   />
-                </span>
-                {" "}to discuss the details.
+                </span>{" "}
+                to discuss the details.
               </div>
 
               {/* Massive Pill-Shaped "SEND INQUIRY" Button with Magnetic Effect */}
@@ -580,7 +589,9 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
                   disabled={isSubmitting}
                   className="group relative inline-flex items-center justify-center gap-4 px-10 sm:px-14 md:px-16 py-5 sm:py-6 rounded-full bg-text-primary text-bg-base font-sans font-black uppercase tracking-wider text-sm sm:text-base cursor-pointer shadow-lg hover:bg-black transition-colors duration-300 disabled:opacity-50"
                 >
-                  <span>{isSubmitting ? "TRANSMITTING..." : "SEND INQUIRY"}</span>
+                  <span>
+                    {isSubmitting ? "TRANSMITTING..." : "SEND INQUIRY"}
+                  </span>
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </button>
               </div>
@@ -593,9 +604,10 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
             >
               <div className="space-y-6 max-w-xl">
                 <div className="w-14 h-[2px] bg-text-primary" />
-                
+
                 <h2 className="font-serif italic text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-text-primary leading-[1.18] tracking-tight">
-                  &ldquo;Your story is safe with us. We will be in touch soon.&rdquo;
+                  &ldquo;Your story is safe with us. We will be in touch
+                  soon.&rdquo;
                 </h2>
 
                 <p className="font-sans font-bold uppercase tracking-[0.2em] text-xs sm:text-sm text-text-muted">
@@ -615,7 +627,6 @@ export function ContactPage({ className, ...props }: ContactPageProps) {
             </div>
           )}
         </div>
-
       </div>
     </section>
   );

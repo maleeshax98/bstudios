@@ -44,6 +44,10 @@ next-env.d.ts
 public/hero2.mp4
 
 # IDE / agent skills and generated output
+# test and local webhook payloads
+app/api/webhooks/**/test.md
+
+# agent skills
 .agents/
 .claude/
 .windsurf/

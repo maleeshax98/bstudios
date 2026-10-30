@@ -8,17 +8,24 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Works Page Feature 03 completed and verified. Awaiting next user instruction.
+- Contact Page and Footer UI enhancements completed on clean `youtube-video-link` branch without Prisma or Clerk, test webhook payload gitignored, and pushed to GitHub.
 
 ## In Progress
 
-- None (Works Page Feature 03 completed and verified. Awaiting next user instruction).
+- None.
 
 ## Next Up
 
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Contact Page and Footer UI Enhancements & Security Hygiene:
+  - Added `"Other Service"` option to `CORE_SERVICES` in `components/contact/contact-page.tsx`.
+  - Added dark mode hover contrast styles (`dark:hover:text-white`) to email, telephone, WhatsApp, and social media links in `components/contact/contact-page.tsx` and `components/footer.tsx`.
+  - Updated contact input placeholder to `"Email/Phone"`.
+  - Added `app/api/webhooks/**/test.md` to `.gitignore` to protect sensitive local webhook debug payloads from being committed.
+  - Kept `youtube-video-link` strictly isolated from Prisma and Clerk dependencies.
 
 - Works Page Feature 03: Showing YouTube Videos in Album (`context/feature-specs/works-page/03-adding-youtube-videos.md`):
   - Sanity Schema & TypeGen Integration:
