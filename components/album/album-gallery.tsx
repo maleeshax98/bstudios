@@ -13,11 +13,13 @@ import {
   Maximize2,
   Film,
   Camera,
+  Share2,
 } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
 import { getImages, getVideos } from "@/lib/cd";
 import { OptimizedImage } from "@/components/optimized-image";
+import { ShareModal } from "@/components/share/share-modal";
 
 export interface MediaItem {
   id: string;
@@ -35,6 +37,7 @@ export interface MediaItem {
 
 export interface AlbumData {
   id: string;
+  slug?: string | null;
   title: string;
   description?: string | null;
   date?: string | null;
@@ -226,6 +229,7 @@ export function AlbumGallery({
     initialVideosCursor,
   );
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  const [isShareOpen, setIsShareOpen] = React.useState(false);
 
   // Sync with initial props
   const prevInitialPhotos = React.useRef(initialPhotos);
@@ -569,8 +573,8 @@ export function AlbumGallery({
         </div>
       )}
 
-      {/* Navigation back to Works Archive (No sticky navbar strip) */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
+      {/* Navigation back to Works Archive (No sticky navbar strip) & Share Button */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 flex items-center justify-between">
         <Link
           href="/works"
           className="group inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors"
@@ -578,6 +582,16 @@ export function AlbumGallery({
           <ArrowLeft className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:-translate-x-1" />
           <span>[ WORKS ARCHIVE ]</span>
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsShareOpen(true)}
+          aria-label="Share this album"
+          className="group inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface/50 hover:bg-bg-surface backdrop-blur-sm cursor-pointer shadow-xs active:scale-95"
+        >
+          <Share2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:scale-110" />
+          <span>[ SHARE ARCHIVE ]</span>
+        </button>
       </div>
 
       {/* =================================================================== */}
@@ -599,6 +613,17 @@ export function AlbumGallery({
               {album.description}
             </p>
           )}
+
+          {/* Quick Share Button in Header */}
+          <button
+            type="button"
+            onClick={() => setIsShareOpen(true)}
+            aria-label="Share this collection"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2 rounded-full border border-border-subtle bg-bg-surface/60 hover:bg-text-primary hover:text-bg-base text-xs font-sans font-bold uppercase tracking-widest text-text-muted transition-all duration-300 shadow-xs cursor-pointer group active:scale-95"
+          >
+            <Share2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:scale-110" />
+            <span>Share Collection</span>
+          </button>
         </div>
 
         {currentMediaList.length === 0 ? (
@@ -909,6 +934,19 @@ export function AlbumGallery({
           </div>
         </div>
       )}
+
+      {/* Share Modal Dialog */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        album={{
+          title: album.title,
+          slug: album.slug || album.id,
+          category: album.category,
+          image: album.thumbnail,
+          description: album.description,
+        }}
+      />
     </div>
   );
 }

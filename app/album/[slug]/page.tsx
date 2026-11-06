@@ -196,6 +196,7 @@ async function AlbumContent({ slug }: { slug: string }) {
 
   const albumData = {
     id: album._id,
+    slug: slug || album.slug?.current || null,
     title: album.title || "Untitled Archive",
     description: album.description,
     date: formattedDate,

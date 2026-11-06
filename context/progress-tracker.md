@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Feature 18: Rebranding to B'STUDIO completed and verified.
+- Works Page Feature 04: Adding Share Button completed and verified (`context/feature-specs/works-page/04-adding-a-share-button.md`).
 
 ## In Progress
 
@@ -19,6 +19,31 @@ Update this file whenever the current phase, active feature, or implementation s
 - Next milestone feature awaiting user instruction.
 
 ## Completed
+
+- Works Page Feature 04: Adding Share Button to Album Cards and Album Page (`context/feature-specs/works-page/04-adding-a-share-button.md`):
+  - Created `ShareModal` component (`components/share/share-modal.tsx`) with alias export in `components/share-modal.tsx`:
+    - Portaled directly to `document.body` via `createPortal`, avoiding GSAP transform clipping and stacking context limitations.
+    - Hydration-safe mounting using `useSyncExternalStore` adhering to React 19 rules without cascading render warnings.
+    - One-click "Copy Link" action with clipboard API and textarea fallback, displaying instant tactile confirmation ("COPIED" state with emerald check icon for 2.5 seconds).
+    - Social channel sharing buttons with official brand SVGs: WhatsApp (pre-filled chat message), X (Twitter), Facebook, LinkedIn, and Pinterest (including image preview).
+    - Web Share API integration (`navigator.share`) on supported devices (iOS, Android, macOS) for native system sheet sharing.
+    - Full keyboard accessibility (`Escape` key dismiss), backdrop blur overlay click-to-close, and top-right close button.
+    - Styled strictly according to the B'STUDIO Off-Light Modern Editorial theme (`#F7F7F5` base, `#111111` ink text, hairline `#DFDFDC` borders, `#EBEBE8` surfaces, dark mode support).
+  - Integrated Share Button on Works Page Album Cards (`components/works/works-page.tsx`):
+    - Added glassmorphic circular share icon button (`top-3.5 left-3.5 z-20`) on every album thumbnail card.
+    - Cleanly intercepts clicks with `e.preventDefault()` and `e.stopPropagation()`, opening `ShareModal` without navigating into the album.
+  - Integrated Share Button on Home Page Selected Works (`components/selected-works.tsx`):
+    - Added high-contrast pill Share button alongside the "View Project" CTA button in the bottom-left text container for each featured project slide.
+    - Clicking opens the `ShareModal` with the corresponding project's metadata, title, and link.
+  - Integrated Share Button on Album Details Page (`app/album/[slug]/page.tsx` & `components/album/album-gallery.tsx`):
+    - Updated `AlbumData` model to carry `slug`.
+    - Added `[ SHARE ARCHIVE ]` button in the top navigation bar opposite `[ WORKS ARCHIVE ]`.
+    - Added a centered "Share Collection" pill button in the album header underneath the description.
+    - Clicking opens `ShareModal` for that specific album collection.
+  - Verification:
+    - TypeScript compiler (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully.
 
 - Feature 18: Rebranding to B'STUDIO (`context/feature-specs/18-rebranding.md`):
   - Renamed "B STUDIO" / "B Studio" to "B'STUDIO" across the entire user-facing Next.js application:
