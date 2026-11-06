@@ -9,11 +9,13 @@ import {
   Play,
   Film,
   Layers,
+  Share2,
 } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
 import { fetchMoreAlbums } from "@/lib/actions";
 import OptimizedImage from "../optimized-image";
+import { ShareModal } from "@/components/share/share-modal";
 
 // ============================================================================
 // Types & Models
@@ -152,6 +154,7 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
   const [hasError, setHasError] = React.useState(false);
   const [isRetrying, setIsRetrying] = React.useState(false);
   const [retryKey, setRetryKey] = React.useState(0);
+  const [isShareOpen, setIsShareOpen] = React.useState(false);
 
   const handleRetry = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -222,6 +225,21 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
             project.aspectRatio || "aspect-[4/5]",
           )}
         >
+          {/* Top-Left: Share Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsShareOpen(true);
+            }}
+            aria-label={`Share ${project.title}`}
+            title="Share Album"
+            className="absolute top-3.5 left-3.5 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white shadow-sm flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer opacity-90 hover:opacity-100"
+          >
+            <Share2 className="w-3.5 h-3.5 stroke-[2]" />
+          </button>
+
           {/* Error Fallback UI with Retry Button */}
           {hasError || !rawSrc ? (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-[#EBEBE8]">
@@ -345,6 +363,19 @@ export function AlbumCard({ project, priority = false }: AlbumCardProps) {
           {project.title}
         </h3>
       </article>
+
+      {/* Share Modal Dialog */}
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        album={{
+          title: project.title,
+          slug: project.slug || project.id,
+          category: project.category,
+          image: project.src,
+          description: project.description,
+        }}
+      />
     </Link>
   );
 }

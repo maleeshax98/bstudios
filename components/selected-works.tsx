@@ -4,11 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsomorphicLayoutEffect } from "@/lib/hooks";
 import type { FEATURED_ALBUMS_QUERY_RESULT } from "@/sanity.types";
 import OptimizedImage from "./optimized-image";
+import { ShareModal } from "./share/share-modal";
 
 // Register ScrollTrigger plugin safely for client-side environments
 if (typeof window !== "undefined") {
@@ -71,6 +72,7 @@ export function SelectedWorks({
   const textRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const isMountedRef = React.useRef(true);
+  const [shareAlbum, setShareAlbum] = React.useState<SelectedProject | null>(null);
 
   const projects = React.useMemo<SelectedProject[]>(() => {
     if (initialWorks && initialWorks.length > 0) {
@@ -360,8 +362,8 @@ export function SelectedWorks({
                   </p>
                 )}
 
-                {/* View Project Button */}
-                <div>
+                {/* Actions: View Project & Share Buttons */}
+                <div className="flex items-center gap-3">
                   <Link
                     href={project.link}
                     onClick={(e) => {
@@ -375,6 +377,16 @@ export function SelectedWorks({
                     <span>View Project</span>
                     <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setShareAlbum(project)}
+                    aria-label={`Share ${project.title}`}
+                    className="group inline-flex items-center gap-2 px-4 sm:px-5 py-3.5 sm:py-4 rounded-full border border-white/30 bg-black/40 hover:bg-white hover:text-black text-white font-sans font-bold text-xs uppercase tracking-widest backdrop-blur-sm transition-all duration-300 cursor-pointer shadow-lg active:scale-95"
+                  >
+                    <Share2 className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -382,6 +394,23 @@ export function SelectedWorks({
         })}
       </div>
     </section>
+
+    {/* Share Modal Dialog */}
+    <ShareModal
+      isOpen={Boolean(shareAlbum)}
+      onClose={() => setShareAlbum(null)}
+      album={
+        shareAlbum
+          ? {
+              title: shareAlbum.title,
+              slug: shareAlbum.link,
+              category: shareAlbum.category,
+              image: shareAlbum.image,
+              description: shareAlbum.description,
+            }
+          : null
+      }
+    />
   </div>
   );
 }
