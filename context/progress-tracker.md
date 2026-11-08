@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Works Page Feature 04: Adding Share Button completed and verified (`context/feature-specs/works-page/04-adding-a-share-button.md`).
+- Next milestone or bugfix awaiting user instruction.
 
 ## In Progress
 
@@ -16,9 +16,59 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Next milestone feature awaiting user instruction.
+- Next milestone feature or bugfix awaiting user instruction.
 
 ## Completed
+
+- Bugfix: Works Page Album Pagination Glitch Resolution (`context/error/04-loading-albums.md`):
+  - Root Cause Analysis & Resolution of Gallery Hiding:
+    - Identified that `fetchMoreAlbums()` in `lib/actions.ts` used Next.js Server Actions (`"use server"`). Calling a Server Action from the client triggers an App Router action flight that re-renders Server Components on `/works` inside `<Suspense fallback={<WorksFallback />}>`, temporarily masking the entire screen with 6 fallback skeletons and causing the whole albums grid to disappear and reappear.
+    - Identified that whenever `sanityAlbums` grew from pagination, `WorksPage` re-triggered its GSAP animation effect (`[filteredProjects, isLoading]`), targeting every `<article>` in the grid and resetting all existing cards to `opacity: 0, y: 20` before animating back in.
+    - Identified that render-phase prop comparison (`if (initialAlbums !== prevInitialAlbums)`) was resetting `sanityAlbums` back to the initial 6 albums whenever parent Server Components re-rendered.
+  - Dedicated API Route Handler for Works Albums (`app/api/albums/route.ts`):
+    - Created GET Route Handler `/api/albums` accepting `start` and `limit` query parameters, querying Sanity with `PAGINATED_ALBUMS_QUERY`.
+    - Switched client-side infinite scroll pagination in `WorksPage` from calling Server Actions to fetching `/api/albums` with resilient fallback.
+    - Completely eliminated Server Action flights and App Router re-renders, ensuring existing albums stay 100% visible, stationary, and un-glitched during pagination.
+  - In-Place Skeleton Loading Indicators & Stable Card Rendering (`components/works/works-page.tsx`):
+    - Added in-place `SkeletonCard` placeholders directly inside the grid (`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) when `isLoadingMore` is true, displaying pulsed placeholder cards in the exact positions where incoming albums will appear.
+    - Refined GSAP card animation to only run on initial mount or when user actively switches filter tabs (`activeMedia` or `activeCategory`), preventing existing cards from ever being hidden or animated from `opacity: 0` during pagination.
+    - Updated prop synchronization to preserve loaded albums across parent updates without resetting state to initial props.
+    - Added dark mode support to `SkeletonCard` inner elements and refined scroll sentinel indicator.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully, including dynamic route `ƒ /api/albums`.
+
+- Bugfix: Single Album Page Image Loading & Pagination Glitch Resolution (`context/error/03-loading-images-issue.md`):
+  - Stable Masonry Grid Distribution & Column Anchoring:
+    - Replaced CSS multi-column (`columns: N`) container layout with independent flex column containers (`useColumnCount()`), eliminating the CSS column-count browser rebalancing bug where appending new images shifted older images into different columns and moved them downwards while newly loaded images jumped to the top of subsequent columns.
+    - Implemented `useColumnCount()` hook utilizing `useSyncExternalStore` adhering to React 19 hydration safety: renders 2 columns on mobile (<768px), 3 columns on tablet (768px–1023px), and 4 columns on desktop (>=1024px) with matching `gap-2.5 sm:gap-4 md:gap-6` spacing.
+    - Deterministically partitions photos across columns (`index % actualCols`), ensuring all previously loaded photos stay 100% in their exact columns and exact positions without shifting a single pixel when new pages arrive.
+  - Dedicated API Route Handler for Pagination (`app/api/album/media/route.ts`):
+    - Created GET Route Handler `/api/album/media` accepting `folder`, `cursor`, `type`, and `limit`.
+    - Switched client-side infinite scroll pagination from invoking Server Actions (`getImages` / `getVideos` with `"use server"`) to fetching `/api/album/media`.
+    - Eliminated Next.js App Router action flights that triggered Server Component re-renders and React `<Suspense fallback={<AlbumFallback />}>`, which previously masked the entire screen with a white loading overlay and hid the entire gallery during pagination.
+  - In-Place Skeleton Loaders & Aspect Ratio Stability:
+    - Rendered pulsating in-place `SkeletonCard` components directly at the bottom of each column right where new photos are loading, and in-place video skeletons for film pagination.
+    - Added inline `style={{ aspectRatio }}` to `LazyGalleryImage` container to immediately reserve dimensions prior to image download, guaranteeing zero Cumulative Layout Shift (CLS) and smooth image rendering.
+    - Guarded initial prop synchronization (`prevAlbumId.current !== album.id`) so that server re-renders never wipe paginated state or reset photo collections.
+    - Added ID deduplication (`Set`) to prevent duplicate keys if cursors return overlapping assets.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully including dynamic route `ƒ /api/album/media`.
+
+
+- Responsive Feature: Single Album Page 2-Column Pinterest Grid on Small Screens (`context/responsive/01-single-album-page.md`):
+  - Converted single-image vertical column layout (`columns-1`) on small/mobile screens into a 2-column Pinterest-style masonry grid (`columns-2 md:columns-3 lg:columns-4`).
+  - Optimized responsive asset sizing in `LazyGalleryImage`: updated `sizes` from `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw` to `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw`, reducing downloaded image payload on mobile devices by ~50-75%.
+  - Harmonized masonry spacing: configured matching column gaps and card bottom margins (`gap-2.5 sm:gap-4 md:gap-6` and `mb-2.5 sm:mb-4 md:mb-6`) with refined card corner radii (`rounded-lg sm:rounded-xl`).
+  - Aligned infinite scroll skeleton loader with the 2-column layout (`columns-2 md:columns-3 lg:columns-4`) and matching card margins.
+  - Enhanced mobile padding, typography, and controls: adjusted top navigation back/share actions (`text-[11px] sm:text-xs`, `px-3 sm:px-6`), album header typography scaling, and full-screen Lightbox controls (`X`, chevrons, counter) for mobile screens.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully.
 
 - Works Page Feature 04: Adding Share Button to Album Cards and Album Page (`context/feature-specs/works-page/04-adding-a-share-button.md`):
   - Created `ShareModal` component (`components/share/share-modal.tsx`) with alias export in `components/share-modal.tsx`:
