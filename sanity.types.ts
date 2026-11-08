@@ -15,6 +15,21 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type Team = {
+  _id: string;
+  _type: "team";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  role?: string;
+  image?: string;
+  link?: string;
+  description?: string;
+  order?: number;
+  publishedAt?: string;
+};
+
 export type ContactSubmission = {
   _id: string;
   _type: "contactSubmission";
@@ -239,6 +254,7 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
+  | Team
   | ContactSubmission
   | CategoryReference
   | Package
@@ -451,6 +467,20 @@ export type COLORGRADING_QUERY_RESULT = Array<{
   publishedAt: string | null;
 }>;
 
+// Source: ../bstudio/sanity/queries.ts
+// Variable: TEAM_QUERY
+// Query: *[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc) {    _id,    name,    role,    image,    link,    description,    order,    publishedAt  }
+export type TEAM_QUERY_RESULT = Array<{
+  _id: string;
+  name: string | null;
+  role: string | null;
+  image: string | null;
+  link: string | null;
+  description: string | null;
+  order: number | null;
+  publishedAt: string | null;
+}>;
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
@@ -465,6 +495,7 @@ declare global {
     '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
     '\n  *[_type == "services"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': SERVICES_QUERY_RESULT;
     '\n  *[_type == "colorgrading"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': COLORGRADING_QUERY_RESULT;
+    '\n  *[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc) {\n    _id,\n    name,\n    role,\n    image,\n    link,\n    description,\n    order,\n    publishedAt\n  }\n': TEAM_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

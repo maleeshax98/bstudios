@@ -184,3 +184,16 @@ export const COLORGRADING_QUERY = defineQuery(`
     publishedAt
   }
 `);
+
+export const TEAM_QUERY = defineQuery(`
+  *[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc) {
+    _id,
+    name,
+    role,
+    image,
+    link,
+    description,
+    order,
+    publishedAt
+  }
+`);

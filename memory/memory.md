@@ -2660,6 +2660,67 @@ Diagnosed and resolved the issue where existing albums in `/works` were glitchin
 - Works page pagination functions without layout shifts, card flashing, or gallery hiding.
 - Works albums can be fetched via `/api/albums?start=0&limit=6`.
 
+---
+
+## 2026-11-09 — About Us Page Feature 02: Team Section for the About Page
+
+### Session Summary
+
+Implemented the Team Section for the About Us page according to `context/feature-specs/about-us-page/02-adding-team.md`. Defined the `teamType` Sanity schema in `studio/schemaTypes/teamType.ts` and registered it in `studio/schemaTypes/index.ts`. Added GROQ query `TEAM_QUERY` in `bstudio/sanity/queries.ts` and ran `sanity typegen` in `studio/` to generate `TEAM_QUERY_RESULT` in `bstudio/sanity.types.ts`. Created `components/about/about-team.tsx` implementing `AboutTeam` with strict conditional rendering (returns `null` if no team data is present), image wrapped in link (`member.link` or fallback), name below image, optional role and description, and zero social media links. Integrated `AboutTeam` and server-side data fetching via `sanityFetch` in `app/about/page.tsx`. Verified with TypeScript strict checks, ESLint, Next.js Webpack production build, and verified that `.next/server/app/about.html` completely omits the team section when Sanity team dataset has 0 documents.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Sanity Studio Schema & TypeGen Integration:
+    - Defined `teamType` document schema in `studio/schemaTypes/teamType.ts` with fields: `name` (required string), `role` (optional string), `image` (required photo URL), `link` (optional photo destination link URL), `description` (optional text bio), `order` (number for sorting), and `publishedAt` (datetime).
+    - Registered `teamType` in `studio/schemaTypes/index.ts`.
+    - Defined GROQ query `TEAM_QUERY` in `bstudio/sanity/queries.ts`: `*[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc)`.
+    - Executed `pnpm run typegen` in `studio/`, extracting schema to `schema.json` and generating type-safe `TEAM_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+  - Editorial Frontend Team Section Component (`components/about/about-team.tsx`):
+    - Created `AboutTeam` client component adhering to B'STUDIO Off-Light Modern Editorial theme (`#F7F7F5` base, `#111111` text, `#888888` muted, `--border-subtle`).
+    - Strict conditional rendering: if `team` data is empty (`!team || team.length === 0`), returns `null`, preventing any empty DOM wrapper or layout displacement when no team data exists.
+    - Photo as Link: Wrapped member photo in a link (`<a>` for external URLs with `target="_blank" rel="noopener noreferrer"`, Next.js `<Link>` for internal routes, and accessible link fallback when unassigned).
+    - Information Hierarchy:
+      - Photo displayed via `<OptimizedImage>` with `aspect-[3/4]` portrait framing and smooth hover zoom (`scale-105`).
+      - Name displayed directly below the image in bold brutalist Sans-Serif typography (`font-sans font-bold uppercase text-xl sm:text-2xl text-text-primary`).
+      - Optional role rendered as an elegant italic Serif subtitle if provided (`font-serif italic text-sm sm:text-base text-text-muted`).
+      - Optional description rendered below name/role if provided (`font-serif italic sm:font-normal text-sm sm:text-base text-text-primary/75`).
+      - Strict absence of socials: zero social media icons or profile links rendered per specification.
+    - Responsive layout: automatically centers single member (`max-w-md`), balances two members (`sm:grid-cols-2 max-w-4xl`), and scales into a 3-column grid (`sm:grid-cols-2 lg:grid-cols-3 max-w-7xl`).
+    - GSAP scroll-triggered animations: subtle fade and upward translation for section header and staggered card entries scoped with `gsap.context()` for clean teardown.
+  - Server-Side Data Fetching on About Page (`app/about/page.tsx`):
+    - Added `getAboutPageData()` calling `sanityFetch({ query: TEAM_QUERY, stega: false })` with resilient fallback (`try/catch` returning empty team array).
+    - Configured tag-based ISR revalidation (`export const revalidate = 60`).
+    - Integrated `<AboutTeam initialTeam={team} />` directly between `<AboutPillars />` (The Core Pillars) and `<ContactForm />` (The Booking Transition).
+  - Documentation:
+    - Updated `context/progress-tracker.md` to In Progress and then Completed with full verification metrics.
+    - Updated `memory/memory.md` with session summary, implementation details, decisions, and continuation context.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - Sanity Studio TypeScript strict check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 14 routes successfully including `/about`.
+    - Zero data fallback check: verified `.next/server/app/about.html` completely omits the team section (`id="team"`) when Sanity team dataset has 0 documents.
+  - Git Commit & Push:
+    - Staged all modified pages, components, spec (`context/feature-specs/about-us-page/02-adding-team.md`), `progress-tracker.md`, `memory.md`, and typegen files.
+    - Committed as `feat(about): add team section component, sanity query, and spec`.
+    - Pushed branch `development-v1` to remote `origin` (`https://github.com/maleeshax98/bstudios.git`).
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Strict Conditional Rendering (`return null`):** The specification explicitly mandated: "If there is no data for the team do not show the section." In `AboutTeam`, checking `if (!team || team.length === 0) return null;` guarantees that neither the section container, header, nor any whitespace is rendered when Sanity returns 0 team documents.
+- **Image Link Handling:** The spec stated "image will be a link." Added a dedicated `link` field to `teamType` in Sanity so editors can configure a portfolio or external URL for each member. The component checks whether `member.link` is external (`/^https?:\/\//i`) and renders a secured external link with `target="_blank" rel="noopener noreferrer"`, an internal Next.js `<Link>`, or an accessible link wrapper if none is provided.
+- **Exclusion of Socials:** The spec explicitly stated "Do not add socials like things." Team cards are kept purely focused on portrait imagery, name, optional role, and optional description without any social icons or profiles.
+
+### Continuation Context
+
+- Team schema (`teamType`) is active in Sanity Studio (`studio/schemaTypes/teamType.ts` & `index.ts`).
+- About page (`/about`) queries Sanity via `TEAM_QUERY` and dynamically renders team members when documents are published in Sanity Studio.
+- Working tree is clean and synchronized with `origin/development-v1`.
+
+
 
 
 
