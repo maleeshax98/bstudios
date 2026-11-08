@@ -20,6 +20,35 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- About Us Page Feature 02: Team Section for the About Page (`context/feature-specs/about-us-page/02-adding-team.md`):
+  - Sanity Studio Schema & TypeGen Integration:
+    - Defined `teamType` in `studio/schemaTypes/teamType.ts` with fields: `name` (required string), `role` (optional string), `image` (required photo URL string), `link` (optional string URL for photo destination link), `description` (optional text bio), `order` (number for sorting), and `publishedAt` (datetime).
+    - Registered `teamType` in `studio/schemaTypes/index.ts`.
+    - Defined GROQ query `TEAM_QUERY` in `bstudio/sanity/queries.ts` (`*[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc)`).
+    - Ran `pnpm run typegen` in `studio/`, extracting schema and generating precise TypeScript query types (`TEAM_QUERY_RESULT`) in `bstudio/sanity.types.ts`.
+  - Editorial Frontend Team Section Component (`components/about/about-team.tsx`):
+    - Created `AboutTeam` client component strictly adhering to the B'STUDIO Off-Light Modern Editorial theme and dark mode tokens.
+    - Strict conditional rendering: if `team` data is empty (`!team || team.length === 0`), returns `null`, ensuring the section is never displayed when no team data exists.
+    - Photo as Link: Wrapped team member image in a link (`<a>` for external URLs with `target="_blank" rel="noopener noreferrer"`, Next.js `<Link>` for internal routes, and accessible link fallback when unassigned).
+    - Team Card Information Hierarchy:
+      - Photo rendered via `<OptimizedImage>` with `aspect-[3/4]` portrait framing and smooth hover zoom (`scale-105`).
+      - Name displayed directly below the image in bold brutalist Sans-Serif typography (`font-sans font-bold uppercase text-xl sm:text-2xl text-text-primary`).
+      - Optional role rendered as an elegant italic Serif subtitle if provided (`font-serif italic text-sm sm:text-base text-text-muted`).
+      - Optional description rendered below name/role if provided (`font-serif italic sm:font-normal text-sm sm:text-base text-text-primary/75`).
+      - Strict absence of socials: zero social media icons or profile links rendered per specification.
+    - Responsive layout: automatically centers single member (`max-w-md`), balances two members (`sm:grid-cols-2 max-w-4xl`), and scales into a 3-column grid (`sm:grid-cols-2 lg:grid-cols-3 max-w-7xl`).
+    - GSAP scroll-triggered animations: subtle fade and upward translation for section header and staggered card entries scoped with `gsap.context()` for clean teardown.
+  - Server-Side Data Fetching on About Page (`app/about/page.tsx`):
+    - Added `getAboutPageData()` calling `sanityFetch({ query: TEAM_QUERY, stega: false })` with resilient error fallback (`try/catch` returning empty team array).
+    - Configured tag-based ISR revalidation (`export const revalidate = 60`).
+    - Integrated `<AboutTeam initialTeam={team} />` directly between `<AboutPillars />` (The Core Pillars) and `<ContactForm />` (The Booking Transition).
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - Sanity Studio TypeScript strict check (`pnpm exec tsc --noEmit` in `studio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 14 routes successfully including `/about`.
+    - Zero data fallback check: verified `.next/server/app/about.html` completely omits the team section (`id="team"`) when Sanity team dataset has 0 documents.
+
 - Bugfix: Works Page Album Pagination Glitch Resolution (`context/error/04-loading-albums.md`):
   - Root Cause Analysis & Resolution of Gallery Hiding:
     - Identified that `fetchMoreAlbums()` in `lib/actions.ts` used Next.js Server Actions (`"use server"`). Calling a Server Action from the client triggers an App Router action flight that re-renders Server Components on `/works` inside `<Suspense fallback={<WorksFallback />}>`, temporarily masking the entire screen with 6 fallback skeletons and causing the whole albums grid to disappear and reappear.
@@ -57,7 +86,6 @@ Update this file whenever the current phase, active feature, or implementation s
     - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
     - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
     - Production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully including dynamic route `ƒ /api/album/media`.
-
 
 - Responsive Feature: Single Album Page 2-Column Pinterest Grid on Small Screens (`context/responsive/01-single-album-page.md`):
   - Converted single-image vertical column layout (`columns-1`) on small/mobile screens into a 2-column Pinterest-style masonry grid (`columns-2 md:columns-3 lg:columns-4`).
