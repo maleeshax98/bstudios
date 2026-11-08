@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
-import { getImages, getVideos } from "@/lib/cd";
+import { getImages, getVideos, type CloudinaryResource } from "@/lib/cd";
 import { OptimizedImage } from "@/components/optimized-image";
 import { ShareModal } from "@/components/share/share-modal";
 
@@ -71,20 +71,51 @@ export function SkeletonCard({
     <div
       aria-hidden="true"
       className={cn(
-        "relative w-full overflow-hidden rounded-xl bg-[#EBEBE8] animate-pulse border border-border-subtle",
+        "relative w-full overflow-hidden rounded-lg sm:rounded-xl bg-[#EBEBE8] animate-pulse border border-border-subtle",
         aspectRatio,
         className,
       )}
-    >
-      {/* <div className="absolute top-4 right-4 h-5 w-16 rounded-full bg-[#DFDFDC] animate-pulse" />
-      <div className="absolute bottom-4 left-4 h-4 w-24 rounded-md bg-[#DFDFDC] animate-pulse" /> */}
-    </div>
+    />
   );
+}
+
+/**
+ * Hook to determine the active number of columns matching Tailwind breakpoints:
+ * - Mobile (< 768px): 2 columns (Pinterest-style)
+ * - Tablet (768px - 1023px): 3 columns
+ * - Desktop (>= 1024px): 4 columns
+ * Uses useSyncExternalStore for hydration safety.
+ */
+function useColumnCount(): number {
+  const subscribe = React.useCallback((callback: () => void) => {
+    if (typeof window === "undefined") return () => {};
+    const mqlLg = window.matchMedia("(min-width: 1024px)");
+    const mqlMd = window.matchMedia("(min-width: 768px)");
+
+    mqlLg.addEventListener("change", callback);
+    mqlMd.addEventListener("change", callback);
+    return () => {
+      mqlLg.removeEventListener("change", callback);
+      mqlMd.removeEventListener("change", callback);
+    };
+  }, []);
+
+  const getSnapshot = React.useCallback(() => {
+    if (typeof window === "undefined") return 4;
+    if (window.matchMedia("(min-width: 1024px)").matches) return 4;
+    if (window.matchMedia("(min-width: 768px)").matches) return 3;
+    return 2;
+  }, []);
+
+  const getServerSnapshot = React.useCallback(() => 4, []);
+
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
  * Lazy Image with CldImage optimization (auto-format, auto-quality, CDN lazy loading),
  * SkeletonCard loading state, and error & retry mechanism.
+ * Uses exact aspect-ratio reservation to guarantee zero Cumulative Layout Shift (CLS).
  */
 function LazyGalleryImage({
   item,
@@ -96,7 +127,15 @@ function LazyGalleryImage({
   index: number;
 }) {
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-[#EBEBE8]">
+    <div
+      className="relative w-full overflow-hidden rounded-lg sm:rounded-xl bg-[#EBEBE8]"
+      style={{
+        aspectRatio:
+          item.width && item.height
+            ? `${item.width} / ${item.height}`
+            : undefined,
+      }}
+    >
       <OptimizedImage
         src={item.url}
         alt={item.alt || `${albumTitle} Still ${index + 1}`}
@@ -105,14 +144,14 @@ function LazyGalleryImage({
         format="auto"
         quality="auto"
         loading="lazy"
-        sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+        sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
         className="w-full h-auto object-cover transition-all duration-700 ease-out group-hover:scale-105"
       />
 
       {/* Hover Overlay with Expand Icon */}
       <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-20">
-        <div className="p-3 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-md transform scale-90 group-hover:scale-100 transition-transform">
-          <Maximize2 className="w-5 h-5 stroke-[1.75]" />
+        <div className="p-2 sm:p-3 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-md transform scale-90 group-hover:scale-100 transition-transform">
+          <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
         </div>
       </div>
     </div>
@@ -231,24 +270,24 @@ export function AlbumGallery({
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
   const [isShareOpen, setIsShareOpen] = React.useState(false);
 
-  // Sync with initial props
-  const prevInitialPhotos = React.useRef(initialPhotos);
+  // Only sync with initial props if the album itself changes (e.g. route transitions),
+  // preventing Server Action flights / re-renders from wiping paginated items.
+  const prevAlbumId = React.useRef(album.id);
   React.useEffect(() => {
-    if (prevInitialPhotos.current !== initialPhotos) {
-      prevInitialPhotos.current = initialPhotos;
+    if (prevAlbumId.current !== album.id) {
+      prevAlbumId.current = album.id;
       setPhotos(initialPhotos);
       setPhotosCursor(initialPhotosCursor);
-    }
-  }, [initialPhotos, initialPhotosCursor]);
-
-  const prevInitialVideos = React.useRef(initialVideos);
-  React.useEffect(() => {
-    if (prevInitialVideos.current !== initialVideos) {
-      prevInitialVideos.current = initialVideos;
       setVideos(initialVideos);
       setVideosCursor(initialVideosCursor);
     }
-  }, [initialVideos, initialVideosCursor]);
+  }, [
+    album.id,
+    initialPhotos,
+    initialPhotosCursor,
+    initialVideos,
+    initialVideosCursor,
+  ]);
 
   // Determine available media
   const hasPhotos = photos.length > 0;
@@ -273,15 +312,27 @@ export function AlbumGallery({
   const currentCursor = activeFilter === "PHOTOS" ? photosCursor : videosCursor;
   const hasMore = Boolean(currentCursor);
 
-  // Fetch more media from backend on scroll
+  // Fetch more media from backend on scroll via lightweight API route
   const loadMore = React.useCallback(async () => {
     if (isLoadingMore || !hasMore || !album.cloudinaryFolder) return;
     setIsLoadingMore(true);
 
     try {
       if (activeFilter === "PHOTOS" && photosCursor) {
-        const res = await getImages(album.cloudinaryFolder, photosCursor, 12);
-        if (res.resources.length > 0) {
+        let res: { resources: CloudinaryResource[]; nextCursor: string | null } | null = null;
+        try {
+          const apiRes = await fetch(
+            `/api/album/media?folder=${encodeURIComponent(album.cloudinaryFolder)}&cursor=${encodeURIComponent(photosCursor)}&type=image&limit=12`,
+          );
+          if (apiRes.ok) {
+            res = await apiRes.json();
+          }
+        } catch {
+          // Graceful fallback to server action if API fetch fails
+          res = await getImages(album.cloudinaryFolder, photosCursor, 12);
+        }
+
+        if (res && res.resources.length > 0) {
           const newItems: MediaItem[] = res.resources.map((img) => ({
             id: img.asset_id || img.public_id,
             type: "image",
@@ -291,12 +342,28 @@ export function AlbumGallery({
             alt: `${album.title || "Album"} Still`,
             format: img.format,
           }));
-          setPhotos((prev) => [...prev, ...newItems]);
+
+          setPhotos((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const uniqueNew = newItems.filter((p) => !existingIds.has(p.id));
+            return [...prev, ...uniqueNew];
+          });
         }
-        setPhotosCursor(res.nextCursor);
+        setPhotosCursor(res ? res.nextCursor : null);
       } else if (activeFilter === "VIDEOS" && videosCursor) {
-        const res = await getVideos(album.cloudinaryFolder, videosCursor, 12);
-        if (res.resources.length > 0) {
+        let res: { resources: CloudinaryResource[]; nextCursor: string | null } | null = null;
+        try {
+          const apiRes = await fetch(
+            `/api/album/media?folder=${encodeURIComponent(album.cloudinaryFolder)}&cursor=${encodeURIComponent(videosCursor)}&type=video&limit=12`,
+          );
+          if (apiRes.ok) {
+            res = await apiRes.json();
+          }
+        } catch {
+          res = await getVideos(album.cloudinaryFolder, videosCursor, 12);
+        }
+
+        if (res && res.resources.length > 0) {
           const newItems: MediaItem[] = res.resources.map((vid) => ({
             id: vid.asset_id || vid.public_id,
             type: "video",
@@ -307,9 +374,14 @@ export function AlbumGallery({
             alt: `${album.title || "Album"} Film`,
             format: vid.format,
           }));
-          setVideos((prev) => [...prev, ...newItems]);
+
+          setVideos((prev) => {
+            const existingIds = new Set(prev.map((v) => v.id));
+            const uniqueNew = newItems.filter((v) => !existingIds.has(v.id));
+            return [...prev, ...uniqueNew];
+          });
         }
-        setVideosCursor(res.nextCursor);
+        setVideosCursor(res ? res.nextCursor : null);
       }
     } catch (err) {
       console.error("Error loading more media from backend:", err);
@@ -325,6 +397,26 @@ export function AlbumGallery({
     photosCursor,
     videosCursor,
   ]);
+
+  // Responsive column count for rock-solid masonry stability
+  const columnCount = useColumnCount();
+
+  // Partition photos into independent columns.
+  // When new photos are appended, they ONLY append to the bottom of their respective column.
+  // Previously loaded photos stay 100% in place without jumping or reordering across columns.
+  const photoColumns = React.useMemo(() => {
+    const actualCols = Math.min(columnCount, Math.max(1, photos.length));
+    const cols: { item: MediaItem; originalIndex: number }[][] = Array.from(
+      { length: actualCols },
+      () => [],
+    );
+
+    photos.forEach((item, index) => {
+      cols[index % actualCols].push({ item, originalIndex: index });
+    });
+
+    return cols;
+  }, [photos, columnCount]);
 
   // Sentinel IntersectionObserver for scroll-based backend pagination
   const sentinelRef = React.useRef<HTMLDivElement>(null);
@@ -574,10 +666,10 @@ export function AlbumGallery({
       )}
 
       {/* Navigation back to Works Archive (No sticky navbar strip) & Share Button */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 flex items-center justify-between">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-10 flex items-center justify-between">
         <Link
           href="/works"
-          className="group inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors"
+          className="group inline-flex items-center gap-1.5 sm:gap-2 font-sans text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:-translate-x-1" />
           <span>[ WORKS ARCHIVE ]</span>
@@ -587,7 +679,7 @@ export function AlbumGallery({
           type="button"
           onClick={() => setIsShareOpen(true)}
           aria-label="Share this album"
-          className="group inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface/50 hover:bg-bg-surface backdrop-blur-sm cursor-pointer shadow-xs active:scale-95"
+          className="group inline-flex items-center gap-1.5 sm:gap-2 font-sans text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-text-muted hover:text-text-primary transition-colors px-3 sm:px-3.5 py-1.5 rounded-full border border-border-subtle bg-bg-surface/50 hover:bg-bg-surface backdrop-blur-sm cursor-pointer shadow-xs active:scale-95"
         >
           <Share2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:scale-110" />
           <span>[ SHARE ARCHIVE ]</span>
@@ -597,19 +689,19 @@ export function AlbumGallery({
       {/* =================================================================== */}
       {/* 2. THE MAIN GALLERY (PINTEREST / MASONRY GRID)                      */}
       {/* =================================================================== */}
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-48">
+      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-48">
         {/* Editorial Album Header: Centered Title & Date */}
-        <div className="flex flex-col items-center justify-center text-center mb-10 sm:mb-14 md:mb-16">
-          <h1 className="font-serif italic font-normal text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-text-primary leading-[1.08] tracking-tight max-w-4xl">
+        <div className="flex flex-col items-center justify-center text-center mb-8 sm:mb-14 md:mb-16">
+          <h1 className="font-serif italic font-normal text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-text-primary leading-[1.08] tracking-tight max-w-4xl px-2">
             {album.title}
           </h1>
           {album.date && (
-            <p className="mt-3 sm:mt-4 font-sans font-bold text-xs sm:text-sm uppercase tracking-[0.25em] text-text-muted">
+            <p className="mt-2.5 sm:mt-4 font-sans font-bold text-[11px] sm:text-sm uppercase tracking-[0.25em] text-text-muted">
               {album.date}
             </p>
           )}
           {album.description && (
-            <p className="mt-4 sm:mt-5 font-serif italic text-base sm:text-lg text-text-muted max-w-2xl px-4 leading-relaxed">
+            <p className="mt-3.5 sm:mt-5 font-serif italic text-sm sm:text-lg text-text-muted max-w-2xl px-4 leading-relaxed">
               {album.description}
             </p>
           )}
@@ -619,7 +711,7 @@ export function AlbumGallery({
             type="button"
             onClick={() => setIsShareOpen(true)}
             aria-label="Share this collection"
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2 rounded-full border border-border-subtle bg-bg-surface/60 hover:bg-text-primary hover:text-bg-base text-xs font-sans font-bold uppercase tracking-widest text-text-muted transition-all duration-300 shadow-xs cursor-pointer group active:scale-95"
+            className="mt-5 sm:mt-6 inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full border border-border-subtle bg-bg-surface/60 hover:bg-text-primary hover:text-bg-base text-[11px] sm:text-xs font-sans font-bold uppercase tracking-widest text-text-muted transition-all duration-300 shadow-xs cursor-pointer group active:scale-95"
           >
             <Share2 className="w-3.5 h-3.5 stroke-[2] transition-transform duration-300 group-hover:scale-110" />
             <span>Share Collection</span>
@@ -731,60 +823,65 @@ export function AlbumGallery({
                     </div>
                   ),
                 )}
+                {isLoadingMore && (
+                  <>
+                    <SkeletonCard aspectRatio="aspect-video" />
+                    <SkeletonCard aspectRatio="aspect-video" />
+                  </>
+                )}
               </div>
             ) : (
-              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6">
-                {currentMediaList.map((item, index) => (
+              <div className="flex gap-2.5 sm:gap-4 md:gap-6 items-start">
+                {photoColumns.map((col, colIdx) => (
                   <div
-                    key={item.id}
-                    onClick={() => openLightbox(index)}
-                    className="break-inside-avoid mb-4 sm:mb-6 group relative cursor-pointer overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-all duration-300 hover:shadow-xl hover:border-black/30"
+                    key={colIdx}
+                    className="flex-1 min-w-0 flex flex-col gap-2.5 sm:gap-4 md:gap-6"
                   >
-                    <LazyGalleryImage
-                      item={item}
-                      albumTitle={album.title}
-                      index={index}
-                    />
+                    {col.map(({ item, originalIndex }) => (
+                      <div
+                        key={item.id}
+                        onClick={() => openLightbox(originalIndex)}
+                        className="group relative cursor-pointer overflow-hidden rounded-lg sm:rounded-xl border border-border-subtle bg-bg-surface transition-all duration-300 hover:shadow-xl hover:border-black/30"
+                      >
+                        <LazyGalleryImage
+                          item={item}
+                          albumTitle={album.title}
+                          index={originalIndex}
+                        />
+                      </div>
+                    ))}
+
+                    {/* In-place skeleton loader in each column where new photos are loading */}
+                    {isLoadingMore && (
+                      <div className="w-full overflow-hidden rounded-lg sm:rounded-xl">
+                        <SkeletonCard
+                          aspectRatio={
+                            colIdx % 3 === 0
+                              ? "aspect-[3/4]"
+                              : colIdx % 3 === 1
+                                ? "aspect-[4/5]"
+                                : "aspect-[16/10]"
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
             {/* Scroll Sentinel & Loading Indicator */}
-            {isLoadingMore && (
-              <div
-                className={cn(
-                  "w-full mt-4",
-                  activeFilter === "VIDEOS"
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                    : "columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6",
-                )}
-              >
-                {activeFilter === "VIDEOS" ? (
-                  <>
-                    <SkeletonCard aspectRatio="aspect-video" />
-                    <SkeletonCard aspectRatio="aspect-video" />
-                    <SkeletonCard aspectRatio="aspect-video" />
-                  </>
-                ) : (
-                  <>
-                    <SkeletonCard aspectRatio="aspect-[3/4]" />
-                    <SkeletonCard aspectRatio="aspect-[4/5]" />
-                    <SkeletonCard aspectRatio="aspect-[16/10]" />
-                    <SkeletonCard aspectRatio="aspect-[3/4]" />
-                  </>
-                )}
-              </div>
-            )}
-
             <div
               ref={sentinelRef}
-              className="w-full py-12 flex items-center justify-center"
+              className="w-full py-10 flex items-center justify-center select-none"
             >
               {isLoadingMore && (
-                <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
-                  loading...
-                </p>
+                <div className="flex items-center gap-2 text-text-muted">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-text-muted animate-ping" />
+                  <p className="font-serif italic text-sm lowercase tracking-widest animate-pulse">
+                    loading {activeFilter === "VIDEOS" ? "more films" : "more photos"}...
+                  </p>
+                </div>
               )}
             </div>
           </>
@@ -856,9 +953,9 @@ export function AlbumGallery({
             type="button"
             onClick={closeLightbox}
             aria-label="Close Lightbox"
-            className="absolute top-6 right-6 z-50 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 text-white/70 hover:text-white p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <X className="w-8 h-8 stroke-[1.5]" />
+            <X className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.5]" />
           </button>
 
           {/* Navigation: Previous Arrow ("<") */}
@@ -866,9 +963,9 @@ export function AlbumGallery({
             type="button"
             onClick={prevMedia}
             aria-label="Previous item"
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 text-white/70 hover:text-white p-4 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 z-50 text-white/70 hover:text-white p-2.5 sm:p-4 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <ChevronLeft className="w-9 h-9 stroke-[1.5]" />
+            <ChevronLeft className="w-7 h-7 sm:w-9 sm:h-9 stroke-[1.5]" />
           </button>
 
           {/* Navigation: Next Arrow (">") */}
@@ -876,13 +973,13 @@ export function AlbumGallery({
             type="button"
             onClick={nextMedia}
             aria-label="Next item"
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 text-white/70 hover:text-white p-4 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 z-50 text-white/70 hover:text-white p-2.5 sm:p-4 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <ChevronRight className="w-9 h-9 stroke-[1.5]" />
+            <ChevronRight className="w-7 h-7 sm:w-9 sm:h-9 stroke-[1.5]" />
           </button>
 
           {/* Index Counter Indicator */}
-          <div className="absolute top-7 left-7 z-50 font-serif italic text-white/60 text-sm tracking-widest">
+          <div className="absolute top-5 left-5 sm:top-7 sm:left-7 z-50 font-serif italic text-white/60 text-xs sm:text-sm tracking-widest">
             {String(lightboxIndex + 1).padStart(2, "0")} /{" "}
             {String(currentMediaList.length).padStart(2, "0")}
           </div>

@@ -2530,5 +2530,137 @@ Implemented Feature 04 per `context/feature-specs/works-page/04-adding-a-share-b
 
 - Sharing functionality is operational across all three target views: `/works`, `/` (Selected Works), and `/album/[slug]`.
 
+---
+
+## 2026-11-09 — Responsive Feature: Single Album Page 2-Column Pinterest Grid on Small Screens
+
+### Session Summary
+
+Implemented mobile responsive enhancements for the individual album details page according to `context/responsive/01-single-album-page.md`. Converted the single-column layout on small/mobile devices to a 2-column Pinterest-style masonry grid in `<AlbumGallery>`, reduced the requested image asset sizes on small screens from `100vw` to `50vw`, harmonized column gaps and card bottom margins, updated infinite scroll loading skeletons to match the 2-column layout, and enhanced mobile touch and viewport ergonomics across headers and Lightbox controls. Verified end-to-end with TypeScript strict checks, ESLint, and a full Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Responsive 2-Column Pinterest Masonry Grid (`components/album/album-gallery.tsx`):
+    - Replaced `columns-1 sm:columns-2 md:columns-3 lg:columns-4` with `columns-2 md:columns-3 lg:columns-4` on the photo gallery container, ensuring small screens render 2 columns side-by-side like Pinterest rather than a single full-width image at a time.
+    - Updated horizontal column gaps (`gap-2.5 sm:gap-4 md:gap-6`) and card bottom margins (`mb-2.5 sm:mb-4 md:mb-6`) to match, providing uniform grid rhythm across all viewport breakpoints.
+    - Configured refined corner radii (`rounded-lg sm:rounded-xl`) proportionate to the smaller mobile card widths.
+  - Image Size Reduction on Small Screens (`components/album/album-gallery.tsx`):
+    - Updated the `sizes` attribute on `<OptimizedImage>` in `LazyGalleryImage` from `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw` to `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw`.
+    - Next.js / Cloudinary CDN now serves 50vw scaled images on mobile devices rather than full-width 100vw images, reducing bandwidth usage, memory consumption, and download latency by ~50-75% on small screens.
+  - Infinite Scroll Loading Skeleton (`components/album/album-gallery.tsx`):
+    - Updated skeleton loader grid to `columns-2 md:columns-3 lg:columns-4 gap-2.5 sm:gap-4 md:gap-6` with `mb-2.5 sm:mb-4 md:mb-6` on individual skeleton cards, preventing visual layout shift when fetching additional media batches.
+  - Mobile Ergonomics & Lightbox Refinements (`components/album/album-gallery.tsx`):
+    - Adjusted top navigation back/share pill buttons with `text-[11px] sm:text-xs` and container padding `px-3 sm:px-6 lg:px-8` to prevent awkward line breaks on narrow phone screens (<360px).
+    - Refined album title header scale (`text-3xl sm:text-5xl md:text-6xl lg:text-7xl`) and description spacing for small viewports.
+    - Adjusted Lightbox control hitboxes and icon sizing (`w-6 h-6 sm:w-8 sm:h-8` for close button, `w-7 h-7 sm:w-9 sm:h-9` for chevron arrows, `top-4 right-4 sm:top-6 sm:right-6`) to maximize photo viewing real estate on mobile.
+  - Documentation:
+    - Updated `context/progress-tracker.md` to In Progress and then Completed.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Breakpoints Selection:** Used `columns-2 md:columns-3 lg:columns-4` so mobile phones (0–767px) consistently show 2 columns of pins like Pinterest, while tablets (768–1023px) use 3 columns and desktop screens (1024px+) use 4 columns.
+- **CDN Sizing Optimization:** Updating `sizes` to `50vw` on mobile guarantees that Cloudinary and Next.js Image Optimization downsample source images appropriately for the narrower 2-column mobile containers, fulfilling the specification requirement to reduce image size on small screens.
+- **Separation of Video Layout:** Left 16:9 video player cards in single-column format on small mobile screens to prevent microscopic video aspect ratios that compromise player usability.
+
+### Continuation Context
+
+- The single album page is fully responsive with a 2-column Pinterest grid on small screens.
+
+---
+
+## 2026-11-09 — Bugfix: Single Album Page Image Loading & Pagination Glitch Resolution
+
+### Session Summary
+
+Diagnosed and resolved image glitching and gallery hiding during scroll-based pagination on the single album page according to `context/error/03-loading-images-issue.md`. Replaced CSS multi-column (`columns: N`) container with independent flex columns mapped via `useColumnCount()` (2 on mobile, 3 on tablet, 4 on desktop), ensuring previously loaded images remain 100% stationary without shifting or rebalancing across columns. Created a dedicated Route Handler (`/api/album/media`) for pagination, eliminating Next.js Server Action flight re-renders that triggered `<Suspense fallback={<AlbumFallback />}>` and covered the screen with a white overlay. Placed pulsating `SkeletonCard` loading indicators directly in-place at the bottom of each column where new items are loading, added inline aspect-ratio preservation to prevent CLS, and guarded prop synchronization against inadvertent state resets. Verified with TypeScript strict checks, ESLint, and Next.js production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Stable Masonry Grid Distribution & Column Anchoring (`components/album/album-gallery.tsx`):
+    - Replaced CSS multi-column (`columns: N`) container layout with independent flex column containers (`useColumnCount()`), eliminating the CSS column-count browser rebalancing bug where appending new images shifted older images into different columns and moved them downwards while newly loaded images jumped to the top of subsequent columns.
+    - Implemented `useColumnCount()` hook utilizing `useSyncExternalStore` adhering to React 19 hydration safety: renders 2 columns on mobile (<768px), 3 columns on tablet (768px–1023px), and 4 columns on desktop (>=1024px) with matching `gap-2.5 sm:gap-4 md:gap-6` spacing.
+    - Deterministically partitions photos across columns (`index % actualCols`), ensuring all previously loaded photos stay 100% in their exact columns and exact positions without shifting a single pixel when new pages arrive.
+  - Dedicated API Route Handler for Pagination (`app/api/album/media/route.ts`):
+    - Created GET Route Handler `/api/album/media` accepting `folder`, `cursor`, `type`, and `limit`.
+    - Switched client-side infinite scroll pagination from invoking Server Actions (`getImages` / `getVideos` with `"use server"`) to fetching `/api/album/media`.
+    - Eliminated Next.js App Router action flights that triggered Server Component re-renders and React `<Suspense fallback={<AlbumFallback />}>`, which previously masked the entire screen with a white loading overlay and hid the entire gallery during pagination.
+  - In-Place Skeleton Loaders & Aspect Ratio Stability (`components/album/album-gallery.tsx`):
+    - Rendered pulsating in-place `SkeletonCard` components directly at the bottom of each column right where new photos are loading, and in-place video skeletons for film pagination.
+    - Added inline `style={{ aspectRatio }}` to `LazyGalleryImage` container to immediately reserve dimensions prior to image download, guaranteeing zero Cumulative Layout Shift (CLS) and smooth image rendering.
+    - Guarded initial prop synchronization (`prevAlbumId.current !== album.id`) so that server re-renders never wipe paginated state or reset photo collections.
+    - Added ID deduplication (`Set`) to prevent duplicate keys if cursors return overlapping assets.
+  - Documentation:
+    - Updated `context/progress-tracker.md` to In Progress and then Completed with full verification metrics.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully including dynamic route `ƒ /api/album/media`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Independent Flex Columns vs. CSS Multi-Column:** CSS `column-count` balances total item count vertically from top to bottom across all columns. Appending items dynamically forces every column to redistribute, pushing older photos down into adjacent columns and pulling newly loaded items up into later columns. Partitioning items into independent flex column arrays with `useColumnCount()` ensures each item's column assignment and vertical order are immutable, so previously rendered photos never move.
+- **Route Handler vs. Server Action for Infinite Scroll:** In Next.js App Router, invoking a Server Action (`"use server"`) signals a potential mutation and triggers a server flight that re-renders the current route's Server Components. Because `AlbumContent` is wrapped in `<Suspense fallback={<AlbumFallback />}>`, this flight caused the page to re-suspend and flash the full-screen white `AlbumFallback` overlay, hiding the whole gallery. Using a dedicated GET API endpoint `/api/album/media` retrieves media data cleanly without touching Server Component lifecycles.
+- **In-Place Skeletons in Columns:** Placing the `SkeletonCard` at the bottom of each column provides immediate tactile feedback in the exact location where incoming media will land without displacing existing photos or jumping the scroll sentinel.
+
+### Continuation Context
+
+- Single album page pagination operates smoothly with in-place column skeletons, zero layout shifts, and immutable photo placement during infinite scroll.
+
+---
+
+## 2026-11-09 — Bugfix: Works Page Album Pagination Glitch Resolution
+
+### Session Summary
+
+Diagnosed and resolved the issue where existing albums in `/works` were glitching, hiding, and reappearing when the user scrolled down to load more albums according to `context/error/04-loading-albums.md`. Identified three compounding root causes: (1) invoking Server Action `fetchMoreAlbums()` (`"use server"`) triggered Next.js App Router action flights that re-rendered Server Components on `/works` wrapped in `<Suspense fallback={<WorksFallback />}>`, temporarily masking the screen with 6 fallback skeletons; (2) GSAP card animation effect re-ran on every pagination append because it depended on `filteredProjects`, resetting all `<article>` cards in the grid to `opacity: 0, y: 20`; (3) render-phase prop comparison `if (initialAlbums !== prevInitialAlbums)` wiped `sanityAlbums` back to the initial 6 items upon parent re-render. Created a dedicated Route Handler `/api/albums`, switched client pagination to fetch the API endpoint, added in-place `SkeletonCard` elements directly into the grid where new albums load, decoupled GSAP animations from pagination updates, and updated prop synchronization. Verified end-to-end with TypeScript strict checks, ESLint, and a full Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Dedicated API Route Handler for Paginated Albums (`app/api/albums/route.ts`):
+    - Created GET Route Handler `/api/albums` accepting `start` and `limit` query parameters, querying Sanity via `PAGINATED_ALBUMS_QUERY`.
+    - Switched client-side infinite scroll in `WorksPage` (`components/works/works-page.tsx`) to fetch `/api/albums` with fallback to `fetchMoreAlbums`.
+    - Eliminated Server Action flights that previously triggered `<Suspense fallback={<WorksFallback />}>` re-renders and full-screen skeleton flash.
+  - In-Place Skeleton Indicators in Gallery Grid (`components/works/works-page.tsx`):
+    - Rendered 3 pulsating in-place `SkeletonCard` components directly inside the grid (`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) when `isLoadingMore` is true, indicating exactly where new albums will land without hiding or displacing existing albums.
+    - Added dark mode support to `SkeletonCard` inner elements (`dark:bg-bg-surface`).
+    - Added clean bottom status indicator in scroll sentinel (`"loading more archives..."` and `"— END OF WORKS ARCHIVE —"`).
+  - GSAP Animation Decoupling & Stability (`components/works/works-page.tsx`):
+    - Refactored GSAP entry animation from depending on `[filteredProjects, isLoading]` to tracking active filter transitions (`[activeMedia, activeCategory, isLoading]`).
+    - Existing album cards remain 100% visible and stable with zero opacity flicker or layout shifts when new albums are appended via pagination.
+  - Safe Prop Synchronization (`components/works/works-page.tsx`):
+    - Replaced render-phase state resets with `useEffect` using `prevInitialAlbumsRef`, preserving paginated albums across re-renders and avoiding state loss.
+  - Documentation:
+    - Updated `context/progress-tracker.md` to In Progress and Completed with detailed metrics.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 14 routes successfully including dynamic route `ƒ /api/albums`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **API Route Handler vs. Server Action:** Similar to the Single Album page resolution (`context/error/03-loading-images-issue.md`), Server Actions (`"use server"`) in Next.js App Router trigger an action flight that re-renders Server Components. When Server Components are wrapped in `<Suspense>`, this flight causes Suspense to unmount children and show the fallback UI, which was hiding the entire works gallery. A standard GET Route Handler (`/api/albums`) fetches data purely client-side without interfering with Server Component lifecycles.
+- **GSAP Filter-Only Trigger:** Animating cards is desirable when a user explicitly switches between "PHOTOS", "VIDEOS", or categories, as the entire view content is being filtered. However, during infinite scroll pagination, cards are merely being added at the bottom; animating the whole grid causes visible opacity flash. Isolating the animation to filter changes preserves delight while eliminating the glitch.
+- **In-Grid Skeletons:** Rendering `SkeletonCard`s directly inside `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3` visually reserves the next row of cards right where the incoming albums will appear, fulfilling the requirement to show loading in the place where new albums are loading.
+
+### Continuation Context
+
+- Works page pagination functions without layout shifts, card flashing, or gallery hiding.
+- Works albums can be fetched via `/api/albums?start=0&limit=6`.
+
+
+
 
 

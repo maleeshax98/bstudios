@@ -131,12 +131,12 @@ export function SkeletonCard() {
 
       {/* Meta Bar Skeleton */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="h-3 w-24 rounded bg-[#DFDFDC] animate-pulse" />
-        <div className="h-3 w-16 rounded bg-[#DFDFDC] animate-pulse" />
+        <div className="h-3 w-24 rounded bg-[#DFDFDC] dark:bg-bg-surface animate-pulse" />
+        <div className="h-3 w-16 rounded bg-[#DFDFDC] dark:bg-bg-surface animate-pulse" />
       </div>
 
       {/* Title Skeleton */}
-      <div className="mt-2 h-7 w-3/4 rounded bg-[#DFDFDC] animate-pulse" />
+      <div className="mt-2 h-7 w-3/4 rounded bg-[#DFDFDC] dark:bg-bg-surface animate-pulse" />
     </div>
   );
 }
@@ -405,13 +405,24 @@ export function WorksPage({
   const [hasMore, setHasMore] = React.useState(
     (initialAlbums?.length ?? 0) >= 6,
   );
-  const [prevInitialAlbums, setPrevInitialAlbums] =
-    React.useState(initialAlbums);
-  if (initialAlbums !== prevInitialAlbums) {
-    setPrevInitialAlbums(initialAlbums);
-    setSanityAlbums(initialAlbums || []);
-    setHasMore((initialAlbums?.length ?? 0) >= 6);
-  }
+  const prevInitialAlbumsRef = React.useRef(initialAlbums);
+
+  // Synchronize initialAlbums only when it changes from a fresh route or live query,
+  // without wiping out newly appended paginated albums.
+  React.useEffect(() => {
+    if (initialAlbums && initialAlbums !== prevInitialAlbumsRef.current) {
+      prevInitialAlbumsRef.current = initialAlbums;
+      setSanityAlbums((prev) => {
+        if (prev.length <= (initialAlbums.length || 6)) {
+          return initialAlbums;
+        }
+        const incomingIds = new Set(initialAlbums.map((a) => a._id));
+        const remaining = prev.filter((a) => !incomingIds.has(a._id));
+        return [...initialAlbums, ...remaining];
+      });
+      setHasMore((initialAlbums.length ?? 0) >= 6);
+    }
+  }, [initialAlbums]);
 
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
@@ -419,7 +430,22 @@ export function WorksPage({
     if (isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
     try {
-      const res = await fetchMoreAlbums(sanityAlbums.length, 6);
+      let res: { albums: WorksPageAlbum[]; hasMore: boolean } | null = null;
+      try {
+        const apiRes = await fetch(
+          `/api/albums?start=${sanityAlbums.length}&limit=6`,
+        );
+        if (apiRes.ok) {
+          res = await apiRes.json();
+        }
+      } catch (fetchErr) {
+        console.warn("API route /api/albums failed, falling back to server action:", fetchErr);
+      }
+
+      if (!res) {
+        res = await fetchMoreAlbums(sanityAlbums.length, 6);
+      }
+
       if (!res || !res.albums || res.albums.length === 0) {
         setHasMore(false);
       } else {
@@ -527,29 +553,42 @@ export function WorksPage({
     });
   }, [allProjects, activeMedia, activeCategory]);
 
-  // Animate grid cards when filtering completes
+  const isFirstMountRef = React.useRef(true);
+  const prevFilterRef = React.useRef({ activeMedia, activeCategory });
+
+  // Animate grid cards ONLY on initial mount and when active filters change.
+  // Never re-animate or reset opacity of existing cards during infinite scroll pagination.
   React.useEffect(() => {
     if (isLoading || !gridRef.current) return;
 
-    const ctx = gsap.context(() => {
-      const cards = gridRef.current?.querySelectorAll("article");
-      if (cards && cards.length > 0) {
-        gsap.fromTo(
-          cards,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.4,
-            stagger: 0.04,
-            ease: "power2.out",
-          },
-        );
-      }
-    }, gridRef);
+    const isFilterChange =
+      prevFilterRef.current.activeMedia !== activeMedia ||
+      prevFilterRef.current.activeCategory !== activeCategory;
 
-    return () => ctx.revert();
-  }, [filteredProjects, isLoading]);
+    prevFilterRef.current = { activeMedia, activeCategory };
+
+    if (isFirstMountRef.current || isFilterChange) {
+      isFirstMountRef.current = false;
+      const ctx = gsap.context(() => {
+        const cards = gridRef.current?.querySelectorAll("article");
+        if (cards && cards.length > 0) {
+          gsap.fromTo(
+            cards,
+            { opacity: 0, y: 20 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.4,
+              stagger: 0.04,
+              ease: "power2.out",
+            },
+          );
+        }
+      }, gridRef);
+
+      return () => ctx.revert();
+    }
+  }, [activeMedia, activeCategory, isLoading]);
 
   return (
     <section
@@ -702,6 +741,15 @@ export function WorksPage({
                     priority={index < 3}
                   />
                 ))}
+
+                {/* In-place skeleton cards directly in the grid where new albums are loading */}
+                {isLoadingMore && (
+                  <>
+                    <SkeletonCard key="loading-skeleton-1" />
+                    <SkeletonCard key="loading-skeleton-2" />
+                    <SkeletonCard key="loading-skeleton-3" />
+                  </>
+                )}
               </div>
 
               {/* Scroll-based pagination sentinel & loading indicator */}
@@ -710,11 +758,18 @@ export function WorksPage({
                 className="w-full py-12 flex items-center justify-center min-h-[80px]"
                 aria-live="polite"
               >
-                {isLoadingMore && (
-                  <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
-                    loading...
+                {isLoadingMore ? (
+                  <div className="flex items-center gap-2.5 text-text-muted select-none">
+                    <span className="inline-block w-2 h-2 rounded-full bg-text-muted animate-ping" />
+                    <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest">
+                      loading more archives...
+                    </p>
+                  </div>
+                ) : !hasMore && allProjects.length > 6 ? (
+                  <p className="font-serif italic text-xs text-text-muted/60 tracking-widest uppercase select-none">
+                    — END OF WORKS ARCHIVE —
                   </p>
-                )}
+                ) : null}
               </div>
             </>
           )}
