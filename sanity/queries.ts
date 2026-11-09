@@ -197,3 +197,21 @@ export const TEAM_QUERY = defineQuery(`
     publishedAt
   }
 `);
+
+export const BTS_QUERY = defineQuery(`
+  *[_type == "bts"] | order(publishedAt desc, _createdAt desc)[0...6] {
+    _id,
+    title,
+    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),
+    publishedAt
+  }
+`);
+
+export const ALL_BTS_QUERY = defineQuery(`
+  *[_type == "bts"] | order(publishedAt desc, _createdAt desc) {
+    _id,
+    title,
+    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),
+    publishedAt
+  }
+`);

@@ -8,6 +8,7 @@ import { ServicesExhibition } from "@/components/services-exhibition";
 import { SampleGallery } from "@/components/sample-gallery";
 import { ClientSpaceTeaser } from "@/components/client-space-teaser";
 import { ColorGradeLookbook } from "@/components/color-grade-lookbook";
+import { BtsGallery } from "@/components/bts-gallery";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
 import { sanityFetch } from "@/sanity/live";
@@ -16,8 +17,9 @@ import {
   COLORGRADING_QUERY,
   FEATURED_ALBUMS_QUERY,
   WEDDING_ALBUMS_QUERY,
+  BTS_QUERY,
 } from "@/sanity/queries";
-import { getSampleImages } from "@/lib/cd";
+import { getSampleImages, getBtsImages } from "@/lib/cd";
 
 export const revalidate = 60;
 
@@ -29,12 +31,16 @@ async function getHomeData() {
       featuredWorksRes,
       weddingAlbumsRes,
       sampleImagesData,
+      btsImagesData,
+      btsVideosRes,
     ] = await Promise.all([
       sanityFetch({ query: SERVICES_QUERY, stega: false }),
       sanityFetch({ query: COLORGRADING_QUERY, stega: false }),
       sanityFetch({ query: FEATURED_ALBUMS_QUERY, stega: false }),
       sanityFetch({ query: WEDDING_ALBUMS_QUERY, stega: false }),
       getSampleImages(),
+      getBtsImages(12),
+      sanityFetch({ query: BTS_QUERY, stega: false }),
     ]);
 
     return {
@@ -43,6 +49,8 @@ async function getHomeData() {
       featuredWorks: featuredWorksRes.data || [],
       weddingAlbums: weddingAlbumsRes.data || [],
       sampleImages: sampleImagesData?.resources || [],
+      btsImages: btsImagesData?.resources || [],
+      btsVideos: btsVideosRes.data || [],
     };
   } catch (error) {
     console.warn(
@@ -55,13 +63,22 @@ async function getHomeData() {
       featuredWorks: [],
       weddingAlbums: [],
       sampleImages: [],
+      btsImages: [],
+      btsVideos: [],
     };
   }
 }
 
 export default async function Home() {
-  const { services, colorgrading, featuredWorks, weddingAlbums, sampleImages } =
-    await getHomeData();
+  const {
+    services,
+    colorgrading,
+    featuredWorks,
+    weddingAlbums,
+    sampleImages,
+    btsImages,
+    btsVideos,
+  } = await getHomeData();
 
   return (
     <>
@@ -77,6 +94,7 @@ export default async function Home() {
       <br />
       <br />
       <ColorGradeLookbook initialLookbook={colorgrading} />
+      <BtsGallery initialImages={btsImages} initialVideos={btsVideos} />
       <ContactForm />
       <Footer />
     </>
