@@ -20,6 +20,77 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- BTS Page Feature 01: Dedicated BTS Page for Behind The Scenes Photos and Videos (`context/feature-specs/bts-page/01-bts-page.md`):
+  - Dedicated Route & Page (`app/bts/page.tsx`):
+    - Created dedicated `/bts` route fetching BTS images from Cloudinary (`getBtsImages(100)`) and BTS videos from Sanity via `sanityFetch({ query: ALL_BTS_QUERY, stega: false })`.
+    - Composed page with `<BtsPage />`, conversational `<ContactForm prompt="READY TO SHOOT?" />`, and `<Footer />`.
+    - Configured tag-based ISR revalidation (`export const revalidate = 60`) and page metadata (`Behind The Scenes — B'STUDIO | High-End Cinematic Photography & Videography`).
+  - Sanity Studio Query & TypeGen:
+    - Added `ALL_BTS_QUERY` in `sanity/queries.ts` (`*[_type == "bts"] | order(publishedAt desc, _createdAt desc)`).
+    - Executed `pnpm run typegen` in `studio/`, generating `ALL_BTS_QUERY_RESULT` in `sanity.types.ts`.
+  - Editorial BTS Page Component (`components/bts/bts-page.tsx` & `components/bts-page.tsx`):
+    - Implemented Pinterest-style masonry layout matching `<SampleGallery />` (`columns-2 md:columns-3 lg:columns-4 gap-2.5 sm:gap-4 md:gap-6`, `rounded-lg sm:rounded-xl`, dynamic aspect ratios, and `<OptimizedImage sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" />`).
+    - Integrated responsive 16:9 YouTube video player cards (`BtsVideoCard`) with facade pattern preview and inline embed playback upon click.
+    - Added editorial header (`BEHIND THE SCENES // ARCHIVE`, `BTS ARCHIVE`, and descriptive italic serif subtitle).
+    - Strict conditional rendering:
+      - If nothing to show (`!hasPhotos && !hasVideos`): returns `null` (zero message, zero DOM output).
+      - If only photos exist (`hasPhotos && !hasVideos`): renders only the photos masonry grid with zero tabs.
+      - If only videos exist (`!hasPhotos && hasVideos`): renders only the videos grid with zero tabs.
+      - If both photos and videos exist: renders filter tabs (`[ PHOTOS ]` and `[ VIDEOS ]`) defaulting to `"PHOTOS"`.
+  - Home Page BTS Gallery "See More" Link Update (`components/bts-gallery.tsx`):
+    - Updated magnetic "See More" CTA button in `<BtsGallery />` to link to `/bts` (previously `/works`).
+    - Left navbar links strictly untouched per specification (zero BTS link in navbar).
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - TypeScript strict check in `studio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled all 15 routes cleanly including dynamic route `ƒ /bts`.
+
+- Responsive Feature: Sample Gallery & BTS Gallery 2-Column Pinterest Grid on Small Screens (`context/responsive/02-sample-gallery.md`):
+  - 2-Column Mobile Masonry Layout (`components/sample-gallery.tsx` & `components/bts-gallery.tsx`):
+    - Converted single-image vertical column layout (`columns-1`) on mobile and small screens into a 2-column Pinterest-style masonry grid (`columns-2 md:columns-3 lg:columns-4`) for both `<SampleGallery />` and `<BtsGallery />` (Photos tab).
+    - Reduced card margins and column gutters on mobile screens (`gap-2.5 sm:gap-4 md:gap-6` and `mb-2.5 sm:mb-4 md:mb-6`), ensuring symmetrical horizontal and vertical gaps.
+    - Scaled card border radii to `rounded-lg sm:rounded-xl` for refined edge proportionality on mobile screens.
+    - Updated container horizontal margins to `px-3 sm:px-6 md:px-10 lg:px-16` for optimal mobile layout width.
+  - Responsive Asset Size Optimization:
+    - Updated `OptimizedImage` `sizes` attribute from `(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw` to `(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw` in both components.
+    - Instructs Next.js and Cloudinary CDN to deliver half-viewport image dimensions (~195-390px) on mobile devices rather than full-width (390-780px), reducing image data transfer by ~50-75% on small screens.
+  - Verification:
+    - TypeScript strict check (`pnpm exec tsc --noEmit` in `bstudio/`): passed with 0 errors.
+    - ESLint check (`pnpm lint` in `bstudio/`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 14 routes successfully.
+
+- Home Page Feature 19: BTS (Behind The Scenes) Section (`context/feature-specs/19-bts-home-section.md`):
+  - Sanity Studio Schema & TypeGen Integration:
+    - Defined `btsType` in `studio/schemaTypes/btsType.ts` with fields: `title` (required string), `youtubeUrl` (required string for full YouTube link), and `publishedAt` (datetime).
+    - Registered `btsType` in `studio/schemaTypes/index.ts`.
+    - Defined GROQ query `BTS_QUERY` in `bstudio/sanity/queries.ts` (`*[_type == "bts"] | order(publishedAt desc, _createdAt desc)[0...6]`).
+    - Ran `pnpm run typegen` in `studio/`, extracting schema and generating `BTS_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+  - Cloudinary BTS Images Fetcher (`lib/cd.ts`):
+    - Added `getBtsImages(limit = 12)` searching `(asset_folder="BTS" OR asset_folder="bts") AND resource_type=image` sorted by `created_at desc` with caching and SDK fallback.
+  - Editorial BTS Gallery Component (`components/bts-gallery.tsx`):
+    - Created `BtsGallery` component sharing the Pinterest masonry design and teaser overlay aesthetic of `<SampleGallery />`.
+    - Strict conditional rendering:
+      - If no photos and no videos exist (`!hasPhotos && !hasVideos`), returns `null` (zero DOM output).
+      - If only photos exist (`hasPhotos && !hasVideos`), renders only the 12 photos in masonry columns with no tabs.
+      - If only videos exist (`!hasPhotos && hasVideos`), renders only the 6 videos in a responsive 16:9 grid with no tabs.
+      - If both photos and videos exist, renders filter tabs (`[ PHOTOS ]` and `[ VIDEOS ]`) to switch views, defaulting to "PHOTOS".
+    - YouTube Player Card (`BtsVideoCard`):
+      - Interactive facade pattern parsing YouTube IDs via `getYouTubeVideoId()`.
+      - High-resolution thumbnail preview with play button, YouTube badge, and video title.
+      - Clicking plays the video directly inline using privacy-enhanced `youtube-nocookie.com` embed iframe with autoplay.
+    - Teaser Gradient Overlay & Magnetic Call to Action:
+      - Bottom gradient overlay fading into `--bg-base`.
+      - Centered magnetic "See More" button with GSAP cursor tracking linking to `/works`.
+  - Integration on Home Page (`app/page.tsx`):
+    - Added `getBtsImages(12)` and `sanityFetch({ query: BTS_QUERY })` to `getHomeData()` in `app/page.tsx` with error handling.
+    - Integrated `<BtsGallery initialImages={btsImages} initialVideos={btsVideos} />` directly before `<ContactForm />`.
+  - Verification:
+    - TypeScript strict check in `studio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack`): compiled and prerendered all 14 routes successfully.
+
 - About Us Page Feature 02: Team Section for the About Page (`context/feature-specs/about-us-page/02-adding-team.md`):
   - Sanity Studio Schema & TypeGen Integration:
     - Defined `teamType` in `studio/schemaTypes/teamType.ts` with fields: `name` (required string), `role` (optional string), `image` (required photo URL string), `link` (optional string URL for photo destination link), `description` (optional text bio), `order` (number for sorting), and `publishedAt` (datetime).

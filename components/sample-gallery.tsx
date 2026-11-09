@@ -102,7 +102,7 @@ export function SampleGallery({
     return (
       <section
         className={cn(
-          "relative w-full bg-bg-base overflow-hidden px-4 sm:px-6 md:px-10 lg:px-16 py-20 select-none",
+          "relative w-full bg-bg-base overflow-hidden px-3 sm:px-6 md:px-10 lg:px-16 py-20 select-none",
           className,
         )}
         {...props}
@@ -121,18 +121,18 @@ export function SampleGallery({
   return (
     <section
       className={cn(
-        "relative w-full bg-bg-base overflow-hidden px-4 sm:px-6 md:px-10 lg:px-16 pt-8 pb-32 sm:pb-40 md:pb-48 select-none",
+        "relative w-full bg-bg-base overflow-hidden px-3 sm:px-6 md:px-10 lg:px-16 pt-8 pb-32 sm:pb-40 md:pb-48 select-none",
         className,
       )}
       {...props}
     >
-      {/* Masonry-Style Pinterest Grid (CSS Columns) */}
+      {/* Masonry-Style Pinterest Grid (CSS Columns): 2 columns on small/mobile screens */}
       <div className="mx-auto max-w-[1700px]">
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 sm:gap-6">
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-2.5 sm:gap-4 md:gap-6">
           {displayImages.map((item) => (
             <div
               key={item.id}
-              className="group relative mb-4 sm:mb-6 break-inside-avoid overflow-hidden rounded-xl border border-border-subtle bg-bg-surface transition-all duration-500 hover:border-text-primary/25 hover:shadow-lg"
+              className="group relative mb-2.5 sm:mb-4 md:mb-6 break-inside-avoid overflow-hidden rounded-lg sm:rounded-xl border border-border-subtle bg-bg-surface transition-all duration-500 hover:border-text-primary/25 hover:shadow-lg"
             >
               <div
                 className={cn(
@@ -149,7 +149,7 @@ export function SampleGallery({
                   src={item.src}
                   alt={item.alt}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                 />
               </div>

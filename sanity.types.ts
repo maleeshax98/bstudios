@@ -15,6 +15,17 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type Bts = {
+  _id: string;
+  _type: "bts";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  youtubeUrl?: string;
+  publishedAt?: string;
+};
+
 export type Team = {
   _id: string;
   _type: "team";
@@ -254,6 +265,7 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
+  | Bts
   | Team
   | ContactSubmission
   | CategoryReference
@@ -481,6 +493,26 @@ export type TEAM_QUERY_RESULT = Array<{
   publishedAt: string | null;
 }>;
 
+// Source: ../bstudio/sanity/queries.ts
+// Variable: BTS_QUERY
+// Query: *[_type == "bts"] | order(publishedAt desc, _createdAt desc)[0...6] {    _id,    title,    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),    publishedAt  }
+export type BTS_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  youtubeUrl: string | null;
+  publishedAt: string | null;
+}>;
+
+// Source: ../bstudio/sanity/queries.ts
+// Variable: ALL_BTS_QUERY
+// Query: *[_type == "bts"] | order(publishedAt desc, _createdAt desc) {    _id,    title,    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),    publishedAt  }
+export type ALL_BTS_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  youtubeUrl: string | null;
+  publishedAt: string | null;
+}>;
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
@@ -496,6 +528,8 @@ declare global {
     '\n  *[_type == "services"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': SERVICES_QUERY_RESULT;
     '\n  *[_type == "colorgrading"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': COLORGRADING_QUERY_RESULT;
     '\n  *[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc) {\n    _id,\n    name,\n    role,\n    image,\n    link,\n    description,\n    order,\n    publishedAt\n  }\n': TEAM_QUERY_RESULT;
+    '\n  *[_type == "bts"] | order(publishedAt desc, _createdAt desc)[0...6] {\n    _id,\n    title,\n    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),\n    publishedAt\n  }\n': BTS_QUERY_RESULT;
+    '\n  *[_type == "bts"] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    "youtubeUrl": coalesce(youtubeUrl, youtubeLink),\n    publishedAt\n  }\n': ALL_BTS_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too
