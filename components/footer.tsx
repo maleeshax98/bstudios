@@ -249,7 +249,7 @@ export function Footer({ className, ...props }: FooterProps) {
               dark:hover:text-white
               transition-colors duration-200"
         >
-          CREATED BY MaleeZha{" "}
+          CREATED BY VinZi{" "}
         </a>
       </div>
     </footer>
