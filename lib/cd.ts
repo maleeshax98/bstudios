@@ -236,10 +236,42 @@ const getBtsImages = async (
   }
 };
 
+const getBtsVideos = async (
+  limit = 12,
+): Promise<CloudinaryPaginationResult> => {
+  const expression = `(asset_folder="BTS" OR asset_folder="bts") AND resource_type=video`;
+
+  // 1. Primary: Next.js native fetch caching with revalidate: 3600
+  try {
+    return await searchCloudinaryWithCache(expression, null, limit, "desc");
+  } catch (fetchErr) {
+    console.warn("Native fetch caching fallback to Cloudinary SDK:", fetchErr);
+  }
+
+  // 2. Secondary fallback via Cloudinary SDK
+  try {
+    const search = cloudinary.search
+      .expression(expression)
+      .sort_by("created_at", "desc")
+      .max_results(limit);
+
+    const resources = await search.execute();
+    return {
+      resources: (resources?.resources as CloudinaryResource[]) || [],
+      nextCursor: resources?.next_cursor || null,
+      totalCount: resources?.total_count || 0,
+    };
+  } catch (err) {
+    console.error("Cloudinary getBtsVideos error:", err);
+    return { resources: [], nextCursor: null, totalCount: 0 };
+  }
+};
+
 export {
   getImages,
   getVideos,
   searchCloudinaryWithCache,
   getSampleImages,
   getBtsImages,
+  getBtsVideos,
 };

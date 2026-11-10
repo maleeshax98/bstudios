@@ -20,6 +20,31 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- BTS Feature 02: Showing Cloudinary Videos Mixed with Images in BtsGallery and BTS Page with Autoplay (`context/feature-specs/bts-page/02-updating-bts.md`):
+  - Cloudinary BTS Videos Fetcher (`lib/cd.ts`):
+    - Added `getBtsVideos(limit = 12)` querying `(asset_folder="BTS" OR asset_folder="bts") AND resource_type=video` sorted by `created_at desc` with caching and SDK fallback.
+  - Server-Side Data Fetching Migration (`app/page.tsx` & `app/bts/page.tsx`):
+    - Replaced Sanity `BTS_QUERY` GROQ query on Home page (`app/page.tsx`) with `getBtsVideos(6)` from Cloudinary.
+    - Replaced Sanity `ALL_BTS_QUERY` GROQ query on BTS page (`app/bts/page.tsx`) with `getBtsVideos(50)` from Cloudinary.
+    - Decoupled BTS media presentation entirely into Cloudinary.
+  - Media Mixing & Tab Removal (`components/bts-gallery.tsx` & `components/bts/bts-page.tsx`):
+    - Implemented `mixMediaItems(photos, videos)` interleaving videos evenly throughout photography cards across masonry columns.
+    - Removed `[ PHOTOS ]` and `[ VIDEOS ]` filter tabs completely from both `<BtsGallery />` and `<BtsPage />`.
+    - Maintained strict conditional rendering: if no media items exist, returns `null` (zero DOM output, zero layout shift).
+  - Autoplaying Responsive Video Player (`BtsCloudinaryVideoCard`):
+    - Configured seamless muted looping autoplay (`autoPlay`, `muted`, `loop`, `playsInline`, `preload="auto"`), with `defaultMuted = true` and `muted = true` set on DOM element.
+    - Interactive Sound Controls: Circular sound button (`VolumeX` / `Volume2`) allowing users to unmute/mute audio anytime with one click; automatically mutes any other video when unmuted.
+    - Interactive Play/Pause: Clicking the card toggles pause/play, displaying a centered tactile Play overlay when paused.
+    - Responsive multi-dimension support: computes dynamic aspect ratios using `getAspectClass(width, height)` and inline `aspectRatio` style (dynamically updated via `onLoadedMetadata`), accommodating horizontal widescreen (16:9), standard landscape, square (1:1), and vertical reels/shorts (9:16) with zero letterboxing or stretching in the 2-column mobile / 3-column tablet / 4-column desktop Pinterest grid.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly including dynamic routes `ƒ /` and `ƒ /bts`.
+
 - BTS Page Feature 01: Dedicated BTS Page for Behind The Scenes Photos and Videos (`context/feature-specs/bts-page/01-bts-page.md`):
   - Dedicated Route & Page (`app/bts/page.tsx`):
     - Created dedicated `/bts` route fetching BTS images from Cloudinary (`getBtsImages(100)`) and BTS videos from Sanity via `sanityFetch({ query: ALL_BTS_QUERY, stega: false })`.
