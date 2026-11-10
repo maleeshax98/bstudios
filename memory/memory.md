@@ -2873,3 +2873,53 @@ Implemented the dedicated BTS (Behind The Scenes) page according to `context/fea
 - Navbar navigation remains clean with standard 5 items (Work, Services, Packages, About, Contact).
 - All code checks, Sanity TypeGen, and production builds are passing with 0 errors.
 
+---
+
+## 2026-11-10 — BTS Feature 02: Showing Cloudinary Videos Mixed with Images in BtsGallery and BTS Page (with Autoplay)
+
+### Session Summary
+
+Implemented BTS Feature 02 according to `context/feature-specs/bts-page/02-updating-bts.md` and user direction. Shifted BTS video retrieval entirely to Cloudinary, replacing Sanity YouTube queries. Added `getBtsVideos(limit = 12)` in `lib/cd.ts` searching `(asset_folder="BTS" OR asset_folder="bts") AND resource_type=video` sorted newest first. Replaced Sanity `BTS_QUERY` on the Home page (`app/page.tsx`) and `ALL_BTS_QUERY` on the BTS page (`app/bts/page.tsx`) with `getBtsVideos`. Removed the `[ PHOTOS ]` and `[ VIDEOS ]` filter tabs from both `<BtsGallery />` and `<BtsPage />`. Implemented `mixMediaItems()` to interleave videos evenly throughout the photos array into a unified Pinterest-style masonry grid. Created `BtsCloudinaryVideoCard` configured to autoplay smoothly on continuous loop (`autoPlay`, `muted`, `loop`, `playsInline`, `preload="auto"`) with `defaultMuted = true` for universal cross-browser reliability. Equipped the card with an interactive sound toggle (`VolumeX` / `Volume2`) to unmute/mute audio anytime with one click (automatically muting other videos), click-to-pause/play with a tactile Play overlay when paused, and dynamic aspect ratio handling supporting horizontal widescreen (16:9), vertical reels/shorts (9:16), standard, and square formats without distortion or letterboxing across mobile, tablet, and desktop viewports. Verified with TypeScript strict checks, ESLint, and a full Next.js Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Cloudinary Video Fetcher (`lib/cd.ts`):
+    - Added `getBtsVideos(limit = 12)` searching `(asset_folder="BTS" OR asset_folder="bts") AND resource_type=video` with Next.js fetch caching fallback to Cloudinary SDK.
+  - Server-Side Data Fetching Migration:
+    - `app/page.tsx`: Updated `getHomeData()` to fetch `getBtsVideos(6)` alongside `getBtsImages(12)`, removing Sanity `BTS_QUERY`.
+    - `app/bts/page.tsx`: Updated `getBtsData()` to fetch `getBtsVideos(50)` alongside `getBtsImages(100)`, removing Sanity `ALL_BTS_QUERY`.
+  - Media Mixing & Tab Removal (`components/bts-gallery.tsx` & `components/bts/bts-page.tsx`):
+    - Removed `[ PHOTOS ]` and `[ VIDEOS ]` tabs from both components.
+    - Implemented `mixMediaItems(photos, videos)` interleaving videos across photos based on calculated stride, distributing media across the masonry columns.
+    - Strict conditional rendering: if both collections are empty, returns `null` (zero DOM output, zero layout shift).
+  - Autoplaying Responsive Video Player (`BtsCloudinaryVideoCard`):
+    - Autoplays muted on continuous loop (`autoPlay`, `muted`, `loop`, `playsInline`, `preload="auto"`), with `defaultMuted = true` ensuring compatibility with Safari, Chrome, iOS, and Android.
+    - Interactive Sound Controls: Circular sound button (`VolumeX` / `Volume2`) allowing users to unmute/mute audio anytime with one click; automatically mutes other videos when unmuted.
+    - Interactive Play/Pause: Clicking the card toggles pause/play, displaying a centered tactile Play overlay when paused.
+    - Responsive dimensions: uses `getAspectClass(width, height)` and inline `aspectRatio` (dynamically updated on `onLoadedMetadata` if width/height absent), properly sizing horizontal (16:9), vertical reels/shorts (9:16), square (1:1), and portrait formats in the Pinterest masonry layout.
+  - Progress Tracker & Documentation:
+    - Marked task as In Progress and then Completed in `context/progress-tracker.md`.
+    - Updated `memory/memory.md` with session details, decisions, and verification results.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly including dynamic routes `ƒ /` and `ƒ /bts`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Autoplay Architecture:** The user explicitly directed: "make those videos autoplay". Modern browser autoplay policy requires videos to be muted and playsInline to autoplay without user gestures. Configured `autoPlay`, `muted`, `loop`, `playsInline` alongside an explicit `useEffect` setting `defaultMuted = true` and `muted = true` on the video DOM element, ensuring reliable, uninterrupted playback across all platforms.
+- **Interactive Audio & Playback Controls:** While videos autoplay silently like living editorial portraits, users have full control: a dedicated sound toggle (`VolumeX` / `Volume2`) lets visitors hear the clip's audio with one tap, and clicking the card toggles pause/play.
+- **Interleaving Media (`mixMediaItems`):** Stride-based interleaving guarantees that videos are evenly spaced throughout photos rather than grouped at the top or bottom, providing an engaging mixed discovery experience across all columns regardless of upload timestamps.
+- **Tab Removal:** Removing tab state and buttons unifies all BTS content into a single masonry view.
+- **Dynamic Aspect Ratio Calculation:** Video cards support horizontal (16:9), vertical (9:16), and custom aspect ratios with dynamic metadata listeners, preventing letterboxing, black bars, or layout distortion.
+
+### Continuation Context
+
+- BTS media on both the Home page (`/`) and BTS archive page (`/bts`) is fetched entirely from Cloudinary folder `BTS`.
+- Videos autoplay silently on continuous loop, interspersed naturally with photography in the 2-column mobile / 3-column tablet / 4-column desktop Pinterest masonry grid.
+- All code checks, TypeScript compiler, ESLint, and Next.js Webpack production builds are passing with 0 errors.
+
+

@@ -3,9 +3,7 @@ import * as React from "react";
 import { BtsPage } from "@/components/bts/bts-page";
 import { ContactForm } from "@/components/contact-form";
 import { Footer } from "@/components/footer";
-import { sanityFetch } from "@/sanity/live";
-import { ALL_BTS_QUERY } from "@/sanity/queries";
-import { getBtsImages } from "@/lib/cd";
+import { getBtsImages, getBtsVideos } from "@/lib/cd";
 
 export const revalidate = 60;
 
@@ -17,17 +15,17 @@ export const metadata: Metadata = {
 
 async function getBtsData() {
   try {
-    const [btsImagesData, btsVideosRes] = await Promise.all([
+    const [btsImagesData, btsVideosData] = await Promise.all([
       getBtsImages(100),
-      sanityFetch({ query: ALL_BTS_QUERY, stega: false }),
+      getBtsVideos(50),
     ]);
 
     return {
       btsImages: btsImagesData?.resources || [],
-      btsVideos: btsVideosRes.data || [],
+      btsVideos: btsVideosData?.resources || [],
     };
   } catch (error) {
-    console.warn("Could not fetch BTS data from Sanity/Cloudinary:", error);
+    console.warn("Could not fetch BTS data from Cloudinary:", error);
     return {
       btsImages: [],
       btsVideos: [],

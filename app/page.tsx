@@ -17,9 +17,8 @@ import {
   COLORGRADING_QUERY,
   FEATURED_ALBUMS_QUERY,
   WEDDING_ALBUMS_QUERY,
-  BTS_QUERY,
 } from "@/sanity/queries";
-import { getSampleImages, getBtsImages } from "@/lib/cd";
+import { getSampleImages, getBtsImages, getBtsVideos } from "@/lib/cd";
 
 export const revalidate = 60;
 
@@ -32,7 +31,7 @@ async function getHomeData() {
       weddingAlbumsRes,
       sampleImagesData,
       btsImagesData,
-      btsVideosRes,
+      btsVideosData,
     ] = await Promise.all([
       sanityFetch({ query: SERVICES_QUERY, stega: false }),
       sanityFetch({ query: COLORGRADING_QUERY, stega: false }),
@@ -40,7 +39,7 @@ async function getHomeData() {
       sanityFetch({ query: WEDDING_ALBUMS_QUERY, stega: false }),
       getSampleImages(),
       getBtsImages(12),
-      sanityFetch({ query: BTS_QUERY, stega: false }),
+      getBtsVideos(6),
     ]);
 
     return {
@@ -50,7 +49,7 @@ async function getHomeData() {
       weddingAlbums: weddingAlbumsRes.data || [],
       sampleImages: sampleImagesData?.resources || [],
       btsImages: btsImagesData?.resources || [],
-      btsVideos: btsVideosRes.data || [],
+      btsVideos: btsVideosData?.resources || [],
     };
   } catch (error) {
     console.warn(

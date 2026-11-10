@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowUpRight, Play, Film } from "lucide-react";
+import { ArrowUpRight, Play, Film, Volume2, VolumeX } from "lucide-react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
 import { OptimizedImage } from "@/components/optimized-image";
@@ -15,6 +15,7 @@ import {
 
 export interface BtsPhotoItem {
   id: string;
+  type: "image";
   src: string;
   alt: string;
   aspectRatio?: string;
@@ -24,57 +25,288 @@ export interface BtsPhotoItem {
 
 export interface BtsVideoItem {
   id: string;
-  title: string;
-  youtubeUrl: string;
-  videoId: string;
+  type: "video";
+  src: string;
+  title?: string;
+  width?: number;
+  height?: number;
+  aspectRatio?: string;
+  duration?: number;
+  youtubeId?: string;
 }
+
+export type BtsMixedMediaItem = BtsPhotoItem | BtsVideoItem;
 
 export interface BtsRawVideo {
   _id: string;
   title?: string | null;
   youtubeUrl?: string | null;
   publishedAt?: string | null;
+  [key: string]: unknown;
 }
 
 export interface BtsGalleryProps extends React.HTMLAttributes<HTMLElement> {
   initialImages?: CloudinaryResource[];
-  initialVideos?: BtsRawVideo[];
+  initialVideos?: (CloudinaryResource | BtsRawVideo)[];
 }
 
+/**
+ * Calculates responsive aspect ratio classes based on dimensions.
+ * Supports horizontal widescreen (16:9), standard landscape, square,
+ * portrait, and vertical reels/shorts (9:16).
+ */
 export function getAspectClass(width?: number, height?: number): string {
   if (!width || !height) return "aspect-[3/4]";
   const ratio = width / height;
+  if (ratio >= 1.7) return "aspect-video"; // 16:9 widescreen
   if (ratio >= 1.4) return "aspect-[16/10]";
   if (ratio >= 1.15) return "aspect-[4/3]";
   if (ratio >= 0.9) return "aspect-[1/1]";
   if (ratio >= 0.7) return "aspect-[4/5]";
+  if (ratio >= 0.55) return "aspect-[9/16]"; // 9:16 vertical video
   return "aspect-[2/3]";
 }
 
 /**
- * Interactive YouTube Video Card for BTS gallery.
- * Implements a lightweight facade pattern: loads thumbnail preview first,
- * then mounts responsive iframe upon click for optimal Core Web Vitals and zero CLS.
+ * Derives a JPEG poster thumbnail URL for Cloudinary video assets.
+ */
+export function getCloudinaryVideoPoster(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes("cloudinary.com")) return undefined;
+  return url.replace(/\.(mp4|mov|webm|mkv|avi|m4v)(\?.*)?$/i, ".jpg$2");
+}
+
+/**
+ * Interleaves videos evenly into photos to produce a balanced, aesthetic
+ * mixed masonry gallery without clustering videos in one spot.
+ */
+export function mixMediaItems(
+  photos: BtsPhotoItem[],
+  videos: BtsVideoItem[],
+): BtsMixedMediaItem[] {
+  if (photos.length === 0) return videos;
+  if (videos.length === 0) return photos;
+
+  const result: BtsMixedMediaItem[] = [];
+  const totalPhotos = photos.length;
+  const totalVideos = videos.length;
+
+  // Stride: distribute videos evenly across photos
+  const stride = Math.max(1, Math.floor(totalPhotos / (totalVideos + 1)));
+
+  let photoIdx = 0;
+  let videoIdx = 0;
+
+  while (photoIdx < totalPhotos || videoIdx < totalVideos) {
+    // Add photo chunk
+    const nextPhotoChunk = Math.min(photoIdx + stride, totalPhotos);
+    while (photoIdx < nextPhotoChunk) {
+      result.push(photos[photoIdx++]);
+    }
+    // Add video if available
+    if (videoIdx < totalVideos) {
+      result.push(videos[videoIdx++]);
+    }
+    // If all videos used, add remaining photos
+    if (videoIdx >= totalVideos && photoIdx < totalPhotos) {
+      while (photoIdx < totalPhotos) {
+        result.push(photos[photoIdx++]);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Responsive Cloudinary HTML5 Video Card for BTS Gallery.
+ * - Autoplays muted on continuous loop like a cinematic moving picture.
+ * - Respects natural video aspect ratios (horizontal widescreen, vertical reels, square).
+ * - Interactive Sound Toggle: users can unmute/mute audio anytime with one click.
+ * - Click-to-pause / Click-to-play with subtle tactile indicator.
+ * - Dynamic aspect ratio calculation with zero letterboxing or layout shift.
+ */
+export function BtsCloudinaryVideoCard({
+  item,
+}: {
+  item: BtsVideoItem;
+}) {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [isPaused, setIsPaused] = React.useState(false);
+  const [isMuted, setIsMuted] = React.useState(true);
+  const [aspectRatio, setAspectRatio] = React.useState<number | null>(
+    item.width && item.height ? item.width / item.height : null,
+  );
+
+  const posterUrl = React.useMemo(
+    () => getCloudinaryVideoPoster(item.src),
+    [item.src],
+  );
+
+  // Guarantee seamless muted autoplay across modern browsers (iOS/Safari/Chrome)
+  React.useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.defaultMuted = true;
+    v.muted = true;
+    const playPromise = v.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        // Autoplay may be deferred or blocked by browser power-saving mode
+        console.debug("Autoplay notice:", err);
+      });
+    }
+  }, []);
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const v = e.currentTarget;
+    if (v.videoWidth && v.videoHeight && !aspectRatio) {
+      setAspectRatio(v.videoWidth / v.videoHeight);
+    }
+  };
+
+  const handleToggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+
+    if (isMuted) {
+      // Unmuting: mute any other active video on the page
+      const allVideos = document.querySelectorAll("video");
+      allVideos.forEach((other) => {
+        if (other !== v) {
+          other.muted = true;
+        }
+      });
+      v.muted = false;
+      setIsMuted(false);
+      if (v.paused) {
+        v.play().catch(() => {});
+        setIsPaused(false);
+      }
+    } else {
+      v.muted = true;
+      setIsMuted(true);
+    }
+  };
+
+  const handleCardClick = () => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    if (v.paused) {
+      v.play().catch(() => {});
+      setIsPaused(false);
+    } else {
+      v.pause();
+      setIsPaused(true);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "group relative mb-2.5 break-inside-avoid overflow-hidden rounded-lg border border-border-subtle bg-black shadow-md transition-all duration-500 hover:border-text-primary/25 hover:shadow-xl sm:mb-4 sm:rounded-xl md:mb-6 cursor-pointer select-none",
+        getAspectClass(item.width, item.height),
+      )}
+      style={
+        aspectRatio
+          ? { aspectRatio: `${aspectRatio}` }
+          : item.width && item.height
+            ? { aspectRatio: `${item.width} / ${item.height}` }
+            : undefined
+      }
+      onClick={handleCardClick}
+    >
+      <video
+        ref={videoRef}
+        src={item.src}
+        poster={posterUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        onLoadedMetadata={handleLoadedMetadata}
+        className="h-full w-full object-cover select-none"
+      />
+
+      {/* Top badges: Sound Toggle & BTS Film label */}
+      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 sm:top-3 sm:right-3 z-10">
+        <button
+          type="button"
+          onClick={handleToggleMute}
+          aria-label={isMuted ? "Unmute video audio" : "Mute video audio"}
+          title={isMuted ? "Unmute" : "Mute"}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition-transform duration-200 hover:scale-110 hover:bg-black/85 cursor-pointer"
+        >
+          {isMuted ? (
+            <VolumeX className="h-3.5 w-3.5 stroke-[2]" />
+          ) : (
+            <Volume2 className="h-3.5 w-3.5 stroke-[2] text-white" />
+          )}
+        </button>
+
+        <div className="flex items-center gap-1.5 rounded-md border border-white/15 bg-black/70 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm sm:px-2.5">
+          <Film className="h-3 w-3 stroke-[2]" />
+          <span>BTS Film</span>
+        </div>
+      </div>
+
+      {/* Paused State Overlay with tactile Play button */}
+      {isPaused && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-text-primary shadow-2xl transition-transform duration-300 sm:h-14 sm:w-14">
+            <Play className="ml-0.5 h-5 w-5 fill-text-primary stroke-none sm:h-6 sm:w-6 dark:fill-black" />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Gradient Scrim with Title & Duration */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2.5 pt-6 pb-2.5 sm:px-3 sm:pb-3 flex items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate font-sans text-xs font-bold uppercase tracking-wide text-white sm:text-sm">
+          </h4>
+        </div>
+        {item.duration ? (
+          <span className="shrink-0 rounded bg-black/60 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white/80 backdrop-blur-xs">
+            {Math.floor(item.duration / 60)}:
+            {String(Math.floor(item.duration % 60)).padStart(2, "0")}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * YouTube Video Card fallback (retained for backward compatibility).
  */
 export function BtsVideoCard({
   video,
-  index,
+  index = 0,
 }: {
-  video: BtsVideoItem;
-  index: number;
+  video: { id: string; title?: string; youtubeUrl?: string; videoId?: string };
+  index?: number;
 }) {
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [thumbError, setThumbError] = React.useState(false);
 
-  const thumbUrl = thumbError
-    ? getYouTubeThumbnailUrl(video.videoId, "hq")
-    : getYouTubeThumbnailUrl(video.videoId, "maxres");
+  const videoId = video.videoId || (video.youtubeUrl ? getYouTubeVideoId(video.youtubeUrl) : null);
+
+  const thumbUrl = videoId
+    ? thumbError
+      ? getYouTubeThumbnailUrl(videoId, "hq")
+      : getYouTubeThumbnailUrl(videoId, "maxres")
+    : "";
+
+  if (!videoId) return null;
 
   return (
     <div className="group relative aspect-video w-full overflow-hidden rounded-xl border border-border-subtle bg-black shadow-md transition-all duration-300 hover:border-text-primary/30 hover:shadow-2xl">
       {isPlaying ? (
         <iframe
-          src={getYouTubeEmbedUrl(video.videoId, { autoplay: true })}
+          src={getYouTubeEmbedUrl(videoId, { autoplay: true })}
           title={video.title || `BTS Video ${index + 1}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
@@ -85,7 +317,6 @@ export function BtsVideoCard({
           onClick={() => setIsPlaying(true)}
           className="relative h-full w-full cursor-pointer select-none"
         >
-          {/* YouTube Video Thumbnail */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={thumbUrl}
@@ -94,24 +325,16 @@ export function BtsVideoCard({
             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             loading="lazy"
           />
-
-          {/* Cinematic Scrim */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35 transition-opacity duration-300 group-hover:opacity-90" />
-
-          {/* Centered Play Button */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-text-primary shadow-2xl transition-transform duration-300 group-hover:scale-110 sm:h-16 sm:w-16">
               <Play className="ml-1 h-6 w-6 fill-text-primary stroke-none sm:h-7 sm:w-7 dark:fill-black" />
             </div>
           </div>
-
-          {/* Top-Right YouTube Badge */}
           <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-md border border-white/15 bg-black/70 px-2.5 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
             <Film className="h-3 w-3 stroke-[2]" />
             <span>YouTube</span>
           </div>
-
-          {/* Bottom Title & Index Badge */}
           <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               <span className="mb-0.5 block font-serif text-xs italic text-white/70">
@@ -141,6 +364,7 @@ export function BtsGallery({
     if (!initialImages || initialImages.length === 0) return [];
     return initialImages.slice(0, 12).map((img, idx) => ({
       id: img.asset_id || img.public_id || `bts-photo-${idx}`,
+      type: "image" as const,
       src: img.public_id || img.secure_url,
       alt:
         (typeof img.display_name === "string" && img.display_name) ||
@@ -152,42 +376,59 @@ export function BtsGallery({
     }));
   }, [initialImages]);
 
-  // Process Videos (up to 6 with valid YouTube ID)
+  // Process Videos (up to 6 from Cloudinary or YouTube fallback)
   const displayVideos: BtsVideoItem[] = React.useMemo(() => {
     if (!initialVideos || initialVideos.length === 0) return [];
     const valid: BtsVideoItem[] = [];
-    for (const v of initialVideos) {
-      if (!v.youtubeUrl) continue;
-      const id = getYouTubeVideoId(v.youtubeUrl);
-      if (id) {
+
+    for (let idx = 0; idx < initialVideos.length; idx++) {
+      const v = initialVideos[idx];
+
+      // 1. Cloudinary video resource
+      if ("secure_url" in v || "url" in v || ("resource_type" in v && v.resource_type === "video")) {
+        const res = v as CloudinaryResource;
+        const src = res.secure_url || res.url;
+        if (!src) continue;
+        const title =
+          (typeof res.display_name === "string" && res.display_name) ||
+          (typeof res.filename === "string" && res.filename) ||
+          `Behind The Scenes Clip ${valid.length + 1}`;
+
         valid.push({
-          id: v._id || `bts-video-${valid.length}`,
-          title: v.title?.trim() || `Behind The Scenes ${valid.length + 1}`,
-          youtubeUrl: v.youtubeUrl,
-          videoId: id,
+          id: res.asset_id || res.public_id || `bts-video-${valid.length}`,
+          type: "video",
+          src,
+          title,
+          width: res.width,
+          height: res.height,
+          duration: res.duration,
+          aspectRatio: getAspectClass(res.width, res.height),
         });
+      } else if ("youtubeUrl" in v && v.youtubeUrl) {
+        // 2. YouTube fallback
+        const ytId = getYouTubeVideoId(v.youtubeUrl);
+        if (ytId) {
+          valid.push({
+            id: v._id || `bts-video-${valid.length}`,
+            type: "video",
+            src: v.youtubeUrl,
+            title: v.title?.trim() || `Behind The Scenes ${valid.length + 1}`,
+            youtubeId: ytId,
+            aspectRatio: "aspect-video",
+          });
+        }
       }
+
       if (valid.length >= 6) break;
     }
+
     return valid;
   }, [initialVideos]);
 
-  const hasPhotos = displayPhotos.length > 0;
-  const hasVideos = displayVideos.length > 0;
-
-  // User-selected tab override (null means compute default based on available content)
-  const [userTab, setUserTab] = React.useState<"PHOTOS" | "VIDEOS" | null>(null);
-
-  const activeTab: "PHOTOS" | "VIDEOS" =
-    userTab !== null
-      ? (userTab === "PHOTOS" && hasPhotos) || (userTab === "VIDEOS" && hasVideos)
-        ? userTab
-        : hasPhotos
-          ? "PHOTOS"
-          : "VIDEOS"
-      : hasPhotos
-        ? "PHOTOS"
-        : "VIDEOS";
+  // Mixed items (photos and videos interleaved without tabs)
+  const displayItems: BtsMixedMediaItem[] = React.useMemo(() => {
+    return mixMediaItems(displayPhotos, displayVideos);
+  }, [displayPhotos, displayVideos]);
 
   // Magnetic button cursor interaction
   const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -230,7 +471,7 @@ export function BtsGallery({
   }, []);
 
   // Strict conditional rendering: If nothing to show, do not render anything at all
-  if (!hasPhotos && !hasVideos) {
+  if (displayItems.length === 0) {
     return null;
   }
 
@@ -242,7 +483,7 @@ export function BtsGallery({
       )}
       {...props}
     >
-      {/* Section Header & Optional Tabs */}
+      {/* Section Header (No tabs per specification) */}
       <div className="mx-auto mb-8 flex max-w-[1700px] flex-col justify-between gap-6 border-b border-border-subtle pb-6 sm:mb-12 sm:flex-row sm:items-end">
         <div>
           <span className="mb-1 block font-serif text-xs italic tracking-widest text-text-muted sm:text-sm">
@@ -252,53 +493,24 @@ export function BtsGallery({
             BTS ARCHIVE
           </h2>
         </div>
-
-        {/* Filter Tabs: Rendered only when both photos and videos are available */}
-        {hasPhotos && hasVideos && (
-          <div
-            role="tablist"
-            aria-label="Behind The Scenes media selector"
-            className="flex items-center gap-2 sm:gap-3"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "PHOTOS"}
-              onClick={() => setUserTab("PHOTOS")}
-              className={cn(
-                "group relative rounded-full px-4 py-2 font-sans text-xs font-bold uppercase tracking-widest transition-all duration-300",
-                "focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:outline-none",
-                activeTab === "PHOTOS"
-                  ? "bg-text-primary text-bg-base shadow-sm"
-                  : "border border-transparent text-text-muted hover:bg-[#111111]/5 hover:text-text-primary",
-              )}
-            >
-              <span>[ PHOTOS ]</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "VIDEOS"}
-              onClick={() => setUserTab("VIDEOS")}
-              className={cn(
-                "group relative rounded-full px-4 py-2 font-sans text-xs font-bold uppercase tracking-widest transition-all duration-300",
-                "focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:outline-none",
-                activeTab === "VIDEOS"
-                  ? "bg-text-primary text-bg-base shadow-sm"
-                  : "border border-transparent text-text-muted hover:bg-[#111111]/5 hover:text-text-primary",
-              )}
-            >
-              <span>[ VIDEOS ]</span>
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Media Content: Photos Tab (Masonry-Style Pinterest Grid matching SampleGallery: 2 columns on small/mobile screens) */}
-      {activeTab === "PHOTOS" && hasPhotos && (
-        <div className="mx-auto max-w-[1700px]">
-          <div className="columns-2 gap-2.5 sm:gap-4 md:columns-3 md:gap-6 lg:columns-4">
-            {displayPhotos.map((item) => (
+      {/* Media Content: Mixed Photos & Videos in Pinterest Masonry Grid */}
+      <div className="mx-auto max-w-[1700px]">
+        <div className="columns-2 gap-2.5 sm:gap-4 md:columns-3 md:gap-6 lg:columns-4">
+          {displayItems.map((item, idx) => {
+            if (item.type === "video") {
+              if (item.youtubeId) {
+                return (
+                  <div key={item.id} className="mb-2.5 break-inside-avoid sm:mb-4 md:mb-6">
+                    <BtsVideoCard video={{ id: item.id, title: item.title, videoId: item.youtubeId }} index={idx} />
+                  </div>
+                );
+              }
+              return <BtsCloudinaryVideoCard key={item.id} item={item} />;
+            }
+
+            return (
               <div
                 key={item.id}
                 className="group relative mb-2.5 break-inside-avoid overflow-hidden rounded-lg border border-border-subtle bg-bg-surface transition-all duration-500 hover:border-text-primary/25 hover:shadow-lg sm:mb-4 sm:rounded-xl md:mb-6"
@@ -323,33 +535,12 @@ export function BtsGallery({
                   />
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
-
-      {/* Media Content: Videos Tab (Responsive 16:9 Video Grid) */}
-      {activeTab === "VIDEOS" && hasVideos && (
-        <div className="mx-auto max-w-[1700px]">
-          <div
-            className={cn(
-              "w-full",
-              displayVideos.length === 1
-                ? "mx-auto max-w-3xl"
-                : displayVideos.length === 2
-                  ? "mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2"
-                  : "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3",
-            )}
-          >
-            {displayVideos.map((video, idx) => (
-              <BtsVideoCard key={video.id} video={video} index={idx} />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* The Teaser Overlay */}
-      {/* Fades from transparent at top to solid Off-White (#F7F7F5) at the bottom */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-bg-base from-15% via-bg-base/85 via-50% to-transparent sm:h-80 md:h-[420px] lg:h-[480px]"

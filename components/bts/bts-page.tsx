@@ -5,17 +5,20 @@ import { cn } from "@/lib/utils";
 import { OptimizedImage } from "@/components/optimized-image";
 import type { CloudinaryResource } from "@/lib/cd";
 import {
+  BtsCloudinaryVideoCard,
   BtsVideoCard,
   getAspectClass,
+  mixMediaItems,
   type BtsPhotoItem,
   type BtsVideoItem,
+  type BtsMixedMediaItem,
   type BtsRawVideo,
 } from "@/components/bts-gallery";
 import { getYouTubeVideoId } from "@/lib/youtube";
 
 export interface BtsPageProps extends React.HTMLAttributes<HTMLElement> {
   initialImages?: CloudinaryResource[];
-  initialVideos?: BtsRawVideo[];
+  initialVideos?: (CloudinaryResource | BtsRawVideo)[];
 }
 
 export function BtsPage({
@@ -29,6 +32,7 @@ export function BtsPage({
     if (!initialImages || initialImages.length === 0) return [];
     return initialImages.map((img, idx) => ({
       id: img.asset_id || img.public_id || `bts-page-photo-${idx}`,
+      type: "image" as const,
       src: img.public_id || img.secure_url,
       alt:
         (typeof img.display_name === "string" && img.display_name) ||
@@ -40,48 +44,61 @@ export function BtsPage({
     }));
   }, [initialImages]);
 
-  // Process all BTS Videos with valid YouTube ID
+  // Process all BTS Videos from Cloudinary or YouTube fallback
   const displayVideos: BtsVideoItem[] = React.useMemo(() => {
     if (!initialVideos || initialVideos.length === 0) return [];
     const valid: BtsVideoItem[] = [];
-    for (const v of initialVideos) {
-      if (!v.youtubeUrl) continue;
-      const id = getYouTubeVideoId(v.youtubeUrl);
-      if (id) {
+
+    for (let idx = 0; idx < initialVideos.length; idx++) {
+      const v = initialVideos[idx];
+
+      // 1. Cloudinary video resource
+      if ("secure_url" in v || "url" in v || ("resource_type" in v && v.resource_type === "video")) {
+        const res = v as CloudinaryResource;
+        const src = res.secure_url || res.url;
+        if (!src) continue;
+        const title =
+          (typeof res.display_name === "string" && res.display_name) ||
+          (typeof res.filename === "string" && res.filename) ||
+          `Behind The Scenes Clip ${valid.length + 1}`;
+
         valid.push({
-          id: v._id || `bts-page-video-${valid.length}`,
-          title: v.title?.trim() || `Behind The Scenes ${valid.length + 1}`,
-          youtubeUrl: v.youtubeUrl,
-          videoId: id,
+          id: res.asset_id || res.public_id || `bts-page-video-${valid.length}`,
+          type: "video",
+          src,
+          title,
+          width: res.width,
+          height: res.height,
+          duration: res.duration,
+          aspectRatio: getAspectClass(res.width, res.height),
         });
+      } else if ("youtubeUrl" in v && v.youtubeUrl) {
+        // 2. YouTube fallback
+        const ytId = getYouTubeVideoId(v.youtubeUrl);
+        if (ytId) {
+          valid.push({
+            id: v._id || `bts-page-video-${valid.length}`,
+            type: "video",
+            src: v.youtubeUrl,
+            title: v.title?.trim() || `Behind The Scenes ${valid.length + 1}`,
+            youtubeId: ytId,
+            aspectRatio: "aspect-video",
+          });
+        }
       }
     }
+
     return valid;
   }, [initialVideos]);
 
-  const hasPhotos = displayPhotos.length > 0;
-  const hasVideos = displayVideos.length > 0;
-
-  // Tab State: null allows derived default based on available content
-  const [userTab, setUserTab] = React.useState<"PHOTOS" | "VIDEOS" | null>(
-    null,
-  );
-
-  const activeTab: "PHOTOS" | "VIDEOS" =
-    userTab !== null
-      ? (userTab === "PHOTOS" && hasPhotos) ||
-        (userTab === "VIDEOS" && hasVideos)
-        ? userTab
-        : hasPhotos
-          ? "PHOTOS"
-          : "VIDEOS"
-      : hasPhotos
-        ? "PHOTOS"
-        : "VIDEOS";
+  // Mixed items (photos and videos interleaved without tabs)
+  const displayItems: BtsMixedMediaItem[] = React.useMemo(() => {
+    return mixMediaItems(displayPhotos, displayVideos);
+  }, [displayPhotos, displayVideos]);
 
   // Strict conditional rendering:
   // If nothing to show do not show a message (zero DOM output)
-  if (!hasPhotos && !hasVideos) {
+  if (displayItems.length === 0) {
     return null;
   }
 
@@ -93,10 +110,8 @@ export function BtsPage({
       )}
       {...props}
     >
-      {/* Editorial Page Header */}
+      {/* Editorial Page Header (No tabs per specification) */}
       <div className="mx-auto mb-10 max-w-[1700px] border-b border-border-subtle pb-8 sm:mb-14 sm:pb-12">
-        {/* Subtle Monograph Category Indicator */}
-
         <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
           <div>
             <h1 className="font-sans text-4xl font-black uppercase tracking-tight text-text-primary sm:text-6xl md:text-7xl lg:text-8xl">
@@ -107,54 +122,25 @@ export function BtsPage({
               chronicles from our editorial sets.
             </p>
           </div>
-
-          {/* Filter Tabs: Rendered only when BOTH photos and videos are available */}
-          {hasPhotos && hasVideos && (
-            <div
-              role="tablist"
-              aria-label="Behind The Scenes media selector"
-              className="flex items-center gap-2 sm:gap-3"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "PHOTOS"}
-                onClick={() => setUserTab("PHOTOS")}
-                className={cn(
-                  "group relative cursor-pointer rounded-full px-5 py-2.5 font-sans text-xs font-bold uppercase tracking-widest transition-all duration-300",
-                  "focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:outline-none",
-                  activeTab === "PHOTOS"
-                    ? "bg-text-primary text-bg-base shadow-sm"
-                    : "border border-transparent text-text-muted hover:bg-[#111111]/5 hover:text-text-primary",
-                )}
-              >
-                <span>[ PHOTOS ]</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "VIDEOS"}
-                onClick={() => setUserTab("VIDEOS")}
-                className={cn(
-                  "group relative cursor-pointer rounded-full px-5 py-2.5 font-sans text-xs font-bold uppercase tracking-widest transition-all duration-300",
-                  "focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:outline-none",
-                  activeTab === "VIDEOS"
-                    ? "bg-text-primary text-bg-base shadow-sm"
-                    : "border border-transparent text-text-muted hover:bg-[#111111]/5 hover:text-text-primary",
-                )}
-              >
-                <span>[ VIDEOS ]</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Media Content: Photos Tab (Masonry-Style Pinterest Grid matching SampleGallery: 2 columns on small/mobile screens) */}
-      {activeTab === "PHOTOS" && hasPhotos && (
-        <div className="mx-auto max-w-[1700px]">
-          <div className="columns-2 gap-2.5 sm:gap-4 md:columns-3 md:gap-6 lg:columns-4">
-            {displayPhotos.map((item) => (
+      {/* Media Content: Mixed Photos & Videos in Pinterest Masonry Grid */}
+      <div className="mx-auto max-w-[1700px]">
+        <div className="columns-2 gap-2.5 sm:gap-4 md:columns-3 md:gap-6 lg:columns-4">
+          {displayItems.map((item, idx) => {
+            if (item.type === "video") {
+              if (item.youtubeId) {
+                return (
+                  <div key={item.id} className="mb-2.5 break-inside-avoid sm:mb-4 md:mb-6">
+                    <BtsVideoCard video={{ id: item.id, title: item.title, videoId: item.youtubeId }} index={idx} />
+                  </div>
+                );
+              }
+              return <BtsCloudinaryVideoCard key={item.id} item={item} />;
+            }
+
+            return (
               <div
                 key={item.id}
                 className="group relative mb-2.5 break-inside-avoid overflow-hidden rounded-lg border border-border-subtle bg-bg-surface transition-all duration-500 hover:border-text-primary/25 hover:shadow-lg sm:mb-4 sm:rounded-xl md:mb-6"
@@ -179,30 +165,10 @@ export function BtsPage({
                   />
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
-
-      {/* Media Content: Videos Tab (Responsive 16:9 Video Grid) */}
-      {activeTab === "VIDEOS" && hasVideos && (
-        <div className="mx-auto max-w-[1700px]">
-          <div
-            className={cn(
-              "w-full",
-              displayVideos.length === 1
-                ? "mx-auto max-w-3xl"
-                : displayVideos.length === 2
-                  ? "mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2"
-                  : "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3",
-            )}
-          >
-            {displayVideos.map((video, idx) => (
-              <BtsVideoCard key={video.id} video={video} index={idx} />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
     </section>
   );
 }
