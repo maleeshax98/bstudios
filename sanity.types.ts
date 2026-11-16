@@ -114,6 +114,7 @@ export type Services = {
   subTitle?: string;
   image?: string;
   description?: string;
+  category?: CategoryReference;
   slug?: Slug;
   publishedAt?: string;
 };
@@ -358,7 +359,7 @@ export type WEDDING_ALBUMS_QUERY_RESULT = Array<{
 
 // Source: ../bstudio/sanity/queries.ts
 // Variable: PAGINATED_ALBUMS_QUERY
-// Query: *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    youtubeLinks,    Media,    count,    duration,    slug,    publishedAt  }
+// Query: *[_type == "album" && (    $category == "ALL" ||    $category == "" ||    !defined($category) ||    lower(category->title) == lower($category) ||    lower(category->title) == lower($categoryNormalized)  )] | order(publishedAt desc, _createdAt desc) [$start...$end] {    _id,    title,    description,    date,    category->{      _id,      title    },    alt,    thumbnail,    cloudinaryFolder,    youtubeLinks,    Media,    count,    duration,    slug,    publishedAt  }
 export type PAGINATED_ALBUMS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -454,6 +455,24 @@ export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
 }>;
 
 // Source: ../bstudio/sanity/queries.ts
+// Variable: PAGINATED_PACKAGES_QUERY
+// Query: *[_type == "package" && (    $category == "ALL" ||    $category == "" ||    !defined($category) ||    category->_id == $category ||    lower(category->title) == lower($category) ||    lower(category->title) == lower($categoryNormalized)  )] | order(order asc, _createdAt asc) [$start...$end] {    _id,    title,    category->{      _id,      title    },    description,    deliverables,    price,    badge,    order,    isHighlited  }
+export type PAGINATED_PACKAGES_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  category: {
+    _id: string;
+    title: string | null;
+  } | null;
+  description: string | null;
+  deliverables: Array<string> | null;
+  price: string | null;
+  badge: string | null;
+  order: number | null;
+  isHighlited: boolean | null;
+}>;
+
+// Source: ../bstudio/sanity/queries.ts
 // Variable: SERVICES_QUERY
 // Query: *[_type == "services"] | order(publishedAt asc, _createdAt asc) {    _id,    title,    subTitle,    description,    image,    slug,    publishedAt  }
 export type SERVICES_QUERY_RESULT = Array<{
@@ -519,12 +538,13 @@ declare global {
     '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUMS_QUERY_RESULT;
     '\n  *[_type == "album" && isFeatured == true] | order(publishedAt desc, _createdAt desc) {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    isFeatured,\n    publishedAt\n  }\n': FEATURED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc)[0...4] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    Media,\n    count,\n    duration,\n    slug,\n    isFeatured,\n    publishedAt\n  }\n': WEDDING_ALBUMS_QUERY_RESULT;
-    '\n  *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': PAGINATED_ALBUMS_QUERY_RESULT;
+    '\n  *[_type == "album" && (\n    $category == "ALL" ||\n    $category == "" ||\n    !defined($category) ||\n    lower(category->title) == lower($category) ||\n    lower(category->title) == lower($categoryNormalized)\n  )] | order(publishedAt desc, _createdAt desc) [$start...$end] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': PAGINATED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "category"] | order(title asc) {\n    _id,\n    title\n  }\n': CATEGORIES_QUERY_RESULT;
     '\n  *[_type == "album" && slug.current == $slug][0] {\n    _id,\n    title,\n    description,\n    date,\n    category->{\n      _id,\n      title\n    },\n    alt,\n    thumbnail,\n    cloudinaryFolder,\n    youtubeLinks,\n    Media,\n    count,\n    duration,\n    slug,\n    publishedAt\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current)] {\n    "slug": slug.current\n  }\n': ALBUM_SLUGS_QUERY_RESULT;
     '\n  *[_type == "package"] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PACKAGES_QUERY_RESULT;
     '\n  *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
+    '\n  *[_type == "package" && (\n    $category == "ALL" ||\n    $category == "" ||\n    !defined($category) ||\n    category->_id == $category ||\n    lower(category->title) == lower($category) ||\n    lower(category->title) == lower($categoryNormalized)\n  )] | order(order asc, _createdAt asc) [$start...$end] {\n    _id,\n    title,\n    category->{\n      _id,\n      title\n    },\n    description,\n    deliverables,\n    price,\n    badge,\n    order,\n    isHighlited\n  }\n': PAGINATED_PACKAGES_QUERY_RESULT;
     '\n  *[_type == "services"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': SERVICES_QUERY_RESULT;
     '\n  *[_type == "colorgrading"] | order(publishedAt asc, _createdAt asc) {\n    _id,\n    title,\n    subTitle,\n    description,\n    image,\n    slug,\n    publishedAt\n  }\n': COLORGRADING_QUERY_RESULT;
     '\n  *[_type == "team"] | order(order asc, publishedAt asc, _createdAt asc) {\n    _id,\n    name,\n    role,\n    image,\n    link,\n    description,\n    order,\n    publishedAt\n  }\n': TEAM_QUERY_RESULT;

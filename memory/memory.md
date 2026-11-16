@@ -2923,3 +2923,197 @@ Implemented BTS Feature 02 according to `context/feature-specs/bts-page/02-updat
 - All code checks, TypeScript compiler, ESLint, and Next.js Webpack production builds are passing with 0 errors.
 
 
+
+---
+
+## 2026-11-16 — Works Page Redesign Feature 01: Category URL Params & Server-Side Filtered Paginated Fetching
+
+### Session Summary
+
+Implemented Works Page Redesign Feature 01 according to `context/redesign/01-wroks-page.md`. Removed the media format filter tabs (`[ PHOTOS ]`, `[ VIDEOS ]`, `[ MIXED ]`) from the UI and filter states, simplifying the header filtering strictly to a single row of Shoot Category tabs (`CATEGORY: [ ALL ] [ WEDDING ] ...`). Created `fetchWorksByCategory(category, start, limit)` to perform server-side paginated queries rather than filtering records in-memory in the client. Updated `PAGINATED_ALBUMS_QUERY` in `bstudio/sanity/queries.ts` to support optional category filtering with case-insensitivity and hyphen/space normalization (`lower(category->title) == lower($category) || lower(category->title) == lower($categoryNormalized)`). Ran Sanity TypeGen in `studio/`, updating query definitions in `bstudio/sanity.types.ts`. Enhanced the Route Handler `GET /api/albums` and server action `fetchMoreAlbums` to accept `category`, querying Sanity for the requested category slice. Integrated browser URL synchronization using `window.history.pushState(null, "", ...)` so selecting a category sets `?category=...` in the URL (and cleans up to `/works` for "ALL"), enabling effortless link sharing without triggering App Router page flashes or server action re-renders. Added a `popstate` event listener to handle browser back/forward navigation. Configured Server Component `Page` on `/works` (`app/works/page.tsx`) to read `searchParams.category` and fetch the initial 6 albums for the requested category on the server, hydrating `<WorksPage initialCategory={...} initialAlbums={...} />` for fast SSR and SEO. Added in-place `SkeletonCard` placeholders during category transitions and refined the empty state with a "Reset Filters" action. Verified with TypeScript strict checks across both workspaces, ESLint (0 errors, 5 pre-existing warnings in unrelated files), and a full Next.js Webpack production build compiling all 15 routes cleanly.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Sanity Studio Query & TypeGen Integration:
+    - Updated `PAGINATED_ALBUMS_QUERY` in `bstudio/sanity/queries.ts` to filter by category when `$category` is provided and not "ALL", matching both exact title casing and hyphen/space normalized variants.
+    - Executed `npx sanity typegen generate` in `studio/`, updating query types in `bstudio/sanity.types.ts`.
+  - Server-Side Route Handler & Actions:
+    - `app/api/albums/route.ts`: Updated GET route handler to parse `category` query parameter and pass `category` and `categoryNormalized` to `PAGINATED_ALBUMS_QUERY`.
+    - `lib/actions.ts`: Updated `fetchMoreAlbums(start, limit, category)` with category support as an API fallback.
+  - Server-Side Initial Data Fetching on `/works` (`app/works/page.tsx`):
+    - Configured Server Component `Page` to accept `searchParams: Promise<{ category?: string }>` (Next.js 15/16 App Router standard).
+    - Fetches initial 6 albums matching the category on the server, passing `initialCategory` and `initialAlbums` to `<WorksPage />`.
+  - Editorial Works Page Component (`components/works/works-page.tsx`):
+    - Removed `[ PHOTOS ]`, `[ VIDEOS ]`, and `[ MIXED ]` format tabs and `activeMedia` filter state completely.
+    - Simplified header filtering to a single row of Shoot Category tabs (`CATEGORY: [ ALL ] [ WEDDING ] ...`).
+    - Implemented `fetchWorksByCategory(category, start, limit)` to fetch paginated albums from the server.
+    - Replaced frontend in-memory filtering (`allProjects.filter(...)`) with direct rendering of server-fetched category albums.
+    - Integrated URL parameter synchronization via `window.history.pushState` with lowercase hyphenated slugs (e.g., `?category=wedding`), allowing users to copy and share direct links.
+    - Added `popstate` window event listener to synchronize category selection when using browser back/forward navigation.
+    - Updated infinite scroll sentinel (`loadMoreAlbums`) to paginate records for the currently active category.
+    - Added in-place `SkeletonCard` placeholders during category switching for smooth visual feedback.
+    - Refined empty state with contextual messaging and "Reset Filters" action.
+  - Progress Tracker & Documentation:
+    - Updated `context/progress-tracker.md` to record the completed feature and reset active progress.
+    - Updated `memory/memory.md` with session summary, architectural decisions, and verification results.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - TypeScript strict check in `studio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly including dynamic routes `ƒ /works` and `ƒ /api/albums`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Server-Side Filtered Pagination over Client Filtering:** Previously, `WorksPage` loaded albums without category filtering and filtered in-memory via `.filter(...)`. This broke pagination when a user selected a specific category because earlier or later albums in that category were not in memory. Fetching from the server per category guarantees complete, accurate archives and consistent infinite scrolling across all categories.
+- **`window.history.pushState` vs `router.push`:** In Next.js App Router, invoking `router.push` with search params can trigger an App Router server action flight that re-renders server components and triggers `<Suspense fallback={<WorksFallback />}>`, causing layout flashes. Using `window.history.pushState(null, "", url)` updates the browser URL and history instantly without triggering unwanted server re-renders, while still allowing users to copy and share the URL.
+- **Server Component `searchParams` Pre-population:** When a user visits or shares a link like `/works?category=wedding`, the Server Component reads `searchParams.category` and fetches the initial 6 wedding albums during SSR, eliminating client-side layout pop and supporting instant rendering.
+- **Single Category Filter Row:** Removing the photos/videos format filter simplifies the portfolio browsing experience and gives prominence to B'STUDIO's editorial shoot categories.
+
+### Continuation Context
+
+- Works Page (`/works`) now filters exclusively by shoot category, with URL parameter synchronization (`?category=...`).
+- Data fetching is server-driven via `/api/albums?start=...&limit=...&category=...` and Sanity GROQ query `PAGINATED_ALBUMS_QUERY`.
+- All code checks, TypeScript compilers, ESLint, and Next.js Webpack production builds are passing with 0 errors.
+
+---
+
+## 2026-11-16 — Responsive Feature: Works Page 2-Column Grid Layout on Small Screens
+
+### Session Summary
+
+Implemented a responsive 2-column grid layout for album cards on the `/works` page for small screens according to `context/responsive/03-works-page-2-column.md`. Converted the single-column mobile presentation (`grid-cols-1`) into a 2-column grid (`grid-cols-2 md:grid-cols-2 lg:grid-cols-3`) across the active gallery grid, category transition loading skeleton grid in `components/works/works-page.tsx`, and the server-side fallback skeleton grid (`WorksFallback`) in `app/works/page.tsx`. Harmonized column gaps and margins across viewports (`gap-3 sm:gap-6 md:gap-8 lg:gap-12` and container padding `px-3 sm:px-6 md:px-8 lg:px-12`). Proportionately scaled all card elements for the narrower 2-column mobile dimensions: refined border radius (`rounded-xl sm:rounded-2xl`), scaled top-left Share button (`top-2 left-2 w-7 h-7`), top-right media format badge (`top-2 right-2 px-2 py-0.5 text-[9px]`), bottom floating video play indicator (`bottom-2.5 right-2.5 w-7 h-7`), metadata typography (`text-[9px] sm:text-[11px]` with `truncate` on category), and album title typography (`text-base sm:text-xl md:text-2xl lg:text-[1.65rem] line-clamp-2 leading-snug sm:leading-tight`). Updated `OptimizedImage` `sizes` to `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw` so Next.js and Cloudinary CDN deliver half-viewport image dimensions (~170-200px) on mobile rather than oversized 100vw assets, cutting mobile image download payload by ~50%. Verified with TypeScript compiler checks, ESLint, and a full Next.js Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - 2-Column Responsive Grid Architecture (`components/works/works-page.tsx` & `app/works/page.tsx`):
+    - Converted single-card vertical column layout (`grid-cols-1`) on mobile/small screens into a 2-column grid (`grid-cols-2 md:grid-cols-2 lg:grid-cols-3`) across active album cards, category loading skeletons, and SSR fallback skeleton grid (`WorksFallback`).
+    - Configured proportional responsive gaps (`gap-3 sm:gap-6 md:gap-8 lg:gap-12`) and horizontal page margins (`px-3 sm:px-6 md:px-8 lg:px-12`).
+  - Mobile Card Proportions & Typography Scaling (`AlbumCard` & `SkeletonCard`):
+    - Border radius: scaled to `rounded-xl sm:rounded-2xl` matching modern editorial design standards.
+    - Share button: scaled to `top-2 left-2 w-7 h-7` with `w-3 h-3` stroke icon (`sm:top-3.5 sm:left-3.5 sm:w-8 sm:h-8`).
+    - Top media badge: scaled to `top-2 right-2 px-2 py-0.5 text-[9px]` with `w-2.5 h-2.5` stroke icon (`sm:top-3.5 sm:right-3.5 sm:px-3 sm:py-1 sm:text-[10px]`).
+    - Bottom video play indicator: scaled to `bottom-2.5 right-2.5 w-7 h-7` with `w-3 h-3` play icon (`sm:bottom-4 sm:right-4 sm:w-10 sm:h-10`).
+    - Metadata: scaled to `text-[9px] sm:text-[11px]`, with `truncate` on category title to guard against multiline overflow in narrow cards.
+    - Album title: scaled to `text-base sm:text-xl md:text-2xl lg:text-[1.65rem] line-clamp-2 leading-snug sm:leading-tight`.
+    - SkeletonCard: updated thumbnail, badges, metadata, and title skeletons to match the 2-column proportions.
+  - Responsive Asset Size Optimization:
+    - Updated `OptimizedImage` `sizes` to `(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw`, saving ~50% mobile bandwidth per album card.
+  - Progress Tracker & Documentation:
+    - Updated `context/progress-tracker.md` to record the completed responsive feature and reset active progress.
+    - Updated `memory/memory.md` with session summary, architectural decisions, and verification results.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **2-Column Mobile Grid (`grid-cols-2`):** Previously, `/works` stacked large full-width album cards vertically on small screens (`grid-cols-1`). Shifting to `grid-cols-2` creates an engaging discovery grid consistent with `<SampleGallery />`, `<BtsGallery />`, and single album masonry (`/album/[slug]`), dramatically reducing scrolling friction on mobile devices.
+- **Proportional Component Scaling:** Placing cards in half-width mobile columns requires scaling down font sizes, corner radii, and badges so that titles don't wrap excessively and overlays don't cover the thumbnail imagery.
+- **Downscaled Asset Sizing (`50vw`):** Setting `50vw` on mobile informs Next.js Image optimization and Cloudinary CDN to deliver appropriately sized thumbnail dimensions rather than full-width (375-430px) assets.
+
+### Continuation Context
+
+- The `/works` page now displays a responsive 2-column grid on mobile screens (`grid-cols-2 md:grid-cols-2 lg:grid-cols-3`) with optimized asset loading.
+- All code checks, TypeScript compilers, ESLint, and Next.js Webpack production builds are passing with 0 errors.
+
+
+---
+
+## 2026-11-16 — Packages Page Redesign Feature 02: Category URL Params, Server-Side Filtered Paginated Fetching, Remove Format Filter, and 2-Column Mobile Grid
+
+### Session Summary
+
+Implemented the Packages Page Redesign according to `context/redesign/02-packages.md`. Migrated the `/packages` page from client-side in-memory filtering (`packages.filter(...)`) to server-side paginated queries (`PAGINATED_PACKAGES_QUERY` and `/api/packages`), added dynamic URL parameter synchronization (`?category=...`) via `window.history.pushState` and `popstate` for direct link sharing, confirmed complete absence of photos/videos format filters, and converted the mobile packages card presentation into a balanced 2-column grid (`grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8 lg:gap-10`) with proportionally scaled typography, badges, inclusions, and WhatsApp inquiry buttons. Added SSR initial data pre-fetching based on `searchParams.category` in `app/packages/page.tsx` wrapped in `<Suspense fallback={<PackagesFallback />}>`. Verified end-to-end with TypeScript strict checks in `bstudio/` and `studio/`, ESLint, and a full Next.js Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Sanity Studio Query & TypeGen Integration:
+    - Added `PAGINATED_PACKAGES_QUERY` to `sanity/queries.ts` supporting category filtering (`$category == "ALL" || $category == "" || !defined($category) || category->_id == $category || lower(category->title) == lower($category) || lower(category->title) == lower($categoryNormalized)`) with pagination slice `[$start...$end]`.
+    - Executed `pnpm run typegen` in `studio/`, generating `PAGINATED_PACKAGES_QUERY_RESULT` in `bstudio/sanity.types.ts`.
+  - Dedicated Route Handler & Server Action (`app/api/packages/route.ts` & `lib/actions.ts`):
+    - Created GET Route Handler `/api/packages` accepting `start`, `limit`, and `category` query parameters, querying Sanity with `PAGINATED_PACKAGES_QUERY`.
+    - Added `fetchMorePackages` in `lib/actions.ts` with matching category and pagination support as a reliable fallback.
+  - Server-Side Data Fetching on `/packages` (`app/packages/page.tsx`):
+    - Configured Server Component `Page` to read `searchParams.category`, querying the initial 6 packages for the requested category on the server.
+    - Wrapped `<PackagesGallery />` in `<Suspense fallback={<PackagesFallback />}>` for partial prerendering and instant SSR loading.
+    - Created `PackagesFallback` rendering skeleton cards in the 2-column mobile / 3-column desktop layout.
+    - Passed `initialCategory`, `initialCategories`, and `initialPackages` to `<PackagesPage />`.
+  - Editorial Packages Page Component (`components/packages/packages-page.tsx`):
+    - Server-side paginated queries: Replaced client-side in-memory `packages.filter(...)` with `fetchPackagesByCategory(category, start, limit)`.
+    - Category URL Params Synchronization: Integrated browser URL search params update via `window.history.pushState(null, "", ...)` allowing users to copy and share category-filtered URLs (e.g. `/packages?category=wedding`) without triggering page reloads.
+    - Added `popstate` event listener for seamless browser back/forward navigation.
+    - Removed format filters: Guaranteed zero photos or videos filter tabs exist per specification, maintaining a clean single row of Category tabs (`[ ALL ] [ WEDDING ] ...`).
+    - Infinite scroll sentinel: Wired bottom intersection observer to paginate packages for the currently active category when `hasMore` is true.
+    - In-place skeleton indicators: Added `PackageSkeletonCard` placeholders during category switching and pagination.
+    - Refined empty state: Contextual messaging (`No data to load`) and direct WhatsApp bespoke quote CTA when no tiers exist for a category.
+  - Responsive 2-Column Grid Layout on Small Screens:
+    - Converted packages card layout into a 2-column grid on mobile (`grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 md:gap-8 lg:gap-10`).
+    - Scaled card proportions for mobile screens:
+      - Padding: `p-3.5 sm:p-6 md:p-8 lg:p-10`, rounded corners: `rounded-xl sm:rounded-2xl`.
+      - Index & Badge: `text-[10px] sm:text-base`, badge `text-[8px] sm:text-[10px] px-1.5 py-0.5 sm:px-2.5 sm:py-1`.
+      - Title: `text-sm sm:text-xl md:text-2xl lg:text-[1.85rem] leading-tight line-clamp-2`.
+      - Price: `text-base sm:text-2xl md:text-3xl lg:text-[2.5rem] leading-none mt-2 sm:mt-4`.
+      - Description: `text-xs sm:text-sm md:text-base line-clamp-3 sm:line-clamp-none`.
+      - Inclusions: `text-[9px] sm:text-xs`, check icon `w-3 h-3 sm:w-3.5 sm:h-3.5`, `space-y-1.5 sm:space-y-3`.
+      - Inquire button: `py-2.5 sm:py-3.5 md:py-4 px-2 sm:px-4 md:px-6 text-[9px] sm:text-xs`.
+      - Synchronized `PackageSkeletonCard` with matching 2-column mobile dimensions.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - TypeScript strict check in `studio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly including dynamic routes `ƒ /packages` and `ƒ /api/packages`.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **Server-Side Filtered Pagination over Client Memory Filtering:** Previously, `PackagesPage` loaded all packages into client state and performed frontend filtering. With `PAGINATED_PACKAGES_QUERY` and `/api/packages`, package collections are queried server-side and paginated per category, eliminating memory overhead and supporting scalable datasets.
+- **`window.history.pushState` for URL Sharing:** Using `window.history.pushState(null, "", url)` updates the browser URL and history instantly without triggering Next.js App Router server action flight re-renders, enabling immediate link copying and sharing (e.g. `/packages?category=wedding`) while preserving client state.
+- **SSR `searchParams` Pre-population:** The Server Component in `app/packages/page.tsx` resolves `searchParams.category` on the server and retrieves the initial 6 packages during SSR, ensuring users who follow shared links receive instantly rendered, pre-filtered packages with zero Cumulative Layout Shift (CLS).
+- **2-Column Mobile Grid (`grid-cols-2`):** Shifting from a 1-column mobile stack to a 2-column mobile grid aligns the Packages page with the Works page and Masonry galleries, while carefully scaled typography, badges, and padding ensure all tier deliverables fit legibly.
+
+### Continuation Context
+
+- The `/packages` page now filters exclusively by shoot category, with URL parameter synchronization (`?category=...`), server-side paginated queries via `/api/packages`, and a responsive 2-column mobile layout.
+- All code checks, TypeScript compilers, ESLint, and Next.js Webpack production builds are passing with 0 errors.
+
+
+---
+
+## 2026-11-16 — Packages Page Layout Refinement: 1-Card Mobile Layout Reversion
+
+### Session Summary
+
+Per user direction ("lets go back to showing 1 card grid in small screens"), reverted the packages page mobile card presentation from a 2-column grid back to a 1-card per row layout (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10`) across the active cards grid, category loading skeletons in `components/packages/packages-page.tsx`, and the server-side fallback (`PackagesFallback`) in `app/packages/page.tsx`. Anchored package cards to an elegant centered container (`w-full max-w-md mx-auto`) and restored full-scale luxury typography, padding, and spacing for mobile viewports (`p-6 sm:p-8 lg:p-10`, `text-2xl sm:text-3xl` titles, `text-3xl sm:text-4xl` pricing, and `py-3.5 sm:py-4` inquiry CTA buttons). Updated `context/redesign/02-packages.md`, `context/progress-tracker.md`, and verified end-to-end with TypeScript checks, ESLint, and a full Next.js Webpack production build.
+
+### Implementation State
+
+- **Completed & Verified:**
+  - Layout Grid on Packages Page (`components/packages/packages-page.tsx` & `app/packages/page.tsx`):
+    - Reverted mobile presentation from `grid-cols-2` back to single card per row (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10`) across active gallery cards, category loading skeletons, and SSR fallback (`PackagesFallback`).
+    - Centered mobile cards (`w-full max-w-md mx-auto`) with proportional breathing room and balanced line lengths.
+    - Restored full-scale typography and spacing: `p-6 sm:p-8 lg:p-10`, `text-2xl sm:text-3xl` titles, `text-3xl sm:text-4xl` pricing display, `text-xs uppercase tracking-wide` inclusions with `w-3.5 h-3.5` check icons, and `py-3.5 sm:py-4 px-6` inquiry CTA buttons.
+    - Updated `PackageSkeletonCard` placeholders to match the 1-card mobile / multi-column desktop dimensions.
+  - Verification:
+    - TypeScript strict check in `bstudio/` (`pnpm exec tsc --noEmit`): passed with 0 errors.
+    - ESLint check in `bstudio/` (`pnpm lint`): passed with 0 errors.
+    - Next.js Webpack production build (`pnpm exec next build --webpack` in `bstudio/`): compiled and prerendered all 15 routes cleanly.
+- **Incomplete / Next:**
+  - Awaiting next user instruction.
+
+### Decisions & Rationale
+
+- **1-Card Layout for Packages on Mobile (`grid-cols-1`):** While photo masonry galleries (e.g. `/works`, `/bts`, `/album/[slug]`) thrive in 2 columns on small screens, detailed package tiers containing lengthy deliverables lists, price typography, descriptions, and CTA inquiry buttons are much more readable and visually impactful in a single centered card per row on mobile screens.
+
+### Continuation Context
+
+- The `/packages` page now renders 1 card per row on small screens (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) with server-side paginated queries and URL category parameter synchronization intact.
+- All code checks, TypeScript compilers, ESLint, and Next.js Webpack production builds are passing with 0 errors.

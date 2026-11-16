@@ -4,160 +4,317 @@ import * as React from "react";
 import gsap from "gsap";
 import { ArrowUpRight, Check, Sparkles, PackageOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { client } from "@/sanity/client";
-import { CATEGORIES_QUERY, PACKAGES_BY_CATEGORY_QUERY } from "@/sanity/queries";
+import { fetchMorePackages } from "@/lib/actions";
 import type {
   CATEGORIES_QUERY_RESULT,
-  PACKAGES_QUERY_RESULT,
+  PAGINATED_PACKAGES_QUERY_RESULT,
 } from "@/sanity.types";
 
 export type CategoryItem = CATEGORIES_QUERY_RESULT[number];
-export type PackageItem = PACKAGES_QUERY_RESULT[number];
+export type PackageItem = PAGINATED_PACKAGES_QUERY_RESULT[number];
 
 export interface PackagesPageProps {
   initialCategories?: CategoryItem[];
   initialPackages?: PackageItem[];
+  initialCategory?: string;
 }
+
+/**
+ * Finds a matching category title or value given a URL parameter (e.g. "pre-shoot" -> "PRE SHOOT").
+ */
+function findMatchingCategory(
+  param: string,
+  categories: { label: string; value: string; id?: string }[],
+): string {
+  const normalized = param.trim().toLowerCase().replace(/-/g, " ");
+  const found = categories.find((c) => {
+    const tabNorm = c.value.trim().toLowerCase().replace(/-/g, " ");
+    return (
+      tabNorm === normalized ||
+      c.id === param ||
+      c.value.toLowerCase() === param.toLowerCase()
+    );
+  });
+  return found ? found.value : "ALL";
+}
+
+// ============================================================================
+// Skeleton Card Component for 1-Card Mobile & Multi-Column Desktop Layout
+// ============================================================================
+
+export function PackageSkeletonCard() {
+  return (
+    <div
+      aria-hidden="true"
+      className="package-skeleton relative flex flex-col justify-between w-full max-w-md mx-auto select-none rounded-xl sm:rounded-2xl border border-border-subtle bg-bg-surface/20 p-6 sm:p-8 lg:p-10 animate-pulse"
+    >
+      <div>
+        {/* Top index skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-4 w-10 rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+          <div className="h-5 w-16 rounded-full bg-[#DFDFDC] dark:bg-bg-surface" />
+        </div>
+        {/* Title skeleton */}
+        <div className="h-7 sm:h-8 w-3/4 rounded bg-[#DFDFDC] dark:bg-bg-surface mb-3" />
+        {/* Price skeleton */}
+        <div className="h-8 sm:h-10 w-1/2 rounded bg-[#DFDFDC] dark:bg-bg-surface mb-5" />
+        {/* Divider */}
+        <div className="h-px w-full bg-border-subtle my-5 sm:my-6" />
+        {/* Description skeleton */}
+        <div className="space-y-2 my-5 sm:my-6">
+          <div className="h-3 w-full rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+          <div className="h-3 w-5/6 rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+        </div>
+        {/* Inclusions header */}
+        <div className="h-2.5 w-28 rounded bg-[#DFDFDC] dark:bg-bg-surface mb-4" />
+        {/* Deliverables skeleton */}
+        <div className="space-y-3">
+          <div className="h-3 w-4/5 rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+          <div className="h-3 w-3/4 rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+          <div className="h-3 w-2/3 rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+        </div>
+      </div>
+      {/* Button skeleton */}
+      <div className="mt-8 sm:mt-10 pt-6 border-t border-border-subtle">
+        <div className="h-11 sm:h-12 w-full rounded bg-[#DFDFDC] dark:bg-bg-surface" />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Packages Page Component
+// ============================================================================
 
 export function PackagesPage({
   initialCategories = [],
   initialPackages = [],
+  initialCategory,
 }: PackagesPageProps) {
-  const [categories, setCategories] =
-    React.useState<CategoryItem[]>(initialCategories);
-  const [packages, setPackages] =
-    React.useState<PackageItem[]>(initialPackages);
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string>(
-    () => initialCategories[0]?._id || "",
-  );
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
-
-  const [prevCategories, setPrevCategories] = React.useState(initialCategories);
-  if (initialCategories !== prevCategories) {
-    setPrevCategories(initialCategories);
-    setCategories(initialCategories);
-    if (!selectedCategoryId && initialCategories[0]?._id) {
-      setSelectedCategoryId(initialCategories[0]._id);
-    }
-  }
-
-  const [prevPackages, setPrevPackages] = React.useState(initialPackages);
-  if (initialPackages !== prevPackages) {
-    setPrevPackages(initialPackages);
-    setPackages(initialPackages);
-  }
-
   const containerRef = React.useRef<HTMLDivElement>(null);
   const cardsGridRef = React.useRef<HTMLDivElement>(null);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
 
-  // If initialCategories was empty, fetch categories on mount
-  React.useEffect(() => {
-    if (categories.length > 0) return;
+  // Compute category tabs: prepend [ ALL ] followed by categories from Sanity
+  const categoryTabs = React.useMemo<{ label: string; value: string; id?: string }[]>(() => {
+    const tabs: { label: string; value: string; id?: string }[] = [
+      { label: "ALL", value: "ALL", id: "ALL" },
+    ];
+    const seen = new Set<string>(["ALL"]);
 
-    let isMounted = true;
-    async function loadCategories() {
-      try {
-        const fetched: CategoryItem[] = await client.fetch(CATEGORIES_QUERY);
-        if (isMounted && fetched && fetched.length > 0) {
-          setCategories(fetched);
-          setSelectedCategoryId((current) => current || fetched[0]._id);
-        }
-      } catch (err) {
-        console.warn("Could not fetch categories on client:", err);
+    initialCategories.forEach((cat) => {
+      const title = cat.title?.trim();
+      if (title && !seen.has(title.toUpperCase())) {
+        seen.add(title.toUpperCase());
+        tabs.push({
+          label: title,
+          value: title,
+          id: cat._id,
+        });
       }
-    }
-
-    loadCategories();
-    return () => {
-      isMounted = false;
-    };
-  }, [categories.length]);
-
-  const effectiveCategoryId = selectedCategoryId || categories[0]?._id || "";
-
-  // Resolve currently selected category
-  const selectedCategory = React.useMemo(() => {
-    return (
-      categories.find((c) => c._id === effectiveCategoryId) ||
-      categories[0] ||
-      null
-    );
-  }, [categories, effectiveCategoryId]);
-
-  // Filter packages for the selected category
-  const activePackages = React.useMemo(() => {
-    if (!selectedCategory) return [];
-
-    return packages.filter((pkg) => {
-      if (!pkg.category) return false;
-      if (pkg.category._id === selectedCategory._id) return true;
-      if (
-        pkg.category.title &&
-        selectedCategory.title &&
-        pkg.category.title.trim().toLowerCase() ===
-          selectedCategory.title.trim().toLowerCase()
-      ) {
-        return true;
-      }
-      return false;
     });
-  }, [packages, selectedCategory]);
 
-  // Fetch from Sanity when selecting a category if no packages exist in local state
+    return tabs;
+  }, [initialCategories]);
+
+  // Initial active category resolved from searchParams or default to ALL
+  const [activeCategory, setActiveCategory] = React.useState<string>(() => {
+    if (initialCategory) {
+      return findMatchingCategory(initialCategory, categoryTabs);
+    }
+    return "ALL";
+  });
+
+  const [packages, setPackages] = React.useState<PackageItem[]>(initialPackages || []);
+  const [hasMore, setHasMore] = React.useState<boolean>(
+    (initialPackages?.length ?? 0) >= 6,
+  );
+  const [isCategoryLoading, setIsCategoryLoading] = React.useState<boolean>(false);
+  const [isLoadingMore, setIsLoadingMore] = React.useState<boolean>(false);
+
+  const prevInitialPackagesRef = React.useRef(initialPackages);
+
+  // Synchronize initialPackages when updated from fresh route or live revalidation
   React.useEffect(() => {
-    if (!selectedCategory) return;
-
-    let isMounted = true;
-
-    async function ensureCategoryPackages() {
-      // Check if we already have matching packages in state
-      const hasMatch = packages.some((p) => {
-        if (!p.category) return false;
-        return (
-          p.category._id === selectedCategory?._id ||
-          (p.category.title &&
-            selectedCategory?.title &&
-            p.category.title.trim().toLowerCase() ===
-              selectedCategory.title.trim().toLowerCase())
-        );
+    if (initialPackages && initialPackages !== prevInitialPackagesRef.current) {
+      prevInitialPackagesRef.current = initialPackages;
+      setPackages((prev) => {
+        if (prev.length <= (initialPackages.length || 6)) {
+          return initialPackages;
+        }
+        const incomingIds = new Set(initialPackages.map((p) => p._id));
+        const remaining = prev.filter((p) => !incomingIds.has(p._id));
+        return [...initialPackages, ...remaining];
       });
+      setHasMore((initialPackages.length ?? 0) >= 6);
+    }
+  }, [initialPackages]);
 
-      if (hasMatch) return;
+  /**
+   * Fetches paginated packages filtered by category from the server.
+   * Keeps data fetching server-side rather than filtering in client-side memory.
+   */
+  const fetchPackagesByCategory = React.useCallback(
+    async (category: string, start = 0, limit = 6) => {
+      const catParam =
+        category === "ALL" ? "" : `&category=${encodeURIComponent(category)}`;
+      const res = await fetch(`/api/packages?start=${start}&limit=${limit}${catParam}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch packages for category: ${category}`);
+      }
+      return (await res.json()) as {
+        packages: PackageItem[];
+        hasMore: boolean;
+      };
+    },
+    [],
+  );
 
+  /**
+   * Category tab click handler:
+   * 1. Updates URL params with clean slug/query param for sharing without page refresh.
+   * 2. Triggers server-side paginated fetching for the selected category.
+   */
+  const handleCategorySelect = React.useCallback(
+    async (newCategory: string) => {
+      if (newCategory === activeCategory && !isCategoryLoading) return;
+
+      setActiveCategory(newCategory);
+
+      // Update browser URL search params without full page reload so users can share the page
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (newCategory === "ALL") {
+          url.searchParams.delete("category");
+        } else {
+          // Clean lowercase hyphenated param for URL sharing (e.g. "wedding", "pre-shoot")
+          const urlParam = newCategory.toLowerCase().replace(/\s+/g, "-");
+          url.searchParams.set("category", urlParam);
+        }
+        window.history.pushState(null, "", url.toString());
+      }
+
+      // Fetch relevant packages filtered by the category from the server
+      setIsCategoryLoading(true);
       try {
-        setIsLoading(true);
-        const fetched: PackageItem[] = await client.fetch(
-          PACKAGES_BY_CATEGORY_QUERY,
-          {
-            categoryId: selectedCategory._id,
-            category: selectedCategory.title || "",
-          },
+        const res = await fetchPackagesByCategory(newCategory, 0, 6);
+        setPackages(res.packages || []);
+        setHasMore(res.hasMore ?? ((res.packages || []).length >= 6));
+      } catch (err) {
+        console.warn(
+          "API route /api/packages failed, falling back to server action:",
+          err,
         );
+        try {
+          const fallbackRes = await fetchMorePackages(0, 6, newCategory);
+          setPackages(fallbackRes.packages || []);
+          setHasMore(fallbackRes.hasMore);
+        } catch (fallbackErr) {
+          console.error("All fetch attempts failed for category:", fallbackErr);
+          setPackages([]);
+          setHasMore(false);
+        }
+      } finally {
+        setIsCategoryLoading(false);
+      }
+    },
+    [activeCategory, isCategoryLoading, fetchPackagesByCategory],
+  );
 
-        if (isMounted && fetched && fetched.length > 0) {
+  // Listen for browser Back/Forward navigation to update category and fetch relevant packages
+  React.useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const catParam = params.get("category");
+      if (!catParam) {
+        if (activeCategory !== "ALL") {
+          handleCategorySelect("ALL");
+        }
+      } else {
+        const match = findMatchingCategory(catParam, categoryTabs);
+        if (match !== activeCategory) {
+          handleCategorySelect(match);
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeCategory, categoryTabs, handleCategorySelect]);
+
+  /**
+   * Infinite scroll pagination: Loads more packages for active category
+   */
+  const loadMorePackages = React.useCallback(async () => {
+    if (isLoadingMore || !hasMore || isCategoryLoading) return;
+
+    setIsLoadingMore(true);
+    const start = packages.length;
+
+    try {
+      const res = await fetchPackagesByCategory(activeCategory, start, 6);
+      const newItems = res.packages || [];
+
+      if (newItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setPackages((prev) => {
+          const existingIds = new Set(prev.map((p) => p._id));
+          const uniqueNew = newItems.filter((p) => !existingIds.has(p._id));
+          return [...prev, ...uniqueNew];
+        });
+        setHasMore(res.hasMore ?? (newItems.length >= 6));
+      }
+    } catch (err) {
+      console.warn("Failed to load more packages via API, trying server action:", err);
+      try {
+        const fallbackRes = await fetchMorePackages(start, 6, activeCategory);
+        const fallbackItems = fallbackRes.packages || [];
+        if (fallbackItems.length === 0) {
+          setHasMore(false);
+        } else {
           setPackages((prev) => {
             const existingIds = new Set(prev.map((p) => p._id));
-            const newItems = fetched.filter((p) => !existingIds.has(p._id));
-            return [...prev, ...newItems];
+            const uniqueNew = fallbackItems.filter((p) => !existingIds.has(p._id));
+            return [...prev, ...uniqueNew];
           });
+          setHasMore(fallbackRes.hasMore);
         }
-      } catch (err) {
-        console.warn("Could not fetch packages for category:", err);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+      } catch (fallbackErr) {
+        console.error("All loadMore attempts failed:", fallbackErr);
+        setHasMore(false);
       }
+    } finally {
+      setIsLoadingMore(false);
     }
+  }, [
+    isLoadingMore,
+    hasMore,
+    isCategoryLoading,
+    packages.length,
+    activeCategory,
+    fetchPackagesByCategory,
+  ]);
 
-    ensureCategoryPackages();
+  // Infinite scroll intersection observer
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCategory, packages]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isCategoryLoading) {
+          loadMorePackages();
+        }
+      },
+      { rootMargin: "300px" },
+    );
 
-  // GSAP animation when switching categories: clean fade-in and subtle upward glide
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, isCategoryLoading, loadMorePackages]);
+
+  // GSAP animation when switching categories or updating packages
   React.useEffect(() => {
     if (!cardsGridRef.current) return;
 
@@ -173,7 +330,7 @@ export function PackagesPage({
             opacity: 1,
             y: 0,
             duration: 0.45,
-            stagger: 0.06,
+            stagger: 0.05,
             ease: "power2.out",
           },
         );
@@ -181,9 +338,10 @@ export function PackagesPage({
     }, containerRef);
 
     return () => ctx.revert();
-  }, [selectedCategoryId, activePackages]);
+  }, [activeCategory, packages.length]);
 
-  const selectedCategoryTitle = selectedCategory?.title || "COLLECTION";
+  const activeCategoryTitle =
+    activeCategory === "ALL" ? "COLLECTION" : activeCategory;
 
   return (
     <div
@@ -191,7 +349,7 @@ export function PackagesPage({
       className="relative w-full min-h-screen bg-bg-base text-text-primary selection:bg-text-primary selection:text-bg-base"
     >
       {/* 1. The Editorial Header */}
-      <section className="relative w-full pt-28 sm:pt-36 md:pt-40 pb-12 sm:pb-16 px-6 sm:px-8 lg:px-12">
+      <section className="relative w-full pt-28 sm:pt-36 md:pt-40 pb-12 sm:pb-16 px-3 sm:px-6 md:px-8 lg:px-12">
         <div className="max-w-7xl mx-auto">
           {/* Subtle Monograph Index */}
           <div className="flex items-center gap-3 mb-6 sm:mb-8 text-xs font-sans font-bold tracking-[0.25em] text-text-muted uppercase">
@@ -214,28 +372,28 @@ export function PackagesPage({
         </div>
       </section>
 
-      {/* 2. The Service Selection (Categories Navigation - wrapped, no horizontal scroll) */}
+      {/* 2. The Service Selection (Categories Navigation - wrapped, no horizontal scroll, NO photos/videos filter) */}
       <nav
         aria-label="Package Categories"
-        className=" top-16 sm:top-20 z-30 w-full bg-bg-base/95 backdrop-blur-md border-y border-border-subtle py-4 px-6 sm:px-8 lg:px-12 transition-colors duration-200"
+        className="top-16 sm:top-20 z-30 w-full bg-bg-base/95 backdrop-blur-md border-y border-border-subtle py-4 px-3 sm:px-6 md:px-8 lg:px-12 transition-colors duration-200"
       >
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5">
-          {categories.map((cat) => {
-            const isActive = selectedCategory?._id === cat._id;
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-2 sm:gap-3.5">
+          {categoryTabs.map((cat) => {
+            const isActive = activeCategory === cat.value;
             return (
               <button
-                key={cat._id}
+                key={cat.id || cat.value}
                 type="button"
-                onClick={() => setSelectedCategoryId(cat._id)}
+                onClick={() => handleCategorySelect(cat.value)}
                 aria-pressed={isActive}
                 className={cn(
-                  "relative px-4 sm:px-6 py-2 sm:py-2.5 text-xs font-sans font-bold uppercase tracking-[0.2em] transition-all duration-200 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-primary",
+                  "relative px-3.5 sm:px-6 py-2 sm:py-2.5 text-[11px] sm:text-xs font-sans font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] transition-all duration-200 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-primary",
                   isActive
                     ? "text-text-primary bg-bg-surface font-black shadow-xs ring-1 ring-border-subtle"
                     : "text-text-muted hover:text-text-primary hover:bg-bg-surface/50",
                 )}
               >
-                [ {cat.title} ]
+                [ {cat.label} ]
                 {isActive && (
                   <span
                     aria-hidden="true"
@@ -248,25 +406,32 @@ export function PackagesPage({
         </div>
       </nav>
 
-      {/* 3. The Packages Display (Centered flex system) */}
-      <section className="relative w-full py-16 sm:py-20 lg:py-24 px-6 sm:px-8 lg:px-12">
+      {/* 3. The Packages Display (1-Card Grid on Small Screens, Multi-Column on Desktop) */}
+      <section className="relative w-full py-12 sm:py-20 lg:py-24 px-4 sm:px-6 md:px-8 lg:px-12">
         <div className="max-w-7xl mx-auto">
           {/* Active Category Monograph Cue */}
-          <div className="flex items-center justify-between mb-10 sm:mb-14 pb-4 border-b border-border-subtle">
+          <div className="flex items-center justify-between mb-8 sm:mb-14 pb-4 border-b border-border-subtle">
             <span className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-text-muted">
-              SHOWING // {selectedCategoryTitle.toUpperCase()} TIERS
+              SHOWING // {activeCategoryTitle.toUpperCase()} TIERS
             </span>
             <span className="font-serif italic text-xs sm:text-sm text-text-muted">
-              {activePackages.length}{" "}
-              {activePackages.length === 1 ? "Option" : "Options"} Available
+              {packages.length} {packages.length === 1 ? "Option" : "Options"}{" "}
+              Available
             </span>
           </div>
 
           {/* Cards or Empty State Container */}
           <div ref={cardsGridRef} className="w-full">
-            {activePackages.length === 0 ? (
-              /* If there is no packages for the relevant category, show a message */
-              <div className="package-empty-state w-full py-16 sm:py-24 text-center border border-dashed border-border-subtle bg-bg-surface/20 max-w-2xl mx-auto px-6 sm:px-10 rounded-sm">
+            {isCategoryLoading ? (
+              /* Skeleton Grid during category switching */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <PackageSkeletonCard key={`cat-skel-${idx}`} />
+                ))}
+              </div>
+            ) : packages.length === 0 ? (
+              /* Empty state if no packages exist for relevant category */
+              <div className="package-empty-state w-full py-16 sm:py-24 text-center border border-dashed border-border-subtle bg-bg-surface/20 max-w-2xl mx-auto px-6 sm:px-10 rounded-xl">
                 <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-bg-surface text-text-muted">
                   <PackageOpen className="w-6 h-6 stroke-[1.5]" />
                 </div>
@@ -280,44 +445,46 @@ export function PackagesPage({
                   Every story deserves dedicated art direction. Inquire directly
                   to commission a bespoke collection for your{" "}
                   <span className="font-semibold text-text-primary lowercase">
-                    {selectedCategoryTitle}
+                    {activeCategoryTitle}
                   </span>
                   .
                 </p>
                 <a
                   href={`https://wa.me/94704028206?text=${encodeURIComponent(
-                    `Hi B'STUDIO, I would like to inquire about bespoke packages for ${selectedCategoryTitle}.`,
+                    `Hi B'STUDIO, I would like to inquire about bespoke packages for ${activeCategoryTitle}.`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-8 py-3.5 text-xs font-sans font-bold uppercase tracking-[0.2em] border border-text-primary bg-text-primary text-bg-base hover:bg-black transition-colors"
+                  className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 text-xs font-sans font-bold uppercase tracking-[0.2em] border border-text-primary bg-text-primary text-bg-base hover:bg-black transition-colors rounded-none"
                 >
                   <span>[ REQUEST BESPOKE QUOTE ]</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </a>
               </div>
             ) : (
-              /* Centered package cards flex system */
-              <div className="flex flex-wrap justify-center items-stretch gap-8 sm:gap-10 lg:gap-12 max-w-7xl mx-auto">
-                {activePackages.map((pkg, idx) => {
+              /* Responsive 1-Card Grid on Small Screens, Multi-Column on Desktop */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
+                {packages.map((pkg, idx) => {
                   const tierIndex = String(idx + 1).padStart(2, "0");
                   const hasBadge = Boolean(pkg.badge);
                   return (
                     <article
                       key={pkg._id || `pkg-${idx}`}
-                      className={`package-card w-full sm:w-[calc(50%-1.25rem)] lg:w-[calc(33.333%-2rem)] max-w-md relative border border-border-subtle bg-bg-surface/20 hover:bg-bg-surface/40 p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-text-primary/50 group ${pkg.isHighlited && "border-2 border-text-primary/50 "}`}
+                      className={`package-card w-full max-w-md mx-auto relative border border-border-subtle bg-bg-surface/20 hover:bg-bg-surface/40 p-6 sm:p-8 lg:p-10 flex flex-col justify-between transition-all duration-300 hover:border-text-primary/50 group rounded-xl sm:rounded-2xl ${
+                        pkg.isHighlited ? "border-2 border-text-primary/50" : ""
+                      }`}
                     >
                       {/* Top Section */}
                       <div>
                         {/* Header Row: Tier Index & Optional Badge */}
-                        <div className="flex items-center justify-between gap-4 mb-6">
-                          <span className="font-serif italic text-lg text-text-muted">
+                        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+                          <span className="font-serif italic text-base sm:text-lg text-text-muted">
                             /{tierIndex}
                           </span>
                           {hasBadge && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-sans font-bold uppercase tracking-[0.2em] border border-text-primary/20 bg-bg-base text-text-primary rounded-full">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] sm:text-xs font-sans font-bold uppercase tracking-[0.2em] border border-text-primary/20 bg-bg-base text-text-primary rounded-full shrink-0">
                               <Sparkles className="w-2.5 h-2.5 stroke-[2]" />
-                              {pkg.badge}
+                              <span>{pkg.badge}</span>
                             </span>
                           )}
                         </div>
@@ -327,9 +494,9 @@ export function PackagesPage({
                           {pkg.title}
                         </h2>
 
-                        {/* Investment / Price (Quite Big Display) */}
+                        {/* Investment / Price */}
                         {pkg.price && (
-                          <div className="mt-4 flex items-baseline gap-2">
+                          <div className="mt-3 sm:mt-4 flex items-baseline gap-2">
                             <span className="font-sans font-black text-3xl sm:text-4xl lg:text-[2.75rem] tracking-tight leading-none text-text-primary">
                               {pkg.price}
                             </span>
@@ -337,7 +504,7 @@ export function PackagesPage({
                         )}
 
                         {/* Hairline Divider */}
-                        <div className="h-px w-full bg-border-subtle my-6" />
+                        <div className="h-px w-full bg-border-subtle my-5 sm:my-6" />
 
                         {/* Description: Sophisticated Italicized Serif */}
                         {pkg.description && (
@@ -347,7 +514,7 @@ export function PackagesPage({
                         )}
 
                         {/* Hairline Divider */}
-                        <div className="h-px w-full bg-border-subtle my-6" />
+                        <div className="h-px w-full bg-border-subtle my-5 sm:my-6" />
 
                         {/* Deliverables Header */}
                         <h3 className="font-sans font-bold text-[10px] uppercase tracking-[0.25em] text-text-muted mb-4">
@@ -356,11 +523,11 @@ export function PackagesPage({
 
                         {/* Deliverables: Sleek List mapping over array */}
                         {pkg.deliverables && pkg.deliverables.length > 0 && (
-                          <ul className="space-y-3">
+                          <ul className="space-y-2.5 sm:space-y-3">
                             {pkg.deliverables.map((item, dIdx) => (
                               <li
                                 key={dIdx}
-                                className="font-sans text-xs uppercase tracking-wider text-text-muted flex items-start gap-2.5 leading-snug"
+                                className="font-sans text-xs uppercase tracking-wide text-text-muted flex items-start gap-2.5 leading-snug"
                               >
                                 <span className="inline-block mt-0.5 text-text-primary/70 shrink-0">
                                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -378,11 +545,11 @@ export function PackagesPage({
                       <div className="mt-8 sm:mt-10 pt-6 border-t border-border-subtle">
                         <a
                           href={`https://wa.me/94704028206?text=${encodeURIComponent(
-                            `Hi B'STUDIO, I would like to inquire about the "${pkg.title || "Package"}" package (${selectedCategoryTitle}${pkg.price ? ` - ${pkg.price}` : ""}).`,
+                            `Hi B'STUDIO, I would like to inquire about the "${pkg.title || "Package"}" package (${activeCategoryTitle}${pkg.price ? ` - ${pkg.price}` : ""}).`,
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full py-4 px-6 text-xs font-sans font-bold uppercase tracking-[0.2em] border border-text-primary text-text-primary bg-transparent hover:bg-text-primary hover:text-bg-base transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-text-primary group-hover:text-bg-base cursor-pointer"
+                          className="w-full py-3.5 sm:py-4 px-6 text-xs font-sans font-bold uppercase tracking-[0.2em] border border-text-primary text-text-primary bg-transparent hover:bg-text-primary hover:text-bg-base transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-text-primary group-hover:text-bg-base cursor-pointer rounded-none"
                         >
                           <span>[ INQUIRE NOW ]</span>
                           <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -391,18 +558,29 @@ export function PackagesPage({
                     </article>
                   );
                 })}
+
+                {/* In-Place Skeletons when loading next page */}
+                {isLoadingMore && (
+                  <>
+                    <PackageSkeletonCard />
+                    <PackageSkeletonCard />
+                  </>
+                )}
               </div>
             )}
-          </div>
 
-          {/* Loading Indicator when fetching category asynchronously */}
-          {isLoading && (
-            <div className="mt-12 text-center">
-              <p className="font-serif italic text-sm text-text-muted lowercase tracking-widest animate-pulse">
-                loading collections...
-              </p>
+            {/* Scroll Sentinel for Infinite Pagination */}
+            <div
+              ref={sentinelRef}
+              className="w-full h-8 flex items-center justify-center mt-8 pointer-events-none"
+            >
+              {isLoadingMore && (
+                <p className="font-serif italic text-xs text-text-muted lowercase tracking-widest animate-pulse">
+                  loading more collections...
+                </p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </section>
     </div>

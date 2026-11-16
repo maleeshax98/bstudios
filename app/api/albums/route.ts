@@ -6,8 +6,9 @@ import type { WorksPageAlbum } from "@/components/works/works-page";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/albums?start=0&limit=6
+ * GET /api/albums?start=0&limit=6&category=wedding
  * Lightweight Route Handler for works archive pagination.
+ * Supports optional category filtering for server-side paginated queries.
  * Prevents Next.js Server Action flight re-renders and Suspense fallback triggers,
  * ensuring existing albums stay completely visible and rock-solid while loading more.
  */
@@ -17,10 +18,12 @@ export async function GET(request: Request) {
     const start = Math.max(0, parseInt(searchParams.get("start") || "0", 10));
     const limit = Math.max(1, parseInt(searchParams.get("limit") || "6", 10));
     const end = start + limit;
+    const category = searchParams.get("category")?.trim() || "ALL";
+    const categoryNormalized = category.replace(/-/g, " ");
 
     const { data: albums } = await sanityFetch({
       query: PAGINATED_ALBUMS_QUERY,
-      params: { start, end },
+      params: { start, end, category, categoryNormalized },
       stega: false,
     });
 
