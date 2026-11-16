@@ -71,7 +71,13 @@ export const WEDDING_ALBUMS_QUERY = defineQuery(`
 export const CLIENT_SPACE_ALBUMS_QUERY = WEDDING_ALBUMS_QUERY;
 
 export const PAGINATED_ALBUMS_QUERY = defineQuery(`
-  *[_type == "album"] | order(publishedAt desc, _createdAt desc) [$start...$end] {
+  *[_type == "album" && (
+    $category == "ALL" ||
+    $category == "" ||
+    !defined($category) ||
+    lower(category->title) == lower($category) ||
+    lower(category->title) == lower($categoryNormalized)
+  )] | order(publishedAt desc, _createdAt desc) [$start...$end] {
     _id,
     title,
     description,
@@ -146,6 +152,30 @@ export const PACKAGES_QUERY = defineQuery(`
 
 export const PACKAGES_BY_CATEGORY_QUERY = defineQuery(`
   *[_type == "package" && (category->_id == $categoryId || lower(category->title) == lower($category) || category->title match $category)] | order(order asc, _createdAt asc) {
+    _id,
+    title,
+    category->{
+      _id,
+      title
+    },
+    description,
+    deliverables,
+    price,
+    badge,
+    order,
+    isHighlited
+  }
+`);
+
+export const PAGINATED_PACKAGES_QUERY = defineQuery(`
+  *[_type == "package" && (
+    $category == "ALL" ||
+    $category == "" ||
+    !defined($category) ||
+    category->_id == $category ||
+    lower(category->title) == lower($category) ||
+    lower(category->title) == lower($categoryNormalized)
+  )] | order(order asc, _createdAt asc) [$start...$end] {
     _id,
     title,
     category->{
